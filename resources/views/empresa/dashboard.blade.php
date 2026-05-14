@@ -1,0 +1,120 @@
+<x-app-layout>
+    <x-slot name="header">
+        <nav class="breadcrumbs">
+            <a href="{{ route('dashboard') }}">Inicio</a>
+            <span class="breadcrumb-sep">›</span>
+            <span>Mi Panel</span>
+        </nav>
+        <h1 class="page-title">{{ $empresa->nombre_empresa }}</h1>
+        <p class="page-subtitle">Panel de servicios RH.</p>
+    </x-slot>
+
+    @if($empresa->estado === 'pendiente')
+        <div style="margin-bottom:20px; padding:14px 16px; background:var(--warning-light); color:var(--warning); border-radius:8px; border-left:4px solid var(--warning); font-size:14px;">
+            Tu empresa está pendiente de aprobación. El administrador la revisará en breve.
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div style="margin-bottom:16px; padding:12px 16px; background:var(--success-light); color:var(--success); border-radius:8px; border-left:4px solid var(--success);">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Métricas --}}
+    <div class="metrics-grid fade-in">
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Servicios activos</span>
+                <div class="metric-icon" style="background:var(--success-light); color:var(--success);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ $stats['solicitudes_activas'] }}</div>
+            <a href="{{ route('empresa.solicitudes') }}" class="metric-change" style="color:var(--success); text-decoration:none; font-size:12px;">Ver mis servicios →</a>
+        </div>
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">En revisión</span>
+                <div class="metric-icon" style="background:var(--warning-light); color:var(--warning);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ $stats['solicitudes_pendientes'] }}</div>
+            <span class="metric-change" style="font-size:12px; color:#64748b;">Esperando aprobación del admin</span>
+        </div>
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Candidatos asignados</span>
+                <div class="metric-icon" style="background:var(--accent-light); color:var(--accent);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z"/></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ $stats['candidatos_total'] }}</div>
+            <span class="metric-change" style="font-size:12px; color:#64748b;">Total en todos los servicios</span>
+        </div>
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">En proceso</span>
+                <div class="metric-icon" style="background:var(--danger-light); color:var(--danger);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ $stats['en_proceso'] }}</div>
+            <span class="metric-change" style="font-size:12px; color:#64748b;">En entrevista</span>
+        </div>
+    </div>
+
+    {{-- Solicitudes recientes --}}
+    <div class="card fade-in" style="margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="font-weight:600; margin:0;">Solicitudes recientes</h3>
+            <a href="{{ route('empresa.solicitudes.crear') }}" style="padding:8px 14px; background:var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:13px; font-weight:500;">+ Solicitar servicio</a>
+        </div>
+
+        @php
+            $tipos = \App\Models\Vacante::tiposServicio();
+            $estadoColors = ['pendiente'=>'var(--warning)','activa'=>'var(--success)','cerrada'=>'var(--text-muted)','rechazada'=>'var(--danger)'];
+            $estadoLabels = ['pendiente'=>'En revisión','activa'=>'Activa','cerrada'=>'Cerrada','rechazada'=>'Rechazada'];
+        @endphp
+
+        @if($solicitudes_recientes->isEmpty())
+            <div style="text-align:center; padding:40px 0;">
+                <p style="color:#64748b; font-size:0.9rem;">Aún no has solicitado ningún servicio.</p>
+                <a href="{{ route('empresa.solicitudes.crear') }}" style="display:inline-block; margin-top:12px; padding:10px 20px; background:var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px;">Hacer tu primera solicitud</a>
+            </div>
+        @else
+            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <thead>
+                    <tr style="border-bottom:2px solid var(--border);">
+                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Servicio</th>
+                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Tipo</th>
+                        <th style="text-align:center; padding:10px 8px; color:var(--text-muted); font-weight:500;">Candidatos</th>
+                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Estado</th>
+                        <th style="text-align:right; padding:10px 8px; color:var(--text-muted); font-weight:500;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($solicitudes_recientes as $sol)
+                        <tr style="border-bottom:1px solid var(--border);">
+                            <td style="padding:10px 8px; font-weight:500;">{{ $sol->titulo }}</td>
+                            <td style="padding:10px 8px; font-size:0.8rem; color:#94a3b8;">{{ $tipos[$sol->tipo_servicio] ?? '—' }}</td>
+                            <td style="padding:10px 8px; text-align:center; font-weight:600;">{{ $sol->postulaciones_count }}</td>
+                            <td style="padding:10px 8px;">
+                                <span style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; background:{{ $estadoColors[$sol->estado] ?? '#64748b' }}22; color:{{ $estadoColors[$sol->estado] ?? '#64748b' }};">
+                                    {{ $estadoLabels[$sol->estado] ?? ucfirst($sol->estado) }}
+                                </span>
+                            </td>
+                            <td style="padding:10px 8px; text-align:right;">
+                                <a href="{{ route('empresa.solicitudes.ver', $sol) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver →</a>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            <div style="margin-top:12px; text-align:right;">
+                <a href="{{ route('empresa.solicitudes') }}" style="font-size:13px; color:var(--accent); text-decoration:none;">Ver todas mis solicitudes →</a>
+            </div>
+        @endif
+    </div>
+</x-app-layout>
