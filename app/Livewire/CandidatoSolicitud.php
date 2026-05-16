@@ -155,23 +155,26 @@ class CandidatoSolicitud extends Component
 
     public function agregarEscolaridad(): void
     {
-        $this->escolaridad_detallada[] = [
+        $this->escolaridad_detallada = array_values([...$this->escolaridad_detallada, [
             'nivel' => '',
             'nombre' => '',
             'anios' => '',
             'titulo' => '',
-        ];
+        ]]);
+        $this->autoGuardar();
     }
 
     public function eliminarEscolaridad(int $index): void
     {
-        unset($this->escolaridad_detallada[$index]);
-        $this->escolaridad_detallada = array_values($this->escolaridad_detallada);
+        $nuevo = $this->escolaridad_detallada;
+        array_splice($nuevo, $index, 1);
+        $this->escolaridad_detallada = array_values($nuevo);
+        $this->autoGuardar();
     }
 
     public function agregarEmpleo(): void
     {
-        $this->historial_laboral[] = [
+        $this->historial_laboral = array_values([...$this->historial_laboral, [
             'empresa' => '',
             'puesto' => '',
             'jefe' => '',
@@ -179,30 +182,36 @@ class CandidatoSolicitud extends Component
             'desde' => '',
             'hasta' => '',
             'motivo' => '',
-        ];
+        ]]);
+        $this->autoGuardar();
     }
 
     public function eliminarEmpleo(int $index): void
     {
-        unset($this->historial_laboral[$index]);
-        $this->historial_laboral = array_values($this->historial_laboral);
+        $nuevo = $this->historial_laboral;
+        array_splice($nuevo, $index, 1);
+        $this->historial_laboral = array_values($nuevo);
+        $this->autoGuardar();
     }
 
     public function agregarReferencia(): void
     {
-        $this->referencias_personales[] = [
+        $this->referencias_personales = array_values([...$this->referencias_personales, [
             'nombre' => '',
             'telefono' => '',
             'ocupacion' => '',
             'tiempo' => '',
             'domicilio' => '',
-        ];
+        ]]);
+        $this->autoGuardar();
     }
 
     public function eliminarReferencia(int $index): void
     {
-        unset($this->referencias_personales[$index]);
-        $this->referencias_personales = array_values($this->referencias_personales);
+        $nuevo = $this->referencias_personales;
+        array_splice($nuevo, $index, 1);
+        $this->referencias_personales = array_values($nuevo);
+        $this->autoGuardar();
     }
 
     public function updated(string $property): void
