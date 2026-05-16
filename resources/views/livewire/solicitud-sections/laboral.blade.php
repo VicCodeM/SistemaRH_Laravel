@@ -30,7 +30,7 @@
                     <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f59e0b;margin:0;">Historial laboral</p>
                     <p style="font-size:.75rem;color:var(--text-muted);margin:3px 0 0;">Opcional — mejora el filtrado automático de candidatos</p>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" wire:click="agregarEmpleo">+ Agregar empleo</button>
+                <button type="button" class="btn btn-secondary btn-sm" x-on:click="$wire.agregarEmpleo()" wire:loading.attr="disabled">+ Agregar empleo</button>
             </div>
 
             @if(count($historial_laboral) > 0)
@@ -70,7 +70,7 @@
                                 <textarea class="form-input" rows="2" wire:model.blur="historial_laboral.{{ $index }}.motivo" placeholder="Motivo de salida del empleo"></textarea>
                             </div>
                             <div style="text-align:right;">
-                                <button type="button" class="btn btn-ghost btn-sm" wire:click="eliminarEmpleo({{ $index }})" style="color:var(--danger);border-color:var(--danger-light);">Quitar empleo</button>
+                                <button type="button" class="btn btn-ghost btn-sm" x-on:click="$wire.eliminarEmpleo({{ $index }})" wire:loading.attr="disabled" style="color:var(--danger);border-color:var(--danger-light);">Quitar empleo</button>
                             </div>
                         </div>
                     @endforeach

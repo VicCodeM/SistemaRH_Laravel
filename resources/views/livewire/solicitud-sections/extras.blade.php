@@ -141,7 +141,7 @@
                     <p class="section-label" style="color:#f43f5e;">Referencias personales</p>
                     <p style="font-size:.75rem;color:var(--text-muted);margin:3px 0 0;">Opcional — personas que puedan dar referencias de ti</p>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" wire:click="agregarReferencia">+ Agregar referencia</button>
+                <button type="button" class="btn btn-secondary btn-sm" x-on:click="$wire.agregarReferencia()" wire:loading.attr="disabled">+ Agregar referencia</button>
             </div>
 
             @if(count($referencias_personales) > 0)
@@ -171,7 +171,7 @@
                                     <label class="form-label">Domicilio</label>
                                     <input type="text" class="form-input" wire:model.blur="referencias_personales.{{ $index }}.domicilio" placeholder="Domicilio de la referencia">
                                 </div>
-                                <button type="button" class="btn btn-ghost btn-sm" wire:click="eliminarReferencia({{ $index }})" style="color:var(--danger);border-color:var(--danger-light);flex-shrink:0;">Quitar</button>
+                                <button type="button" class="btn btn-ghost btn-sm" x-on:click="$wire.eliminarReferencia({{ $index }})" wire:loading.attr="disabled" style="color:var(--danger);border-color:var(--danger-light);flex-shrink:0;">Quitar</button>
                             </div>
                         </div>
                     @endforeach

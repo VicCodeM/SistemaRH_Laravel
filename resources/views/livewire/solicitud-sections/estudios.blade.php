@@ -55,7 +55,7 @@
                     <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#8b5cf6;margin:0;">Estudios detallados</p>
                     <p style="font-size:.75rem;color:var(--text-muted);margin:3px 0 0;">Opcional — agrega más datos para afinar coincidencias</p>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" wire:click="agregarEscolaridad">+ Agregar estudio</button>
+                <button type="button" class="btn btn-secondary btn-sm" x-on:click="$wire.agregarEscolaridad()" wire:loading.attr="disabled">+ Agregar estudio</button>
             </div>
 
             @if(count($escolaridad_detallada) > 0)
@@ -86,7 +86,7 @@
                                 </div>
                             </div>
                             <div style="text-align:right;margin-top:10px;">
-                                <button type="button" class="btn btn-ghost btn-sm" wire:click="eliminarEscolaridad({{ $index }})" style="color:var(--danger);border-color:var(--danger-light);">Quitar</button>
+                                <button type="button" class="btn btn-ghost btn-sm" x-on:click="$wire.eliminarEscolaridad({{ $index }})" wire:loading.attr="disabled" style="color:var(--danger);border-color:var(--danger-light);">Quitar</button>
                             </div>
                         </div>
                     @endforeach
