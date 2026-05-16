@@ -93,7 +93,7 @@ class ReporteService
      * @param int $meses Cantidad de meses hacia atrás
      * @return array<int, array{label: string, valor: int}>
      */
-    public function graficaMensual(string $modelo, int $meses = 6): array
+    public function graficaMensual(string $modelo, int $meses = 6): \Illuminate\Support\Collection
     {
         $rango = collect(range($meses - 1, 0))->map(fn ($i) => now()->subMonths($i));
 
@@ -104,6 +104,6 @@ class ReporteService
                     ->whereMonth('created_at', $mes->month)
                     ->count(),
             ];
-        })->all();
+        });
     }
 }
