@@ -1,30 +1,21 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="page-title">Chat</h1>
+        <h1 class="page-title">Mensajes</h1>
         <p class="page-subtitle">{{ $room->nombre ?? 'Conversación activa' }}</p>
     </x-slot>
 
-    <div class="card fade-in" style="display:grid; grid-template-columns:280px 1fr; height:580px; overflow:hidden; padding:0;">
-        <div style="border-right:1px solid var(--border); overflow-y:auto; padding:12px;">
-            <p style="font-size:11px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; padding:4px 8px; margin-bottom:8px;">Conversaciones</p>
-            <livewire:chat.chat-list :room-id="$room->id" />
-        </div>
-
-        <div style="display:flex; flex-direction:column; overflow:hidden;">
-            <div style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
-                <div style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; flex-shrink:0;">
-                    {{ strtoupper(substr($room->nombre ?? 'C', 0, 1)) }}
-                </div>
-                <div>
-                    <p style="font-weight:600; font-size:14px; margin:0;">{{ $room->nombre ?? 'Chat' }}</p>
-                    <p style="font-size:12px; color:var(--text-muted); margin:0;">
-                        {{ \App\Models\ChatRoom::tipoLabel($room->tipo) }}
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--success); margin-left:4px; vertical-align:middle;"></span>
-                    </p>
-                </div>
+    <div class="chat-layout card fade-in">
+        <aside class="chat-sidebar">
+            <div class="chat-sidebar-header">
+                <h3 class="chat-sidebar-title">Conversaciones</h3>
             </div>
+            <div class="chat-sidebar-body">
+                <livewire:chat.chat-list :room-id="$room->id" />
+            </div>
+        </aside>
 
+        <main class="chat-main">
             <livewire:chat.chat-conversacion :room="$room" />
-        </div>
+        </main>
     </div>
 </x-app-layout>

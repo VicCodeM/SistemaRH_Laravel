@@ -37,6 +37,19 @@ class ChatConversacion extends Component
         $this->mensaje = '';
     }
 
+    public function eliminarMensaje(int $mensajeId): void
+    {
+        $user = auth()->user();
+        $mensaje = ChatMessage::findOrFail($mensajeId);
+
+        // Solo el emisor o un admin puede eliminar
+        if ($mensaje->sender_user_id !== $user->id && ! $user->esAdmin()) {
+            abort(403, 'No puedes eliminar este mensaje.');
+        }
+
+        $mensaje->delete();
+    }
+
     public function actualizarMensajes(): void
     {
         $this->marcarLeido();
@@ -71,6 +84,7 @@ class ChatConversacion extends Component
             ->get();
 
         $otroUsuario = null;
+        $puedeEliminar = [];
         if ($this->room->tipo === 'directo') {
             $user = auth()->user();
             $otroId = $this->room->direct_user_a_id === $user->id

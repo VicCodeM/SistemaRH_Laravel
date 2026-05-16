@@ -45,11 +45,25 @@ class ChatList extends Component
         $this->redirect(route('chat.show', $room));
     }
 
+    public function eliminarConversacion(int $roomId): void
+    {
+        $user = auth()->user();
+        $room = ChatRoom::findOrFail($roomId);
+
+        // Marcar como oculta para este usuario (soft delete personal)
+        $room->miembros()->updateExistingPivot($user->id, [
+            'hidden_at' => now(),
+        ]);
+    }
+
     public function render()
     {
         $user = auth()->user();
 
-        $rooms = ChatRoom::whereHas('miembros', fn ($q) => $q->where('user_id', $user->id))
+        $rooms = ChatRoom::whereHas('miembros', function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->whereNull('chat_room_members.hidden_at');
+        })
             ->with(['mensajes' => fn ($q) => $q->latest()->limit(1), 'creador'])
             ->latest('updated_at')
             ->get();
@@ -57,7 +71,9 @@ class ChatList extends Component
         // Para admin: usuarios sin chat directo para poder iniciar uno nuevo
         $usuariosSinChat = collect();
         if ($user->esAdmin()) {
-            $idsConChat = $rooms->where('tipo', 'directo')
+            $idsConChat = ChatRoom::whereHas('miembros', fn ($q) => $q->where('user_id', $user->id))
+                ->where('tipo', 'directo')
+                ->get()
                 ->flatMap(fn ($r) => [$r->direct_user_a_id, $r->direct_user_b_id])
                 ->filter(fn ($id) => $id !== $user->id)
                 ->unique();
