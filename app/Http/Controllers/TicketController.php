@@ -3,30 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
-use App\Models\TicketMessage;
 use App\Services\SlaInteligenteService;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
-    public function index()
+    public function index(TicketService $ticketService)
     {
-        $user = Auth::user();
-
-        if ($user->esAdmin() || $user->esInterno()) {
-            $tickets = Ticket::with('empresa.usuario')
-                ->orderByRaw("CASE estado WHEN 'abierto' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'resuelto' THEN 3 ELSE 4 END")
-                ->orderByRaw("CASE prioridad WHEN 'urgente' THEN 1 WHEN 'alta' THEN 2 WHEN 'media' THEN 3 ELSE 4 END")
-                ->orderByRaw('COALESCE(sla_due_at, created_at) ASC')
-                ->paginate(15);
-        } else {
-            $empresa = $user->empresa;
-            abort_unless($empresa, 403);
-            $tickets = Ticket::where('empresa_id', $empresa->id)
-                ->latest()
-                ->paginate(15);
-        }
+        $tickets = $ticketService->listarParaUsuario(Auth::user());
 
         return view('tickets.index', compact('tickets'));
     }
@@ -38,7 +24,7 @@ class TicketController extends Controller
         return view('tickets.create');
     }
 
-    public function guardar(Request $request, SlaInteligenteService $sla)
+    public function guardar(Request $request, SlaInteligenteService $sla, TicketService $ticketService)
     {
         $empresa = Auth::user()->empresa;
         abort_unless($empresa, 403);
@@ -50,27 +36,10 @@ class TicketController extends Controller
             'prioridad'   => 'required|in:' . implode(',', array_keys(Ticket::prioridades())),
         ]);
 
-        // Calcular SLA inteligente
-        $prioridadSla = $data['prioridad'] === 'urgente' ? 'alta' : $data['prioridad'];
-        $clasificacion = $sla->clasificar(
-            'solicitud_empresa_soporte',
-            $data['asunto'],
-            $data['descripcion'],
-            $prioridadSla
-        );
-
-        $ticket = Ticket::create([
-            'empresa_id'  => $empresa->id,
-            'asunto'      => $data['asunto'],
-            'descripcion' => $data['descripcion'],
-            'categoria'   => $data['categoria'],
-            'prioridad'   => $data['prioridad'],
-            'estado'      => 'abierto',
-            'sla_due_at'  => now()->addMinutes($clasificacion['sla_minutes']),
-        ]);
+        $ticket = $ticketService->crearConSla($data, $empresa, $sla);
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', "Ticket creado. SLA estimado: {$clasificacion['sla_minutes']} minutos.");
+            ->with('success', "Ticket creado. SLA estimado: {$ticket->sla_due_at->diffInMinutes(now())} minutos.");
     }
 
     public function show(Ticket $ticket)
@@ -80,27 +49,18 @@ class TicketController extends Controller
         return view('tickets.show', compact('ticket'));
     }
 
-    public function responder(Request $request, Ticket $ticket)
+    public function responder(Request $request, Ticket $ticket, TicketService $ticketService)
     {
         $this->autorizar($ticket);
-        abort_if(in_array($ticket->estado, ['resuelto', 'cerrado'], true), 422, 'El ticket ya fue cerrado.');
 
         $request->validate(['mensaje' => 'required|string|max:3000']);
 
-        TicketMessage::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => Auth::id(),
-            'mensaje'   => $request->mensaje,
-        ]);
-
-        if ($ticket->estado === 'abierto') {
-            $ticket->update(['estado' => 'en_proceso']);
-        }
+        $ticketService->responder($ticket, $request->mensaje, Auth::user());
 
         return back()->with('success', 'Respuesta enviada correctamente.');
     }
 
-    public function cambiarEstado(Request $request, Ticket $ticket)
+    public function cambiarEstado(Request $request, Ticket $ticket, TicketService $ticketService)
     {
         abort_unless(Auth::user()->esAdmin() || Auth::user()->esInterno(), 403);
 
@@ -108,17 +68,12 @@ class TicketController extends Controller
             'estado' => 'required|in:' . implode(',', array_keys(Ticket::estados())),
         ]);
 
-        $updates = ['estado' => $request->estado];
-        if (in_array($request->estado, ['resuelto', 'cerrado'], true)) {
-            $updates['resuelto_at'] = now();
-        }
-
-        $ticket->update($updates);
+        $ticketService->cambiarEstado($ticket, $request->estado);
 
         return back()->with('success', 'Estado del ticket actualizado correctamente.');
     }
 
-    public function asignar(Request $request, Ticket $ticket)
+    public function asignar(Request $request, Ticket $ticket, TicketService $ticketService)
     {
         abort_unless(Auth::user()->esAdmin() || Auth::user()->esInterno(), 403);
 
@@ -126,7 +81,7 @@ class TicketController extends Controller
             'asignado_a' => ['nullable', 'exists:users,id'],
         ]);
 
-        $ticket->update(['asignado_a' => $data['asignado_a'] ?? null]);
+        $ticketService->asignar($ticket, $data['asignado_a'] ?? null);
 
         return back()->with('success', 'Ticket asignado correctamente.');
     }
