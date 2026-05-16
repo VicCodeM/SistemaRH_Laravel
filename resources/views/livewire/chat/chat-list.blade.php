@@ -3,13 +3,19 @@
         @php
             $ultimoMensaje = $room->mensajes->first();
             $activa = request()->routeIs('chat.show') && request()->route('room')?->id === $room->id;
+            $noLeidos = $room->noLeidosPara(auth()->user());
         @endphp
         <a href="{{ route('chat.show', $room) }}" wire:navigate
             style="display:flex; align-items:center; gap:12px; padding:12px 14px; text-decoration:none; border-radius:8px; margin-bottom:4px; {{ $activa ? 'background: var(--accent-light);' : '' }} transition: background .15s;"
             onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='{{ $activa ? 'var(--accent-light)' : 'transparent' }}'">
 
-            <div style="width:38px; height:38px; border-radius:50%; background: var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:15px; flex-shrink:0;">
+            <div style="width:38px; height:38px; border-radius:50%; background: var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:15px; flex-shrink:0; position:relative;">
                 {{ strtoupper(substr($room->nombre ?? 'C', 0, 1)) }}
+                @if($noLeidos > 0)
+                    <span style="position:absolute; top:-2px; right:-2px; min-width:16px; height:16px; background:var(--danger); color:#fff; font-size:9px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 4px;">
+                        {{ $noLeidos > 99 ? '99+' : $noLeidos }}
+                    </span>
+                @endif
             </div>
             <div style="min-width:0; flex:1;">
                 <p style="font-weight:500; font-size:14px; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: {{ $activa ? 'var(--accent)' : 'inherit' }};">

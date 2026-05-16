@@ -42,4 +42,22 @@ class ChatRoom extends Model
             ->withPivot(['joined_at', 'last_read_message_id', 'hidden_at'])
             ->withTimestamps();
     }
+
+    /**
+     * Cuenta mensajes no leídos por un usuario en esta sala.
+     */
+    public function noLeidosPara(User $user): int
+    {
+        $member = $this->miembros()->where('user_id', $user->id)->first();
+        if (! $member) {
+            return 0;
+        }
+
+        $lastRead = $member->pivot->last_read_message_id ?? 0;
+
+        return $this->mensajes()
+            ->where('id', '>', $lastRead)
+            ->where('sender_user_id', '!=', $user->id)
+            ->count();
+    }
 }
