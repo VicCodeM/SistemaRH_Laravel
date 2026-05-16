@@ -1,73 +1,110 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
-            <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.solicitudes') }}">Mis Servicios</a>
-            <span class="breadcrumb-sep">›</span>
-            <span>Editar solicitud</span>
+            <a href="{{ route('empresa.dashboard') }}">Inicio</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
+            <a href="{{ route('empresa.solicitudes') }}">Solicitudes</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
+            <span>Editar</span>
         </nav>
         <h1 class="page-title">Editar solicitud</h1>
-        <p class="page-subtitle">Solo puedes editar solicitudes que aún están en revisión.</p>
+        <p class="page-subtitle">{{ $vacante->empresa?->nombre_empresa }}</p>
     </x-slot>
 
-    <div style="max-width:680px;">
+    @php
+        $nivelActual = \App\Models\CatalogoServicio::normalizarNivelJerarquico(old('nivel_jerarquico', $vacante->nivel_jerarquico));
+        $nivelEstudiosActual = old('nivel_estudios_minimo', $vacante->nivel_estudios_minimo);
+    @endphp
+
+    <div style="display:grid; grid-template-columns:1fr 280px; gap:20px; align-items:start; max-width:980px;">
         <div class="card">
             <form method="POST" action="{{ route('empresa.solicitudes.actualizar', $vacante) }}">
                 @csrf
                 @method('PUT')
 
-                {{-- Tipo de servicio --}}
                 <div class="form-group">
-                    <label class="form-label">¿Qué tipo de servicio necesitas? <span style="color:var(--danger)">*</span></label>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-top:8px;">
+                    <label class="form-label">Tipo de servicio <span style="color:var(--danger)">*</span></label>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:7px; margin-top:8px;">
                         @foreach($tipos as $key => $label)
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid {{ (old('tipo_servicio', $vacante->tipo_servicio)) === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ (old('tipo_servicio', $vacante->tipo_servicio)) === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }}; transition:border-color 0.15s;">
-                                <input type="radio" name="tipo_servicio" value="{{ $key }}"
-                                       {{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'checked' : '' }}
-                                       style="accent-color:var(--accent);">
-                                <span style="font-size:0.88rem; font-weight:500;">{{ $label }}</span>
+                            <label style="display:flex; align-items:center; gap:8px; padding:9px 11px; border:1px solid {{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }};">
+                                <input type="radio" name="tipo_servicio" value="{{ $key }}" {{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'checked' : '' }} style="accent-color:var(--accent);">
+                                <span style="font-size:0.82rem; font-weight:500;">{{ $label }}</span>
                             </label>
                         @endforeach
                     </div>
                     @error('tipo_servicio')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Título --}}
-                <div class="form-group" style="margin-top:24px;">
-                    <label class="form-label" for="titulo">Título o puesto <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror"
-                           value="{{ old('titulo', $vacante->titulo) }}" maxlength="200">
+                <div class="form-group" style="margin-top:18px;">
+                    <label class="form-label" for="titulo">Título / Puesto <span style="color:var(--danger)">*</span></label>
+                    <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror" value="{{ old('titulo', $vacante->titulo) }}" maxlength="200">
                     @error('titulo')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Nivel --}}
-                <div class="form-group" style="margin-top:20px;">
+                <div class="form-group" style="margin-top:16px;">
                     <label class="form-label" for="nivel_jerarquico">Nivel jerárquico <span style="color:var(--danger)">*</span></label>
                     <select id="nivel_jerarquico" name="nivel_jerarquico" class="form-input @error('nivel_jerarquico') is-invalid @enderror">
-                        <option value="">— Selecciona el nivel —</option>
+                        <option value="">— Selecciona —</option>
                         @foreach($niveles as $key => $label)
-                            <option value="{{ $key }}" {{ old('nivel_jerarquico', $vacante->nivel_jerarquico) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                            <option value="{{ $key }}" {{ $nivelActual === $key ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                     @error('nivel_jerarquico')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Requerimientos --}}
-                <div class="form-group" style="margin-top:20px;">
-                    <label class="form-label" for="requerimientos">Descripción y requerimientos</label>
-                    <textarea id="requerimientos" name="requerimientos"
-                              class="form-input @error('requerimientos') is-invalid @enderror"
-                              rows="5" maxlength="2000">{{ old('requerimientos', $vacante->requerimientos) }}</textarea>
-                    <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Opcional · máx. 2000 caracteres</div>
+                <div class="card" style="margin-top:18px; padding:18px; background:var(--surface-2);">
+                    <h2 style="margin:0 0 6px; font-size:0.98rem;">Requisitos de compatibilidad</h2>
+                    <p style="margin:0 0 14px; font-size:0.84rem; color:#64748b;">Si cambias estos datos, el sistema recalcula el orden de los candidatos sugeridos.</p>
+
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="nivel_estudios_minimo">Nivel mínimo de estudios</label>
+                            <select id="nivel_estudios_minimo" name="nivel_estudios_minimo" class="form-input @error('nivel_estudios_minimo') is-invalid @enderror">
+                                <option value="">Sin requisito</option>
+                                @foreach($estudios as $key => $label)
+                                    <option value="{{ $key }}" {{ $nivelEstudiosActual === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('nivel_estudios_minimo')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="area_requerida">Área o carrera requerida</label>
+                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror"
+                                   value="{{ old('area_requerida', $vacante->area_requerida) }}" maxlength="150" placeholder="Ej: Sistemas, Medicina, RH">
+                            @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="experiencia_minima">Experiencia mínima (años)</label>
+                            <input type="number" id="experiencia_minima" name="experiencia_minima" class="form-input @error('experiencia_minima') is-invalid @enderror"
+                                   value="{{ old('experiencia_minima', $vacante->experiencia_minima) }}" min="0" step="1" placeholder="0">
+                            @error('experiencia_minima')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:16px;">
+                    <label class="form-label" for="requerimientos">Requerimientos del cliente</label>
+                    <textarea id="requerimientos" name="requerimientos" class="form-input @error('requerimientos') is-invalid @enderror" rows="3" maxlength="2000" placeholder="Lo que el cliente describió al solicitar el servicio...">{{ old('requerimientos', $vacante->requerimientos) }}</textarea>
                     @error('requerimientos')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                <div style="display:flex; gap:12px; margin-top:28px;">
+                <div style="display:flex; gap:12px; margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                    <a href="{{ route('empresa.solicitudes.ver', $vacante) }}" class="btn btn-secondary">Cancelar</a>
+                    <a href="{{ route('empresa.solicitudes') }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>
+        </div>
+
+        <div class="card" style="position:sticky; top:20px;">
+            <h3 style="font-size:0.9rem; font-weight:600; margin:0 0 14px;">Resumen</h3>
+            <div style="display:grid; gap:10px; font-size:0.82rem;">
+                <div><span style="color:#64748b; display:block; font-size:0.72rem;">Empresa</span>{{ $vacante->empresa?->nombre_empresa ?? '—' }}</div>
+                <div><span style="color:#64748b; display:block; font-size:0.72rem;">Estado</span><span class="badge {{ \App\Models\Vacante::estadoBadgeClass($vacante->estado) }}">{{ \App\Models\Vacante::estadoLabel($vacante->estado) }}</span></div>
+                <div><span style="color:#64748b; display:block; font-size:0.72rem;">Candidatos</span>{{ $vacante->postulaciones_count ?? $vacante->postulaciones()->count() }}</div>
+                <div><span style="color:#64748b; display:block; font-size:0.72rem;">Requisitos</span>{{ $vacante->requisitoResumen() }}</div>
+            </div>
         </div>
     </div>
 </x-app-layout>

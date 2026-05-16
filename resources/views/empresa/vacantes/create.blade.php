@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
+            <a href="{{ route('empresa.dashboard') }}">Mi panel</a>
             <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.vacantes') }}">Mis Vacantes</a>
+            <a href="{{ route('empresa.vacantes') }}">Mis Solicitudes</a>
             <span class="breadcrumb-sep">›</span>
             <span>Solicitar vacante</span>
         </nav>

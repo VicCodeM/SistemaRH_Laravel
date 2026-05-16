@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Admin</a>
+            <a href="{{ route('admin.dashboard') }}">Administración</a>
             <span class="breadcrumb-sep">›</span>
             <a href="{{ route('admin.personal-externo.index') }}">Personal Externo</a>
             <span class="breadcrumb-sep">›</span>
@@ -9,6 +9,14 @@
         </nav>
         <h1 class="page-title">{{ $persona->exists ? 'Editar consultor/capacitador' : 'Agregar consultor/capacitador' }}</h1>
     </x-slot>
+
+    @php
+        $nivelesSeleccionados = collect(old('niveles_jerarquicos', $persona->niveles_jerarquicos ?? []))
+            ->map(fn ($nivel) => \App\Models\CatalogoServicio::normalizarNivelJerarquico($nivel))
+            ->filter()
+            ->values()
+            ->all();
+    @endphp
 
     <div style="max-width: 720px;">
         <form method="POST"
@@ -67,9 +75,11 @@
                 <div class="form-group">
                     <label class="form-label" for="disponibilidad">Disponibilidad <span style="color: #ef4444;">*</span></label>
                     <select id="disponibilidad" class="form-input" name="disponibilidad" required>
-                        <option value="disponible" {{ old('disponibilidad', $persona->disponibilidad ?? 'disponible') === 'disponible' ? 'selected' : '' }}>Disponible</option>
-                        <option value="ocupado"    {{ old('disponibilidad', $persona->disponibilidad) === 'ocupado'    ? 'selected' : '' }}>Ocupado</option>
-                        <option value="inactivo"   {{ old('disponibilidad', $persona->disponibilidad) === 'inactivo'   ? 'selected' : '' }}>Inactivo</option>
+                        @foreach ($disponibilidades as $key => $label)
+                            <option value="{{ $key }}" {{ old('disponibilidad', $persona->disponibilidad ?? 'disponible') === $key ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
                     @error('disponibilidad') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
@@ -83,7 +93,7 @@
                             <input type="checkbox"
                                    name="niveles_jerarquicos[]"
                                    value="{{ $key }}"
-                                   {{ in_array($key, old('niveles_jerarquicos', $persona->niveles_jerarquicos ?? [])) ? 'checked' : '' }}>
+                                    {{ in_array($key, $nivelesSeleccionados) ? 'checked' : '' }}>
                             {{ $label }}
                         </label>
                     @endforeach

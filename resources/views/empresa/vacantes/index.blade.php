@@ -3,14 +3,14 @@
         <nav class="breadcrumbs">
             <a href="{{ route('empresa.dashboard') }}">Empresa</a>
             <span class="breadcrumb-sep">›</span>
-            <span>Mis Vacantes</span>
+            <span>Mis Solicitudes</span>
         </nav>
         <div style="display:flex; justify-content:space-between; align-items:flex-end;">
             <div>
-                <h1 class="page-title">Mis Vacantes</h1>
+                <h1 class="page-title">Mis Solicitudes</h1>
                 <p class="page-subtitle">{{ $vacantes->total() }} vacante(s) publicada(s).</p>
             </div>
-            <a href="{{ route('empresa.vacantes.crear') }}" style="padding:10px 18px; background: var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px; font-weight:500; white-space:nowrap;">+ Nueva vacante</a>
+            <a href="{{ route('empresa.vacantes.crear') }}" style="padding:10px 18px; background: var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px; font-weight:500; white-space:nowrap;">+ Nueva solicitud</a>
         </div>
     </x-slot>
 
@@ -23,7 +23,7 @@
     @if($vacantes->isEmpty())
         <div class="card fade-in" style="text-align:center; padding:60px 40px;">
             <p class="text-muted" style="margin-bottom:16px;">Aún no tienes vacantes publicadas.</p>
-            <a href="{{ route('empresa.vacantes.crear') }}" style="padding:10px 20px; background: var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px;">Publicar primera vacante</a>
+            <a href="{{ route('empresa.vacantes.crear') }}" style="padding:10px 20px; background: var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px;">Crear primera solicitud</a>
         </div>
     @else
         <div class="card fade-in">
@@ -43,7 +43,7 @@
                         <tr style="border-bottom: 1px solid var(--border);">
                             <td style="padding:12px;">
                                 <p style="font-weight:500; margin:0;">{{ $vacante->titulo }}</p>
-                                <p style="font-size:12px; color:var(--text-muted); margin:0;">{{ ucfirst($vacante->nivel_jerarquico) }} · {{ $vacante->ubicacion ?? 'Sin ubicación' }}</p>
+                                <p style="font-size:12px; color:var(--text-muted); margin:0;">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }} · {{ $vacante->ubicacion ?? 'Sin ubicación' }}</p>
                             </td>
                             <td style="padding:12px; font-size:13px; color:var(--text-muted);">
                                 @if($vacante->salario_min || $vacante->salario_max)
@@ -65,7 +65,7 @@
                             <td style="padding:12px; color:var(--text-muted); font-size:13px;">{{ $vacante->fecha_publicacion?->format('d/m/Y') ?? '—' }}</td>
                             <td style="padding:12px; text-align:right;">
                                 <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                    <a href="{{ route('empresa.vacantes.ver', $vacante) }}" style="padding:5px 10px; background: var(--accent); color:#fff; border-radius:6px; font-size:12px; text-decoration:none; font-weight:500;">Candidatos</a>
+                                    <a href="{{ route('empresa.vacantes.ver', $vacante) }}" style="padding:5px 10px; background: var(--accent); color:#fff; border-radius:6px; font-size:12px; text-decoration:none; font-weight:500;">Seguimiento</a>
                                     <a href="{{ route('empresa.vacantes.editar', $vacante) }}" style="padding:5px 10px; border:1px solid var(--border); color: var(--text-muted); border-radius:6px; font-size:12px; text-decoration:none;">Editar</a>
                                 </div>
                             </td>

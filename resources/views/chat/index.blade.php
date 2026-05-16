@@ -1,18 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="page-title">Chat</h1>
-        <p class="page-subtitle">Conversaciones con el equipo.</p>
+        <p class="page-subtitle">Conversaciones activas con el equipo.</p>
     </x-slot>
 
     <div class="card fade-in" style="display:grid; grid-template-columns:280px 1fr; height:580px; overflow:hidden; padding:0;">
-
-        {{-- Panel izquierdo: lista de chats --}}
         <div style="border-right:1px solid var(--border); overflow-y:auto; padding:12px;">
             <p style="font-size:11px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; padding:4px 8px; margin-bottom:8px;">Conversaciones</p>
             <livewire:chat.chat-list />
         </div>
 
-        {{-- Panel derecho: vacío al inicio --}}
         <div style="display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
             <div style="text-align:center;">
                 <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:40px; height:40px; margin:0 auto 12px; opacity:.4;">
@@ -21,6 +18,5 @@
                 <p style="font-size:14px;">Selecciona una conversación</p>
             </div>
         </div>
-
     </div>
 </x-app-layout>

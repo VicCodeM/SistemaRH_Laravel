@@ -7,11 +7,13 @@ use App\Models\Candidato;
 use App\Models\CatalogoServicio;
 use App\Models\Empresa;
 use App\Models\Postulacion;
-use App\Models\User;
+use App\Models\Ticket;
+use App\Models\ServicioAsignado;
 use App\Models\Vacante;
-use App\Services\WorkflowService;
+use App\Services\SolicitudCompatibilidadService;
+use App\Services\VacanteService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -25,6 +27,8 @@ class AdminController extends Controller
             'solicitudes_activas'   => Vacante::where('estado', 'activa')->count(),
             'solicitudes_pendientes'=> Vacante::where('estado', 'pendiente')->count(),
             'personal_disponible'   => \App\Models\PersonalExterno::where('disponibilidad', 'disponible')->count(),
+            'tareas_activas'        => ServicioAsignado::whereIn('estado', ['activo', 'en_proceso'])->count(),
+            'internos_activos'      => \App\Models\User::where('rol', 'interno')->where('estado', 'activo')->count(),
         ];
 
         $empresas_pendientes = Empresa::where('estado', 'pendiente')
@@ -37,9 +41,168 @@ class AdminController extends Controller
             ->whereIn('estado', ['pendiente', 'activa'])
             ->latest()->take(5)->get();
 
+        $tareas_recientes = ServicioAsignado::with(['servicio', 'asignable', 'asignadoA'])
+            ->orderByRaw("CASE estado WHEN 'activo' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'completado' THEN 3 ELSE 4 END")
+            ->orderByDesc('created_at')
+            ->take(5)
+            ->get();
+
+        $alertas = [];
+
+        $ticketsVencidos = Ticket::whereNotNull('sla_due_at')
+            ->where('sla_due_at', '<', now())
+            ->whereNotIn('estado', ['resuelto', 'cerrado'])
+            ->count();
+
+        if ($ticketsVencidos > 0) {
+            $alertas[] = [
+                'tipo' => 'danger',
+                'mensaje' => "Hay {$ticketsVencidos} ticket(s) vencido(s) sin resolver. Revisa el módulo de soporte.",
+                'link' => route('tickets.index'),
+            ];
+        }
+
+        $empresasViejas = Empresa::where('estado', 'pendiente')
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
+
+        if ($empresasViejas > 0) {
+            $alertas[] = [
+                'tipo' => 'warning',
+                'mensaje' => "{$empresasViejas} empresa(s) lleva(n) más de 7 días esperando aprobación de acceso.",
+                'link' => route('admin.empresas', ['estado' => 'pendiente']),
+            ];
+        }
+
+        $candidatosViejos = Candidato::where('solicitud_estado', 'enviada')
+            ->where('solicitud_enviada_at', '<', now()->subDays(7))
+            ->count();
+
+        if ($candidatosViejos > 0) {
+            $alertas[] = [
+                'tipo' => 'warning',
+                'mensaje' => "{$candidatosViejos} candidato(s) lleva(n) más de 7 días esperando revisión.",
+                'link' => route('admin.candidatos', ['estado' => 'enviada']),
+            ];
+        }
+
         return view('admin.dashboard', compact(
-            'stats', 'empresas_pendientes', 'candidatos_pendientes', 'solicitudes_recientes'
+            'stats', 'empresas_pendientes', 'candidatos_pendientes', 'solicitudes_recientes', 'tareas_recientes', 'alertas'
         ));
+    }
+
+    public function reportes()
+    {
+        $resumen = [
+            'empresas_total' => Empresa::count(),
+            'empresas_activas' => Empresa::where('estado', 'activa')->count(),
+            'empresas_pendientes' => Empresa::where('estado', 'pendiente')->count(),
+            'candidatos_total' => Candidato::count(),
+            'candidatos_aprobados' => Candidato::where('solicitud_estado', 'aprobada')->count(),
+            'candidatos_pendientes' => Candidato::where('solicitud_estado', 'enviada')->count(),
+            'solicitudes_total' => Vacante::count(),
+            'solicitudes_activas' => Vacante::where('estado', 'activa')->count(),
+            'solicitudes_pendientes' => Vacante::where('estado', 'pendiente')->count(),
+            'tareas_total' => ServicioAsignado::count(),
+            'tareas_activas' => ServicioAsignado::whereIn('estado', ['activo', 'en_proceso'])->count(),
+            'tickets_total' => Ticket::count(),
+            'tickets_abiertos' => Ticket::where('estado', 'abierto')->count(),
+            'tickets_vencidos' => Ticket::whereNotNull('sla_due_at')
+                ->where('sla_due_at', '<', now())
+                ->whereNotIn('estado', ['resuelto', 'cerrado'])
+                ->count(),
+        ];
+
+        $empresasTop = Empresa::withCount('vacantes')
+            ->orderByDesc('vacantes_count')
+            ->orderBy('nombre_empresa')
+            ->limit(8)
+            ->get();
+
+        $solicitudesActivas = Vacante::with('empresa')
+            ->where('estado', 'activa')
+            ->latest('fecha_publicacion')
+            ->limit(8)
+            ->get();
+
+        $ticketsRecientes = Ticket::with(['empresa', 'asignado'])
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        $tareasRecientes = ServicioAsignado::with(['servicio', 'asignadoA'])
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        // Datos para gráficas mensuales (últimos 6 meses)
+        $meses = collect(range(5, 0))->map(function ($i) {
+            return now()->subMonths($i);
+        });
+
+        $graficaVacantes = $meses->map(function ($mes) {
+            return [
+                'label' => $mes->format('M Y'),
+                'valor' => Vacante::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
+            ];
+        });
+
+        $graficaPostulaciones = $meses->map(function ($mes) {
+            return [
+                'label' => $mes->format('M Y'),
+                'valor' => Postulacion::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
+            ];
+        });
+
+        $graficaTickets = $meses->map(function ($mes) {
+            return [
+                'label' => $mes->format('M Y'),
+                'valor' => Ticket::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
+            ];
+        });
+
+        return view('admin.reportes.index', compact(
+            'resumen',
+            'empresasTop',
+            'solicitudesActivas',
+            'ticketsRecientes',
+            'tareasRecientes',
+            'graficaVacantes',
+            'graficaPostulaciones',
+            'graficaTickets'
+        ));
+    }
+
+    public function exportarCsv()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="reporte_sistema_' . now()->format('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () {
+            $output = fopen('php://output', 'w');
+            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($output, ['Reporte del Sistema RH - ' . now()->format('d/m/Y')]);
+            fputcsv($output, []);
+            fputcsv($output, ['Resumen']);
+            fputcsv($output, ['Empresas totales', Empresa::count()]);
+            fputcsv($output, ['Empresas activas', Empresa::where('estado', 'activa')->count()]);
+            fputcsv($output, ['Empresas pendientes', Empresa::where('estado', 'pendiente')->count()]);
+            fputcsv($output, ['Candidatos totales', Candidato::count()]);
+            fputcsv($output, ['Candidatos aprobados', Candidato::where('solicitud_estado', 'aprobada')->count()]);
+            fputcsv($output, ['Solicitudes de servicio', Vacante::count()]);
+            fputcsv($output, ['Solicitudes activas', Vacante::where('estado', 'activa')->count()]);
+            fputcsv($output, ['Tareas totales', ServicioAsignado::count()]);
+            fputcsv($output, ['Tickets totales', Ticket::count()]);
+            fputcsv($output, ['Tickets abiertos', Ticket::where('estado', 'abierto')->count()]);
+            fputcsv($output, ['Tickets vencidos', Ticket::whereNotNull('sla_due_at')->where('sla_due_at', '<', now())->whereNotIn('estado', ['resuelto', 'cerrado'])->count()]);
+
+            fclose($output);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function empresas(Request $request)
@@ -69,6 +232,11 @@ class AdminController extends Controller
         return back()->with('success', "Empresa \"{$empresa->nombre_empresa}\" aprobada.");
     }
 
+    public function rechazarEmpresaModal(Empresa $empresa)
+    {
+        return view('admin.empresas.modal-rechazar', compact('empresa'));
+    }
+
     public function rechazarEmpresa(Empresa $empresa)
     {
         $empresa->update(['estado' => 'rechazada']);
@@ -93,22 +261,19 @@ class AdminController extends Controller
         return view('admin.candidatos.modal', compact('candidato'));
     }
 
+    public function editarSolicitudCandidato(Candidato $candidato)
+    {
+        $candidato->load('usuario');
+
+        return view('admin.candidatos.solicitud', compact('candidato'));
+    }
+
     public function candidatos(Request $request)
     {
-        $query = Candidato::with('usuario')->latest();
-
-        if ($request->filled('estado')) {
-            $query->where('solicitud_estado', $request->estado);
-        }
-
-        if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
-            $query->where(function ($q) use ($buscar) {
-                $q->where('nombre', 'like', "%{$buscar}%")
-                  ->orWhere('apellido_paterno', 'like', "%{$buscar}%")
-                  ->orWhere('curp', 'like', "%{$buscar}%");
-            });
-        }
+        $query = Candidato::with('usuario')
+            ->orderByDesc('solicitud_enviada_at')
+            ->orderByDesc('id');
+        $this->aplicarFiltrosCandidatos($query, $request);
 
         $candidatos = $query->paginate(15)->withQueryString();
 
@@ -117,21 +282,32 @@ class AdminController extends Controller
 
     public function aprobarCandidato(Candidato $candidato)
     {
+        if (! $candidato->solicitudCompleta()) {
+            return back()->with('error', 'No se puede aprobar una solicitud incompleta.');
+        }
+
         $candidato->update([
-            'solicitud_estado'           => 'aprobada',
-            'solicitud_revisada_at'      => now(),
-            'solicitud_revision_admin_id'=> auth()->id(),
+            'solicitud_estado'            => 'aprobada',
+            'solicitud_revisada_at'       => now(),
+            'solicitud_revision_admin_id' => auth()->id(),
         ]);
+
         return back()->with('success', "Solicitud de {$candidato->nombre} aprobada.");
+    }
+
+    public function rechazarCandidatoModal(Candidato $candidato)
+    {
+        return view('admin.candidatos.modal-rechazar', compact('candidato'));
     }
 
     public function rechazarCandidato(Candidato $candidato)
     {
         $candidato->update([
-            'solicitud_estado'           => 'rechazada',
-            'solicitud_revisada_at'      => now(),
-            'solicitud_revision_admin_id'=> auth()->id(),
+            'solicitud_estado'            => 'rechazada',
+            'solicitud_revisada_at'       => now(),
+            'solicitud_revision_admin_id' => auth()->id(),
         ]);
+
         return back()->with('error', "Solicitud de {$candidato->nombre} rechazada.");
     }
 
@@ -157,9 +333,9 @@ class AdminController extends Controller
 
         $vacantes = $query->withCount([
             'postulaciones',
-            'postulaciones as seleccionados_count'  => fn ($q) => $q->where('estado', 'seleccionado'),
-            'postulaciones as entrevista_count'      => fn ($q) => $q->where('estado', 'entrevista'),
-            'postulaciones as postulados_count'      => fn ($q) => $q->where('estado', 'postulado'),
+            'postulaciones as seleccionados_count' => fn ($q) => $q->where('estado', 'seleccionado'),
+            'postulaciones as entrevista_count'    => fn ($q) => $q->where('estado', 'entrevista'),
+            'postulaciones as postulados_count'    => fn ($q) => $q->where('estado', 'postulado'),
         ])->paginate(15)->withQueryString();
 
         return view('admin.vacantes.index', compact('vacantes'));
@@ -168,63 +344,37 @@ class AdminController extends Controller
     public function activarVacante(Vacante $vacante)
     {
         $vacante->update(['estado' => 'activa']);
-        return back()->with('success', "Vacante \"{$vacante->titulo}\" activada.");
+        return back()->with('success', "Solicitud \"{$vacante->titulo}\" activada.");
     }
 
     public function cerrarVacante(Vacante $vacante)
     {
         $vacante->update(['estado' => 'cerrada']);
-        return back()->with('success', "Vacante \"{$vacante->titulo}\" cerrada.");
+        return back()->with('success', "Solicitud \"{$vacante->titulo}\" cerrada.");
     }
 
     public function crearVacante()
     {
         $empresas = Empresa::where('estado', 'activa')->orderBy('nombre_empresa')->get();
-        $niveles  = collect(CatalogoServicio::nivelesJerarquicos())->except('todos')->toArray();
+        $niveles  = CatalogoServicio::nivelesJerarquicosFormulario();
         $tipos    = Vacante::tiposServicio();
-        return view('admin.vacantes.create', compact('empresas', 'niveles', 'tipos'));
+        $estudios  = Vacante::nivelesEstudios();
+
+        return view('admin.vacantes.create', compact('empresas', 'niveles', 'tipos', 'estudios'));
     }
 
-    public function guardarVacante(Request $request)
+    public function guardarVacante(Request $request, VacanteService $vacanteService)
     {
-        $nivelesValidos = implode(',', array_keys(
-            collect(CatalogoServicio::nivelesJerarquicos())->except('todos')->toArray()
-        ));
+        $nivelesValidos = implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()));
 
         $data = $request->validate([
             'empresa_id'       => 'required|exists:empresas,id',
             'tipo_servicio'    => 'required|in:' . implode(',', array_keys(Vacante::tiposServicio())),
             'titulo'           => 'required|string|max:200',
             'nivel_jerarquico' => "required|in:{$nivelesValidos}",
-            'requerimientos'   => 'nullable|string|max:2000',
-        ]);
-
-        $data['estado']            = 'activa';
-        $data['fecha_publicacion'] = now();
-
-        Vacante::create($data);
-
-        return redirect()->route('admin.vacantes')->with('success', 'Solicitud creada y activada.');
-    }
-
-    public function editarVacante(Vacante $vacante)
-    {
-        $vacante->load('empresa');
-        $niveles = collect(CatalogoServicio::nivelesJerarquicos())->except('todos')->toArray();
-        $tipos   = Vacante::tiposServicio();
-        return view('admin.vacantes.edit', compact('vacante', 'niveles', 'tipos'));
-    }
-
-    public function actualizarVacante(Request $request, Vacante $vacante)
-    {
-        $nivelesValidos = implode(',', array_keys(
-            collect(CatalogoServicio::nivelesJerarquicos())->except('todos')->toArray()
-        ));
-
-        $data = $request->validate([
-            'tipo_servicio'    => 'required|in:' . implode(',', array_keys(Vacante::tiposServicio())),
-            'titulo'           => 'required|string|max:200',
-            'nivel_jerarquico' => "required|in:{$nivelesValidos}",
+            'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
+            'area_requerida'   => 'nullable|string|max:150',
+            'experiencia_minima'=> 'nullable|integer|min:0|max:60',
             'descripcion'      => 'nullable|string|max:5000',
             'requerimientos'   => 'nullable|string|max:2000',
             'salario_min'      => 'nullable|numeric|min:0',
@@ -232,7 +382,40 @@ class AdminController extends Controller
             'ubicacion'        => 'nullable|string|max:200',
         ]);
 
-        $vacante->update($data);
+        $vacanteService->crear($data, (int) $data['empresa_id'], 'activa');
+
+        return redirect()->route('admin.vacantes')->with('success', 'Solicitud creada y activada.');
+    }
+
+    public function editarVacante(Vacante $vacante)
+    {
+        $vacante->load('empresa');
+        $niveles = CatalogoServicio::nivelesJerarquicosFormulario();
+        $tipos   = Vacante::tiposServicio();
+        $estudios = Vacante::nivelesEstudios();
+
+        return view('admin.vacantes.edit', compact('vacante', 'niveles', 'tipos', 'estudios'));
+    }
+
+    public function actualizarVacante(Request $request, Vacante $vacante, VacanteService $vacanteService)
+    {
+        $nivelesValidos = implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()));
+
+        $data = $request->validate([
+            'tipo_servicio'    => 'required|in:' . implode(',', array_keys(Vacante::tiposServicio())),
+            'titulo'           => 'required|string|max:200',
+            'nivel_jerarquico' => "required|in:{$nivelesValidos}",
+            'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
+            'area_requerida'   => 'nullable|string|max:150',
+            'experiencia_minima'=> 'nullable|integer|min:0|max:60',
+            'descripcion'      => 'nullable|string|max:5000',
+            'requerimientos'   => 'nullable|string|max:2000',
+            'salario_min'      => 'nullable|numeric|min:0',
+            'salario_max'      => 'nullable|numeric|min:0',
+            'ubicacion'        => 'nullable|string|max:200',
+        ]);
+
+        $vacanteService->actualizar($vacante, $data);
 
         return redirect()->route('admin.vacantes')->with('success', "Solicitud \"{$vacante->titulo}\" actualizada.");
     }
@@ -240,13 +423,13 @@ class AdminController extends Controller
     public function moverPostulacion(Request $request, Postulacion $postulacion)
     {
         $request->validate([
-            'estado' => 'required|in:postulado,entrevista,seleccionado,rechazado,retirado',
+            'estado' => 'required|in:' . implode(',', array_keys(Postulacion::estadosProceso())),
         ]);
 
         $postulacion->update(['estado' => $request->estado]);
 
-        $msg = match($request->estado) {
-            'entrevista'   => 'Candidato movido a entrevista.',
+        $msg = match ($request->estado) {
+            'entrevista'   => 'Candidato marcado como ya entrevistado.',
             'seleccionado' => 'Candidato seleccionado.',
             'rechazado'    => 'Candidato rechazado.',
             'retirado'     => 'Candidato retirado de la vacante.',
@@ -256,57 +439,200 @@ class AdminController extends Controller
         return back()->with('success', $msg);
     }
 
-    public function matchingVacante(Vacante $vacante)
+    public function destroyEmpresa(Empresa $empresa)
+    {
+        $usuario = $empresa->usuario;
+        $empresa->delete();
+        $usuario?->delete();
+
+        return back()->with('success', 'Empresa eliminada permanentemente.');
+    }
+
+    public function destroyCandidato(Candidato $candidato)
+    {
+        $usuario = $candidato->usuario;
+        $candidato->delete();
+        $usuario?->delete();
+
+        return back()->with('success', 'Candidato eliminado permanentemente.');
+    }
+
+    public function destroyVacante(Vacante $vacante)
+    {
+        $vacante->delete();
+
+        return back()->with('success', 'Solicitud eliminada permanentemente.');
+    }
+
+    public function matchingVacante(Request $request, Vacante $vacante, SolicitudCompatibilidadService $compatibilidad)
     {
         $vacante->load('empresa', 'postulaciones.candidato.usuario');
 
-        // Solo excluir candidatos activos (postulado, entrevista, seleccionado) — retirados/rechazados pueden reasignarse
-        $yaActivos = $vacante->postulaciones
-            ->whereIn('estado', ['postulado', 'entrevista', 'seleccionado'])
+        $asignados = $vacante->postulaciones()->with('candidato.usuario')->latest('fecha_postulacion')->get();
+
+        $yaActivos = $asignados
+            ->whereIn('estado', Postulacion::estadosActivos())
             ->pluck('candidato_id')
-            ->toArray();
+            ->all();
 
-        // Candidatos aprobados no asignados aún
-        $palabras = collect(explode(' ', Str::lower($vacante->titulo)))
-            ->filter(fn ($w) => strlen($w) > 3)
-            ->values();
-
-        $query = Candidato::where('solicitud_estado', 'aprobada')
+        $candidatos = Candidato::where('solicitud_estado', 'aprobada')
             ->whereNotIn('id', $yaActivos)
             ->with('usuario');
 
-        // Ordenar: primero los que tienen puesto_deseado compatible
-        if ($palabras->isNotEmpty()) {
-            $query->orderByRaw(
-                'CASE WHEN ' .
-                $palabras->map(fn ($p) => "LOWER(puesto_deseado) LIKE '%{$p}%'")->implode(' OR ') .
-                ' THEN 0 ELSE 1 END'
-            );
-        }
+        $this->aplicarFiltrosCandidatos($candidatos, $request, false);
 
-        $candidatos = $query->get();
-        $asignados  = $vacante->postulaciones;
+        $candidatos = $candidatos
+            ->get()
+            ->map(function (Candidato $candidato) use ($vacante, $compatibilidad) {
+                return [
+                    'candidato' => $candidato,
+                    'compatibilidad' => $compatibilidad->evaluar($vacante, $candidato),
+                ];
+            })
+            ->sortByDesc(fn ($item) => $item['compatibilidad']['puntaje'])
+            ->values();
 
-        return view('admin.vacantes.matching', compact('vacante', 'candidatos', 'asignados'));
+        $grupos = [
+            'aptos' => $candidatos->where('compatibilidad.categoria', 'aptos')->values(),
+            'dudosos' => $candidatos->where('compatibilidad.categoria', 'dudosos')->values(),
+            'no_aptos' => $candidatos->where('compatibilidad.categoria', 'no_aptos')->values(),
+        ];
+
+        $requisitos = [
+            'nivel_jerarquico' => CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico),
+            'nivel_estudios_minimo' => Vacante::nivelEstudiosLabel($vacante->nivel_estudios_minimo),
+            'area_requerida' => $vacante->area_requerida,
+            'experiencia_minima' => $vacante->experiencia_minima,
+        ];
+
+        return view('admin.vacantes.matching', compact('vacante', 'grupos', 'asignados', 'requisitos'));
     }
 
     public function asignarCandidato(Request $request, Vacante $vacante)
     {
-        $request->validate(['candidato_id' => ['required', 'exists:candidatos,id']]);
+        $data = $request->validate([
+            'candidato_id' => ['required', 'exists:candidatos,id'],
+            'forzar' => ['nullable', 'boolean'],
+            'motivo_asignacion' => ['nullable', 'string', 'max:1000'],
+        ]);
 
-        $existe = Postulacion::where('vacante_id', $vacante->id)
-            ->where('candidato_id', $request->candidato_id)
-            ->exists();
+        $candidato = Candidato::where('id', $data['candidato_id'])
+            ->where('solicitud_estado', 'aprobada')
+            ->firstOrFail();
 
-        if (!$existe) {
-            Postulacion::create([
-                'vacante_id'        => $vacante->id,
-                'candidato_id'      => $request->candidato_id,
-                'estado'            => 'postulado',
-                'fecha_postulacion' => now(),
-            ]);
+        $evaluacion = app(SolicitudCompatibilidadService::class)->evaluar($vacante, $candidato);
+        $forzar = $request->boolean('forzar');
+
+        if ($evaluacion['categoria'] === 'no_aptos' && ! $forzar) {
+            return back()->with('error', 'Ese candidato no cumple los requisitos mínimos. Usa la asignación con excepción.');
         }
 
-        return back()->with('success', 'Candidato asignado a la vacante.');
+        if ($evaluacion['categoria'] === 'no_aptos' && trim((string) ($data['motivo_asignacion'] ?? '')) === '') {
+            return back()->with('error', 'Indica un motivo para justificar la excepción.');
+        }
+
+        Postulacion::updateOrCreate(
+            [
+                'vacante_id' => $vacante->id,
+                'candidato_id' => $candidato->id,
+            ],
+            [
+                'estado' => 'postulado',
+                'fecha_postulacion' => now(),
+                'asignacion_forzada' => $forzar && $evaluacion['categoria'] === 'no_aptos',
+                'motivo_asignacion' => trim((string) ($data['motivo_asignacion'] ?? '')) ?: $evaluacion['resumen'],
+            ]
+        );
+
+        return back()->with('success', $forzar && $evaluacion['categoria'] === 'no_aptos'
+            ? 'Candidato asignado con excepción registrada.'
+            : 'Candidato asignado a la solicitud.');
+    }
+
+    public function buscarGlobal(Request $request)
+    {
+        $q = trim((string) $request->input('q'));
+
+        if ($q === '') {
+            return view('admin.buscar', ['resultados' => [], 'q' => '']);
+        }
+
+        $like = "%{$q}%";
+
+        $empresas = Empresa::where('nombre_empresa', 'like', $like)
+            ->orWhere('rfc', 'like', $like)
+            ->orWhereHas('usuario', fn ($u) => $u->where('email', 'like', $like))
+            ->with('usuario')
+            ->limit(8)
+            ->get()
+            ->map(fn ($e) => ['tipo' => 'empresa', 'titulo' => $e->nombre_empresa, 'sub' => $e->rfc ?? 'Sin RFC', 'url' => route('admin.empresas'), 'estado' => $e->estado]);
+
+        $candidatos = Candidato::where('nombre', 'like', $like)
+            ->orWhere('apellido_paterno', 'like', $like)
+            ->orWhere('apellido_materno', 'like', $like)
+            ->orWhere('curp', 'like', $like)
+            ->orWhereHas('usuario', fn ($u) => $u->where('email', 'like', $like))
+            ->with('usuario')
+            ->limit(8)
+            ->get()
+            ->map(fn ($c) => ['tipo' => 'candidato', 'titulo' => $c->nombreCompleto(), 'sub' => $c->puesto_deseado ?? 'Sin puesto', 'url' => route('admin.candidatos'), 'estado' => $c->solicitud_estado]);
+
+        $vacantes = Vacante::where('titulo', 'like', $like)
+            ->orWhere('descripcion', 'like', $like)
+            ->orWhereHas('empresa', fn ($e) => $e->where('nombre_empresa', 'like', $like))
+            ->with('empresa')
+            ->limit(8)
+            ->get()
+            ->map(fn ($v) => ['tipo' => 'vacante', 'titulo' => $v->titulo, 'sub' => $v->empresa?->nombre_empresa ?? 'Sin empresa', 'url' => route('admin.vacantes'), 'estado' => $v->estado]);
+
+        $tickets = Ticket::where('asunto', 'like', $like)
+            ->orWhere('descripcion', 'like', $like)
+            ->orWhereHas('empresa', fn ($e) => $e->where('nombre_empresa', 'like', $like))
+            ->with('empresa')
+            ->limit(8)
+            ->get()
+            ->map(fn ($t) => ['tipo' => 'ticket', 'titulo' => $t->asunto, 'sub' => $t->empresa?->nombre_empresa ?? 'Sin empresa', 'url' => route('tickets.show', $t), 'estado' => $t->estado]);
+
+        $resultados = $empresas->merge($candidatos)->merge($vacantes)->merge($tickets);
+
+        return view('admin.buscar', compact('resultados', 'q'));
+    }
+
+    private function aplicarFiltrosCandidatos(Builder $query, Request $request, bool $incluirEstado = true): void
+    {
+        if ($incluirEstado && $request->filled('estado')) {
+            $query->where('solicitud_estado', $request->estado);
+        }
+
+        if ($request->filled('estudios')) {
+            $nivel = Vacante::normalizarNivelEstudios($request->string('estudios')->toString());
+            $nivelesPermitidos = Vacante::nivelesEstudiosDesde($nivel);
+
+            if ($nivelesPermitidos !== []) {
+                $query->whereIn('escolaridad', $nivelesPermitidos);
+            }
+        }
+
+        if ($request->filled('experiencia_min')) {
+            $query->where('experiencia_anios', '>=', max(0, (int) $request->input('experiencia_min')));
+        }
+
+        if ($request->filled('aspiracion')) {
+            $aspiracion = trim((string) $request->input('aspiracion'));
+
+            if ($aspiracion !== '') {
+                $query->where('puesto_deseado', 'like', "%{$aspiracion}%");
+            }
+        }
+
+        if ($request->filled('buscar')) {
+            $buscar = $request->input('buscar');
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'like', "%{$buscar}%")
+                    ->orWhere('apellido_paterno', 'like', "%{$buscar}%")
+                    ->orWhere('apellido_materno', 'like', "%{$buscar}%")
+                    ->orWhere('curp', 'like', "%{$buscar}%");
+            });
+        }
     }
 }

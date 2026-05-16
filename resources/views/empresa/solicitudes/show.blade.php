@@ -1,16 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
-            <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.solicitudes') }}">Mis Servicios</a>
-            <span class="breadcrumb-sep">›</span>
+            <a href="{{ route('empresa.dashboard') }}">Mi panel</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
+            <a href="{{ route('empresa.solicitudes') }}">Solicitudes</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
             <span>{{ $vacante->titulo }}</span>
         </nav>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
             <div>
                 <h1 class="page-title">{{ $vacante->titulo }}</h1>
-                <p class="page-subtitle">Detalle de tu solicitud de servicio.</p>
+                <p class="page-subtitle">Detalle de tu solicitud.</p>
             </div>
             @if($vacante->estado === 'pendiente')
                 <a href="{{ route('empresa.solicitudes.editar', $vacante) }}" class="btn btn-secondary">Editar solicitud</a>
@@ -19,21 +19,16 @@
     </x-slot>
 
     @php
-        $estadoColors  = ['pendiente' => '#f59e0b', 'activa' => '#22c55e', 'cerrada' => '#64748b', 'rechazada' => '#ef4444'];
-        $estadoLabels  = ['pendiente' => 'En revisión', 'activa' => 'Activa', 'cerrada' => 'Cerrada', 'rechazada' => 'Rechazada'];
         $tipos = \App\Models\Vacante::tiposServicio();
-        $niveles = \App\Models\CatalogoServicio::nivelesJerarquicos();
     @endphp
 
-    <div style="display:grid; grid-template-columns: 1fr 320px; gap:20px; align-items:start;">
-
-        {{-- Detalle principal --}}
+    <div style="display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start;">
         <div>
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h3 style="font-weight:600; margin:0; font-size:1rem;">Información del servicio</h3>
-                    <span style="padding:5px 14px; border-radius:20px; font-size:0.8rem; font-weight:600; background:{{ $estadoColors[$vacante->estado] ?? '#64748b' }}22; color:{{ $estadoColors[$vacante->estado] ?? '#64748b' }};">
-                        {{ $estadoLabels[$vacante->estado] ?? ucfirst($vacante->estado) }}
+                    <h3 style="font-weight:600; margin:0; font-size:1rem;">Información de la solicitud</h3>
+                    <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($vacante->estado) }}" style="font-size:0.8rem;">
+                        {{ \App\Models\Vacante::estadoLabel($vacante->estado) }}
                     </span>
                 </div>
 
@@ -44,11 +39,15 @@
                     </div>
                     <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
                         <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">Nivel jerárquico</span>
-                        <span style="font-weight:500;">{{ $niveles[$vacante->nivel_jerarquico] ?? ucfirst($vacante->nivel_jerarquico) }}</span>
+                        <span style="font-weight:500;">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</span>
                     </div>
                     <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
                         <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">Fecha de solicitud</span>
                         <span>{{ $vacante->fecha_publicacion?->format('d/m/Y') ?? '—' }}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
+                        <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">Requisitos</span>
+                        <span style="font-size:0.9rem; line-height:1.6; color:var(--text);">{{ $vacante->requisitoResumen() }}</span>
                     </div>
                     @if($vacante->requerimientos)
                         <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:4px;">
@@ -59,15 +58,9 @@
                 </div>
             </div>
 
-            {{-- Candidatos asignados --}}
             @if($vacante->postulaciones->isNotEmpty())
                 <div class="card" style="margin-top:16px;">
                     <h3 style="font-weight:600; font-size:1rem; margin:0 0 16px;">Candidatos asignados</h3>
-
-                    @php
-                        $etapaColors = ['postulado'=>'#3b82f6','entrevista'=>'#f59e0b','seleccionado'=>'#22c55e','rechazado'=>'#ef4444'];
-                        $etapaLabels = ['postulado'=>'En revisión','entrevista'=>'En entrevista','seleccionado'=>'Seleccionado','rechazado'=>'No continúa'];
-                    @endphp
 
                     <div style="display:grid; gap:10px;">
                         @foreach($vacante->postulaciones as $postulacion)
@@ -80,9 +73,14 @@
                                         <div style="font-size:0.78rem; color:#94a3b8; margin-top:1px;">{{ $candidato->puesto_deseado }}</div>
                                     @endif
                                 </div>
-                                <span style="padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:600; background:{{ $etapaColors[$postulacion->estado] ?? '#64748b' }}22; color:{{ $etapaColors[$postulacion->estado] ?? '#64748b' }};">
-                                    {{ $etapaLabels[$postulacion->estado] ?? ucfirst($postulacion->estado) }}
-                                </span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    @if($postulacion->asignacion_forzada)
+                                        <span class="badge badge-red">Excepción</span>
+                                    @endif
+                                    <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacion->estado) }}" style="font-size:0.75rem;">
+                                        {{ \App\Models\Postulacion::estadoLabel($postulacion->estado) }}
+                                    </span>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -90,7 +88,6 @@
             @endif
         </div>
 
-        {{-- Sidebar de acciones / info --}}
         <div>
             <div class="card">
                 <h3 style="font-weight:600; font-size:0.95rem; margin:0 0 14px;">¿Qué sigue?</h3>
@@ -139,6 +136,6 @@
     </div>
 
     <div style="margin-top:20px;">
-        <a href="{{ route('empresa.solicitudes') }}" style="font-size:0.85rem; color:#64748b; text-decoration:none;">← Volver a mis servicios</a>
+        <a href="{{ route('empresa.solicitudes') }}" style="font-size:0.85rem; color:#64748b; text-decoration:none;">&larr; Volver a mis solicitudes</a>
     </div>
 </x-app-layout>

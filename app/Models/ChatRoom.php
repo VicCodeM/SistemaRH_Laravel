@@ -13,6 +13,19 @@ class ChatRoom extends Model
         'tipo', 'nombre', 'creado_por', 'direct_user_a_id', 'direct_user_b_id'
     ];
 
+    public static function tipos(): array
+    {
+        return CatalogoOpcion::opciones('chat_room_tipos', [
+            'directo' => 'Chat directo',
+            'grupal'  => 'Grupo',
+        ]);
+    }
+
+    public static function tipoLabel(?string $tipo): string
+    {
+        return self::tipos()[$tipo] ?? ucfirst((string) $tipo);
+    }
+
     public function creador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creado_por');

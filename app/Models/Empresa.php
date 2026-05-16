@@ -28,4 +28,30 @@ class Empresa extends Model
     {
         return $this->hasMany(Ticket::class);
     }
+
+    public static function estados(): array
+    {
+        return CatalogoOpcion::opciones('empresa_estados', [
+            'pendiente' => 'Pendiente',
+            'activa' => 'Activa',
+            'rechazada' => 'Rechazada',
+            'suspendida' => 'Suspendida',
+        ]);
+    }
+
+    public static function estadoLabel(?string $estado): string
+    {
+        return CatalogoOpcion::label('empresa_estados', $estado);
+    }
+
+    public static function estadoBadgeClass(?string $estado): string
+    {
+        return match ($estado) {
+            'pendiente' => 'badge-yellow',
+            'activa' => 'badge-green',
+            'rechazada' => 'badge-red',
+            'suspendida' => 'badge-gray',
+            default => 'badge-gray',
+        };
+    }
 }

@@ -9,13 +9,13 @@
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
         <div class="form-group">
-            <label class="form-label" for="email">Correo Electrónico</label>
+            <label class="form-label" for="email">Correo electrónico</label>
             <input id="email" class="form-input" type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="tu@correo.com">
             @error('email') <p class="form-error">{{ $message }}</p> @enderror
         </div>
-        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Enviar Enlace</button>
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Enviar enlace</button>
         <div class="text-center mt-4">
-            <a href="{{ route('login') }}" style="color: var(--accent); font-size: 0.85rem; text-decoration: none; font-weight: 500;">← Volver a inicio</a>
+            <a href="{{ route('login') }}" style="color: var(--accent); font-size: 0.85rem; text-decoration: none; font-weight: 500;">← Volver al inicio</a>
         </div>
     </form>
 </x-guest-layout>

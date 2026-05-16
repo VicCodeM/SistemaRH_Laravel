@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Models\Candidato;
-use App\Models\Postulacion;
-use Illuminate\Support\Facades\Auth;
 
 class CandidatoService
 {
@@ -17,8 +15,9 @@ class CandidatoService
         $datos['usuario_id'] = $usuarioId;
 
         if ($candidatoId) {
-            Candidato::where('id', $candidatoId)->update($datos);
-            return Candidato::find($candidatoId);
+            $candidato = Candidato::findOrFail($candidatoId);
+            $candidato->fill($datos)->save();
+            return $candidato;
         }
 
         return Candidato::create($datos);
@@ -33,12 +32,6 @@ class CandidatoService
         ]);
 
         $this->workflow->decideCandidatoRegistration($candidato);
-
-        Postulacion::firstOrCreate([
-            'candidato_id' => $candidato->id,
-            'vacante_id' => 1,
-            'estado' => 'postulado',
-        ]);
 
         return $candidato;
     }

@@ -23,4 +23,28 @@ class PersonalExterno extends Model
     {
         return "{$this->nombre} {$this->apellidos}";
     }
+
+    public static function disponibilidades(): array
+    {
+        return CatalogoOpcion::opciones('disponibilidad_externa', [
+            'disponible' => 'Disponible',
+            'ocupado' => 'Ocupado',
+            'inactivo' => 'Inactivo',
+        ]);
+    }
+
+    public static function disponibilidadLabel(?string $disponibilidad): string
+    {
+        return CatalogoOpcion::label('disponibilidad_externa', $disponibilidad);
+    }
+
+    public static function disponibilidadBadgeClass(?string $disponibilidad): string
+    {
+        return match ($disponibilidad) {
+            'disponible' => 'badge-green',
+            'ocupado' => 'badge-yellow',
+            'inactivo' => 'badge-gray',
+            default => 'badge-gray',
+        };
+    }
 }

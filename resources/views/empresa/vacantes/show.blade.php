@@ -1,15 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
+            <a href="{{ route('empresa.dashboard') }}">Mi panel</a>
             <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.vacantes') }}">Mis Vacantes</a>
+            <a href="{{ route('empresa.vacantes') }}">Mis Solicitudes</a>
             <span class="breadcrumb-sep">›</span>
             <span>Candidatos asignados</span>
         </nav>
         <h1 class="page-title">{{ $vacante->titulo }}</h1>
         <p class="page-subtitle">
-            Nivel: <strong>{{ ucfirst($vacante->nivel_jerarquico) }}</strong>
+            Nivel: <strong>{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</strong>
             @if ($vacante->ubicacion) · {{ $vacante->ubicacion }} @endif
             · <span class="badge badge-{{ match($vacante->estado) { 'activa' => 'success', 'pendiente' => 'warning', default => 'secondary' } }}">{{ ucfirst($vacante->estado) }}</span>
         </p>
@@ -63,20 +63,8 @@
                                 {{ $postulacion->fecha_postulacion?->format('d/m/Y') }}
                             </td>
                             <td>
-                                <span class="badge badge-{{ match($postulacion->estado) {
-                                    'postulado'    => 'secondary',
-                                    'entrevista'   => 'warning',
-                                    'seleccionado' => 'success',
-                                    'rechazado'    => 'danger',
-                                    default        => 'secondary',
-                                } }}">
-                                    {{ match($postulacion->estado) {
-                                        'postulado'    => 'En revisión',
-                                        'entrevista'   => 'En entrevista',
-                                        'seleccionado' => 'Seleccionado',
-                                        'rechazado'    => 'No seleccionado',
-                                        default        => ucfirst($postulacion->estado),
-                                    } }}
+                                <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacion->estado) }}">
+                                    {{ \App\Models\Postulacion::estadoLabel($postulacion->estado) }}
                                 </span>
                             </td>
                         </tr>

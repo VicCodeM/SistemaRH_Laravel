@@ -10,21 +10,10 @@ class CatalogoServicioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = CatalogoServicio::orderBy('orden')->orderBy('tipo');
-
-        if ($request->filled('tipo')) {
-            $query->where('tipo', $request->tipo);
-        }
-        if ($request->filled('nivel')) {
-            $query->where('nivel_jerarquico', $request->nivel);
-        }
-        if ($request->filled('para_quien')) {
-            $query->where('para_quien', $request->para_quien);
-        }
-
-        $servicios = $query->paginate(20)->withQueryString();
-
-        return view('admin.catalogo.index', compact('servicios'));
+        return redirect()->route('admin.catalogos.index', array_merge(
+            $request->except('page'),
+            ['tab' => 'servicios']
+        ));
     }
 
     public function create()
@@ -35,20 +24,21 @@ class CatalogoServicioController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nombre'           => ['required', 'string', 'max:200'],
-            'descripcion'      => ['nullable', 'string'],
-            'tipo'             => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
-            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicos()))],
-            'para_quien'       => ['required', 'in:empresa,candidato,ambos'],
-            'activo'           => ['boolean'],
-            'orden'            => ['nullable', 'integer', 'min:0'],
+            'nombre' => ['required', 'string', 'max:200'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
+            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
+            'para_quien' => ['required', 'in:empresa,candidato,ambos'],
+            'activo' => ['boolean'],
+            'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
+        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico']);
         $data['activo'] = $request->boolean('activo', true);
 
         CatalogoServicio::create($data);
 
-        return redirect()->route('admin.catalogo.index')
+        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
             ->with('success', 'Servicio creado correctamente.');
     }
 
@@ -60,26 +50,27 @@ class CatalogoServicioController extends Controller
     public function update(Request $request, CatalogoServicio $catalogo)
     {
         $data = $request->validate([
-            'nombre'           => ['required', 'string', 'max:200'],
-            'descripcion'      => ['nullable', 'string'],
-            'tipo'             => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
-            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicos()))],
-            'para_quien'       => ['required', 'in:empresa,candidato,ambos'],
-            'activo'           => ['boolean'],
-            'orden'            => ['nullable', 'integer', 'min:0'],
+            'nombre' => ['required', 'string', 'max:200'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
+            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
+            'para_quien' => ['required', 'in:empresa,candidato,ambos'],
+            'activo' => ['boolean'],
+            'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
+        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico']);
         $data['activo'] = $request->boolean('activo');
 
         $catalogo->update($data);
 
-        return redirect()->route('admin.catalogo.index')
-            ->with('success', 'Servicio actualizado.');
+        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
+            ->with('success', 'Servicio actualizado correctamente.');
     }
 
     public function toggle(CatalogoServicio $catalogo)
     {
-        $catalogo->update(['activo' => !$catalogo->activo]);
+        $catalogo->update(['activo' => ! $catalogo->activo]);
 
         return back()->with('success', $catalogo->activo ? 'Servicio activado.' : 'Servicio desactivado.');
     }
@@ -87,6 +78,7 @@ class CatalogoServicioController extends Controller
     public function destroy(CatalogoServicio $catalogo)
     {
         $catalogo->delete();
+
         return back()->with('success', 'Servicio eliminado.');
     }
 }

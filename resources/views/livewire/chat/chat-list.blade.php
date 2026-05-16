@@ -1,5 +1,4 @@
 <div>
-    {{-- Lista de conversaciones --}}
     @foreach($rooms as $room)
         @php
             $ultimoMensaje = $room->mensajes->first();
@@ -19,22 +18,24 @@
                         <span style="font-size:11px; color:var(--text-muted);">(grupo)</span>
                     @endif
                 </p>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;">
+                    {{ \App\Models\ChatRoom::tipoLabel($room->tipo) }}
+                </p>
                 @if($ultimoMensaje)
                     <p style="font-size:12px; color:var(--text-muted); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        {{ Str::limit($ultimoMensaje->contenido, 40) }}
+                        {{ \Illuminate\Support\Str::limit($ultimoMensaje->contenido, 40) }}
                     </p>
                 @else
-                    <p style="font-size:12px; color:var(--text-muted); margin:0;">Sin mensajes aún</p>
+                    <p style="font-size:12px; color:var(--text-muted); margin:0;">Sin mensajes todavía</p>
                 @endif
             </div>
         </a>
     @endforeach
 
     @if($rooms->isEmpty())
-        <p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 0;">Sin conversaciones</p>
+        <p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 0;">Sin conversaciones activas</p>
     @endif
 
-    {{-- Admin: iniciar chat con usuarios sin conversación --}}
     @if(auth()->user()->esAdmin() && $usuariosSinChat->isNotEmpty())
         <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
             <p style="font-size:11px; color:var(--text-muted); font-weight:500; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;">Nueva conversación</p>

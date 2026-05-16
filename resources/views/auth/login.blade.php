@@ -10,7 +10,7 @@
         @csrf
 
         <div class="form-group">
-            <label class="form-label" for="email">Correo Electrónico</label>
+            <label class="form-label" for="email">Correo electrónico</label>
             <input id="email" class="form-input" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="tu@correo.com">
             @error('email') <p class="form-error">{{ $message }}</p> @enderror
         </div>
@@ -34,7 +34,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-            Iniciar Sesión
+            Iniciar sesión
         </button>
 
         <div class="divider"></div>

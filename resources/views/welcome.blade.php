@@ -1,81 +1,230 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>SistemaRH - Gestión de Talento</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
-        <div class="fade-in" style="max-width: 600px; text-align: center;">
-            <h1 style="font-size: 3rem; font-weight: 800; color: #fff; margin-bottom: 4px; letter-spacing: -1px;">
-                Sistema<span style="color: #3b82f6;">RH</span>
-            </h1>
-            <p style="color: #3b82f6; font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-bottom: 32px;">Plataforma de Gestión de Talento</p>
+@extends('layouts.landing')
 
-            <p style="color: #94a3b8; font-size: 1.05rem; margin-bottom: 40px; line-height: 1.7;">
-                Reclutamiento, seguimiento de candidatos y automatización de procesos<br>
-                en una plataforma moderna e inteligente.
-            </p>
+@section('title', 'SistemaRH — Gestión de Talento')
 
-            @auth
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">Ir al Dashboard</a>
-            </div>
-            @else
-            {{-- Two registration paths --}}
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 560px; margin: 0 auto 32px;">
-                <a href="{{ route('register.empresa') }}" style="display: block; background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 24px 20px; text-decoration: none; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='#334155'">
-                    <div style="width: 40px; height: 40px; background: rgba(37,99,235,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#60a5fa" style="width: 20px; height: 20px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-                        </svg>
-                    </div>
-                    <h4 style="color: #f1f5f9; font-size: 1rem; font-weight: 700; margin-bottom: 6px;">Soy Empresa</h4>
-                    <p style="color: #64748b; font-size: 0.82rem; line-height: 1.5; margin-bottom: 16px;">Solicita servicios de RH, publica vacantes y gestiona tu talento.</p>
-                    <span style="font-size: 0.8rem; color: #60a5fa; font-weight: 600;">Registrar empresa →</span>
-                </a>
+@section('content')
+<div class="lp-wrap">
 
-                <a href="{{ route('register.candidato') }}" style="display: block; background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 24px 20px; text-decoration: none; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#10b981'" onmouseout="this.style.borderColor='#334155'">
-                    <div style="width: 40px; height: 40px; background: rgba(16,185,129,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#34d399" style="width: 20px; height: 20px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                        </svg>
-                    </div>
-                    <h4 style="color: #f1f5f9; font-size: 1rem; font-weight: 700; margin-bottom: 6px;">Soy Candidato</h4>
-                    <p style="color: #64748b; font-size: 0.82rem; line-height: 1.5; margin-bottom: 16px;">Crea tu perfil profesional y accede a oportunidades acordes a tu nivel.</p>
-                    <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">Crear mi perfil →</span>
-                </a>
-            </div>
-
-            <a href="{{ route('login') }}" style="font-size: 0.85rem; color: #64748b; text-decoration: none;">¿Ya tienes cuenta? <span style="color: #60a5fa; font-weight: 600;">Inicia sesión</span></a>
-            @endauth
-
-            <div style="margin-top: 56px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: left;">
-                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px;">
-                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(37,99,235,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #60a5fa;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387"/></svg>
-                    </div>
-                    <h4 style="color: #f1f5f9; font-size: 0.95rem; font-weight: 600; margin-bottom: 6px;">Catálogo de Servicios</h4>
-                    <p style="color: #64748b; font-size: 0.82rem; line-height: 1.5;">Reclutamiento, capacitación, coaching y más, por nivel jerárquico.</p>
-                </div>
-                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px;">
-                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #34d399;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07"/></svg>
-                    </div>
-                    <h4 style="color: #f1f5f9; font-size: 0.95rem; font-weight: 600; margin-bottom: 6px;">Matching Inteligente</h4>
-                    <p style="color: #64748b; font-size: 0.82rem; line-height: 1.5;">El sistema sugiere candidatos compatibles según jerarquía y perfil.</p>
-                </div>
-                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px;">
-                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #a78bfa;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-                    </div>
-                    <h4 style="color: #f1f5f9; font-size: 0.95rem; font-weight: 600; margin-bottom: 6px;">SLA Inteligente</h4>
-                    <p style="color: #64748b; font-size: 0.82rem; line-height: 1.5;">Tiempos de respuesta automáticos según prioridad e impacto.</p>
-                </div>
-            </div>
-
-            <p style="color: #475569; font-size: 0.75rem; margin-top: 48px;">&copy; {{ date('Y') }} SistemaRH. Todos los derechos reservados.</p>
+    {{-- NAV --}}
+    <header class="lp-nav">
+        <a href="/" class="lp-logo">Sistema<span>RH</span></a>
+        <div class="lp-nav-actions">
+            <a href="{{ route('login') }}" class="btn btn-ghost lp-btn-ghost">Iniciar sesión</a>
         </div>
-    </body>
-</html>
+    </header>
+
+    {{-- HERO --}}
+    <section class="lp-hero">
+        <div class="lp-hero-badge">Plataforma de Gestión de Talento</div>
+        <h1 class="lp-hero-title">
+            Recluta, gestiona<br>y desarrolla talento<br>
+            <span class="lp-hero-accent">de forma inteligente</span>
+        </h1>
+        <p class="lp-hero-sub">
+            Conecta empresas con candidatos, automatiza procesos de RH<br class="hide-mobile">
+            y gestiona todo tu equipo desde un solo lugar.
+        </p>
+
+        @auth
+            <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg lp-cta-btn">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+                Ir a mi panel
+            </a>
+        @else
+            <div class="lp-hero-cta">
+                <a href="{{ route('register.empresa') }}" class="btn btn-primary btn-lg lp-cta-btn">
+                    Registrar empresa
+                </a>
+                <a href="{{ route('register.candidato') }}" class="lp-cta-outline">
+                    Soy candidato →
+                </a>
+            </div>
+            <p class="lp-hero-hint">¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión</a></p>
+        @endauth
+    </section>
+
+    {{-- ROLE CARDS --}}
+    @guest
+    <section class="lp-roles">
+        <a href="{{ route('register.empresa') }}" class="lp-role-card lp-role-empresa">
+            <div class="lp-role-icon">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+                </svg>
+            </div>
+            <div>
+                <h3>Soy empresa</h3>
+                <p>Solicita servicios de RH, publica vacantes y gestiona tu talento con aprobación de admin.</p>
+            </div>
+            <span class="lp-role-cta">Registrar empresa →</span>
+        </a>
+
+        <a href="{{ route('register.candidato') }}" class="lp-role-card lp-role-candidato">
+            <div class="lp-role-icon">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                </svg>
+            </div>
+            <div>
+                <h3>Soy candidato</h3>
+                <p>Crea tu perfil profesional, postúlate a vacantes y da seguimiento a tu proceso de selección.</p>
+            </div>
+            <span class="lp-role-cta">Crear mi perfil →</span>
+        </a>
+    </section>
+    @endguest
+
+    {{-- FEATURES --}}
+    <section class="lp-features">
+        <p class="lp-features-label">¿Qué incluye la plataforma?</p>
+        <div class="lp-features-grid">
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-blue">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                </div>
+                <h4>Catálogo de servicios RH</h4>
+                <p>Reclutamiento, capacitación, coaching y más, organizados por nivel jerárquico.</p>
+            </div>
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-green">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0Zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                    </svg>
+                </div>
+                <h4>Matching inteligente</h4>
+                <p>Sugiere candidatos compatibles según jerarquía, perfil y habilidades requeridas.</p>
+            </div>
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-purple">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+                    </svg>
+                </div>
+                <h4>SLA inteligente</h4>
+                <p>Tiempos de respuesta automáticos calculados por prioridad e impacto del ticket.</p>
+            </div>
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-orange">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z"/>
+                    </svg>
+                </div>
+                <h4>Tickets y soporte</h4>
+                <p>Sistema de tickets con asignación a personal interno y seguimiento en tiempo real.</p>
+            </div>
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-teal">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
+                    </svg>
+                </div>
+                <h4>Chat integrado</h4>
+                <p>Comunicación directa entre candidatos, empresas e internos sin salir de la plataforma.</p>
+            </div>
+            <div class="lp-feature">
+                <div class="lp-feature-icon lp-fi-rose">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                    </svg>
+                </div>
+                <h4>Aprobaciones controladas</h4>
+                <p>Flujo de aprobación de empresas y candidatos con control total del administrador.</p>
+            </div>
+        </div>
+    </section>
+
+    {{-- FOOTER --}}
+    <footer class="lp-footer">
+        <p>&copy; {{ date('Y') }} SistemaRH. Todos los derechos reservados.</p>
+    </footer>
+
+</div>
+
+<style>
+/* Landing page — estilos autónomos para robustez */
+:root {
+    --lp-bg: #0f172a;
+    --lp-bg2: #111827;
+    --lp-border: rgba(255,255,255,.08);
+    --lp-text: #f1f5f9;
+    --lp-muted: #94a3b8;
+    --lp-accent: #3b82f6;
+    --lp-accent2: #6366f1;
+}
+* { box-sizing: border-box; }
+body.landing-page { background: var(--lp-bg); color: var(--lp-text); margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+.lp-wrap { min-height: 100vh; display: flex; flex-direction: column; max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+/* Nav */
+.lp-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--lp-border); }
+.lp-logo { font-size: 1.2rem; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -.5px; }
+.lp-logo span { color: var(--lp-accent); }
+.lp-btn-ghost { background: transparent; border: 1px solid var(--lp-border); color: var(--lp-muted); padding: 7px 16px; border-radius: 8px; text-decoration: none; font-size: .82rem; font-weight: 500; transition: all .18s ease; }
+.lp-btn-ghost:hover { border-color: rgba(255,255,255,.2); color: #fff; }
+
+/* Hero */
+.lp-hero { text-align: center; padding: 72px 0 56px; }
+.lp-hero-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(99,102,241,.4); background: rgba(99,102,241,.1); color: #a5b4fc; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+.lp-hero-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; line-height: 1.15; letter-spacing: -1.5px; margin: 0 0 20px; color: #fff; }
+.lp-hero-accent { background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.lp-hero-sub { color: var(--lp-muted); font-size: 1.05rem; line-height: 1.7; margin: 0 0 36px; }
+.lp-hero-cta { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
+.lp-cta-btn { padding: 12px 28px; font-size: .95rem; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #6366f1); color: #fff; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all .2s ease; box-shadow: 0 4px 20px rgba(37,99,235,.35); }
+.lp-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,.45); }
+.lp-cta-outline { color: var(--lp-muted); text-decoration: none; font-weight: 500; font-size: .9rem; transition: color .18s; }
+.lp-cta-outline:hover { color: #fff; }
+.lp-hero-hint { color: var(--lp-muted); font-size: .82rem; margin: 0; }
+.lp-hero-hint a { color: var(--lp-accent); text-decoration: none; font-weight: 500; }
+
+/* Role cards */
+.lp-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 60px; }
+.lp-role-card { display: flex; flex-direction: column; gap: 12px; padding: 28px 24px; border-radius: 16px; border: 1px solid var(--lp-border); text-decoration: none; transition: all .2s ease; }
+.lp-role-card:hover { transform: translateY(-3px); }
+.lp-role-empresa { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.25); }
+.lp-role-empresa:hover { border-color: rgba(37,99,235,.5); box-shadow: 0 12px 32px rgba(37,99,235,.15); }
+.lp-role-candidato { background: rgba(16,185,129,.07); border-color: rgba(16,185,129,.25); }
+.lp-role-candidato:hover { border-color: rgba(16,185,129,.5); box-shadow: 0 12px 32px rgba(16,185,129,.12); }
+.lp-role-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.lp-role-empresa .lp-role-icon { background: rgba(37,99,235,.15); color: #60a5fa; }
+.lp-role-candidato .lp-role-icon { background: rgba(16,185,129,.15); color: #34d399; }
+.lp-role-card h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff; }
+.lp-role-card p { margin: 0; color: var(--lp-muted); font-size: .85rem; line-height: 1.55; }
+.lp-role-cta { font-size: .8rem; font-weight: 600; margin-top: auto; }
+.lp-role-empresa .lp-role-cta { color: #60a5fa; }
+.lp-role-candidato .lp-role-cta { color: #34d399; }
+
+/* Features */
+.lp-features { margin-bottom: 64px; }
+.lp-features-label { text-align: center; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--lp-muted); margin: 0 0 28px; }
+.lp-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.lp-feature { background: rgba(255,255,255,.03); border: 1px solid var(--lp-border); border-radius: 14px; padding: 22px 20px; transition: all .2s ease; }
+.lp-feature:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); }
+.lp-feature-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.lp-fi-blue   { background: rgba(59,130,246,.15);  color: #60a5fa; }
+.lp-fi-green  { background: rgba(16,185,129,.15);  color: #34d399; }
+.lp-fi-purple { background: rgba(139,92,246,.15);  color: #a78bfa; }
+.lp-fi-orange { background: rgba(245,158,11,.15);  color: #fbbf24; }
+.lp-fi-teal   { background: rgba(20,184,166,.15);  color: #2dd4bf; }
+.lp-fi-rose   { background: rgba(244,63,94,.15);   color: #fb7185; }
+.lp-feature h4 { color: #e2e8f0; font-size: .88rem; font-weight: 600; margin: 0 0 6px; }
+.lp-feature p  { color: var(--lp-muted); font-size: .78rem; line-height: 1.55; margin: 0; }
+
+/* Footer */
+.lp-footer { border-top: 1px solid var(--lp-border); padding: 24px 0; text-align: center; margin-top: auto; }
+.lp-footer p { color: #475569; font-size: .75rem; margin: 0; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .lp-hero { padding: 48px 0 40px; }
+    .lp-roles { grid-template-columns: 1fr; }
+    .lp-features-grid { grid-template-columns: 1fr 1fr; }
+    .lp-hero-title { letter-spacing: -1px; }
+}
+@media (max-width: 400px) {
+    .lp-features-grid { grid-template-columns: 1fr; }
+}
+</style>
+@endsection

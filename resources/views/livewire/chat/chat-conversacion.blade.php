@@ -1,8 +1,5 @@
 <div wire:poll.3000ms="actualizarMensajes" style="display:flex; flex-direction:column; height:100%;">
-
-    {{-- Mensajes --}}
     <div id="chat-mensajes" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;">
-
         @forelse($mensajes as $msg)
             @php $esMio = $msg->sender_user_id === auth()->id(); @endphp
             <div style="display:flex; {{ $esMio ? 'justify-content:flex-end' : 'justify-content:flex-start' }};">
@@ -28,10 +25,8 @@
                 <p style="color:var(--text-muted); font-size:14px;">Sé el primero en escribir un mensaje.</p>
             </div>
         @endforelse
-
     </div>
 
-    {{-- Input enviar mensaje --}}
     <div style="padding:16px 20px; border-top:1px solid var(--border); background: var(--surface);">
         <form wire:submit="enviar" style="display:flex; gap:10px; align-items:flex-end;">
             <textarea wire:model="mensaje" rows="1" placeholder="Escribe un mensaje..."
@@ -44,17 +39,19 @@
         </form>
         @error('mensaje') <p style="color:var(--danger); font-size:12px; margin-top:4px;">{{ $message }}</p> @enderror
     </div>
-
 </div>
 
 <script>
-    // Auto-scroll al fondo cuando llegan nuevos mensajes
     document.addEventListener('livewire:updated', () => {
         const el = document.getElementById('chat-mensajes');
-        if (el) el.scrollTop = el.scrollHeight;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     });
     document.addEventListener('DOMContentLoaded', () => {
         const el = document.getElementById('chat-mensajes');
-        if (el) el.scrollTop = el.scrollHeight;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     });
 </script>

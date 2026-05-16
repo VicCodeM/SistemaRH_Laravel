@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Admin</a>
+            <a href="{{ route('admin.dashboard') }}">Administración</a>
             <span class="breadcrumb-sep">›</span>
             <span>Empresas</span>
         </nav>
-        <h1 class="page-title">Gestión de Empresas</h1>
-        <p class="page-subtitle">{{ $empresas->total() }} empresa(s) registrada(s).</p>
+        <h1 class="page-title">Aprobaciones de acceso — Empresas</h1>
+        <p class="page-subtitle">{{ $empresas->total() }} empresa(s) registrada(s). Aquí autorizas o rechazas empresas que solicitan usar la plataforma. Esto NO es solicitudes de servicio.</p>
     </x-slot>
 
     @if(session('success'))
@@ -117,10 +117,9 @@
                             <td>
                                 @php
                                     $colors = ['pendiente'=>'warning','activa'=>'success','rechazada'=>'danger','suspendida'=>'danger'];
-                                    $labels = ['pendiente'=>'Pendiente','activa'=>'Activa','rechazada'=>'Rechazada','suspendida'=>'Suspendida'];
                                 @endphp
                                 <span class="badge badge-{{ $colors[$empresa->estado] ?? 'secondary' }}">
-                                    {{ $labels[$empresa->estado] ?? ucfirst($empresa->estado) }}
+                                    {{ \App\Models\Empresa::estadoLabel($empresa->estado) }}
                                 </span>
                             </td>
                             <td style="font-size:13px; color:#64748b;">{{ $empresa->created_at?->format('d/m/Y') ?? '—' }}</td>
@@ -128,7 +127,7 @@
                                 <div style="display:flex; gap:6px; align-items:center; justify-content:flex-end;">
                                     <button onclick="rhModal('{{ route('admin.empresas.modal', $empresa) }}')"
                                             title="Ver detalle"
-                                            style="width:30px;height:30px;background:#1e293b;border:1px solid #334155;border-radius:7px;cursor:pointer;color:#94a3b8;display:flex;align-items:center;justify-content:center;">
+                                            class="btn btn-ghost" style="width:30px;height:30px;padding:0;">
                                         <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     </button>
                                     @if($empresa->estado === 'pendiente')
@@ -136,21 +135,24 @@
                                             @csrf @method('PATCH')
                                             <button type="submit" class="btn btn-success" style="padding:5px 12px; font-size:12px;">Aprobar</button>
                                         </form>
-                                        <form method="POST" action="{{ route('admin.empresas.rechazar', $empresa) }}">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" class="btn btn-danger" style="padding:5px 12px; font-size:12px;">Rechazar</button>
-                                        </form>
+                                        <button type="button" onclick="rhModal('{{ route('admin.empresas.rechazar.modal', $empresa) }}')" class="btn btn-danger" style="padding:5px 12px; font-size:12px;">Rechazar</button>
                                     @elseif(in_array($empresa->estado, ['rechazada','suspendida']))
                                         <form method="POST" action="{{ route('admin.empresas.aprobar', $empresa) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="btn btn-success" style="padding:5px 12px; font-size:12px;">Reactivar</button>
                                         </form>
                                     @elseif($empresa->estado === 'activa')
-                                        <form method="POST" action="{{ route('admin.empresas.suspender', $empresa) }}" onsubmit="return confirm('¿Suspender esta empresa?')">
+                                        <form method="POST" action="{{ route('admin.empresas.suspender', $empresa) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="btn btn-secondary" style="padding:5px 12px; font-size:12px;">Suspender</button>
                                         </form>
                                     @endif
+                                    <form method="POST" action="{{ route('admin.empresas.destroy', $empresa) }}" onsubmit="return confirm('¿Eliminar {{ addslashes($empresa->nombre_empresa) }} permanentemente? No se puede deshacer.')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" style="width:30px;height:30px;padding:0;" title="Eliminar">
+                                            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397M4.772 5.79c.342-.052.682-.107 1.022-.166m1.022.165l.346 9"/></svg>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

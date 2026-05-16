@@ -1,224 +1,228 @@
-<div>
-    @if($yaEnviada)
-        <div class="card fade-in" style="text-align: center; padding: 48px;">
-            <div style="font-size: 3rem; margin-bottom: 16px;">🎉</div>
-            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">¡Solicitud Enviada!</h2>
-            <p class="text-muted" style="margin-bottom: 24px;">Tu solicitud está siendo evaluada.</p>
-            <a wire:navigate href="{{ route('dashboard') }}" class="btn btn-primary">Ir al Dashboard</a>
+@php
+    $nivelesEstudio    = \App\Models\Vacante::nivelesEstudios();
+    $progresoSolicitud = $this->progresoSolicitud();
+    $secciones         = $this->seccionesCompletadas();
+    $puedeEnviar       = $this->puedeEnviarSolicitud();
+
+    $tabs = [
+        'personales' => ['numero' => 1, 'titulo' => 'Personales',  'detalle' => 'Datos de identificación'],
+        'contacto'   => ['numero' => 2, 'titulo' => 'Contacto',    'detalle' => 'Cómo localizarte'],
+        'estudios'   => ['numero' => 3, 'titulo' => 'Escolaridad', 'detalle' => 'Estudios y perfil'],
+        'laboral'    => ['numero' => 4, 'titulo' => 'Experiencia', 'detalle' => 'Historial laboral'],
+        'extras'     => ['numero' => 5, 'titulo' => 'Extras',      'detalle' => 'CURP y documentos'],
+    ];
+
+    $btnLocked = "display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:600;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;border:1.5px solid #e2e8f0;";
+    $lockIcon  = '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>';
+@endphp
+
+{{-- SIN x-cloak en el div raíz: cabecera y pestañas siempre visibles --}}
+<div x-data="{
+    tab: 'personales',
+    order: ['personales','contacto','estudios','laboral','extras'],
+    goTo(t) { this.tab = t; window.scrollTo({top:0,behavior:'smooth'}); },
+    next(c) { const i = this.order.indexOf(c); if(i < this.order.length-1) this.goTo(this.order[i+1]); },
+    prev(c) { const i = this.order.indexOf(c); if(i > 0) this.goTo(this.order[i-1]); },
+    isActive(k) { return this.tab === k; },
+}">
+
+    {{-- ═══ CABECERA ═══ --}}
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:6px;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#fff"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+                </div>
+                <div>
+                    <h2 style="margin:0;font-size:1rem;font-weight:700;color:var(--text);">{{ $modoAdmin ? 'Editar solicitud' : 'Mi solicitud' }}</h2>
+                    <p style="margin:2px 0 0;font-size:.78rem;color:var(--text-muted);">{{ $modoAdmin ? 'Modo administrativo — los cambios se guardan automáticamente' : 'Completa los 5 pasos para enviar tu solicitud' }}</p>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge {{ $yaEnviada ? 'badge-success' : 'badge-warning' }}">{{ $yaEnviada ? 'Enviada' : 'Borrador' }}</span>
+                <span style="padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;background:{{ $puedeEnviar ? 'var(--success-light)' : 'var(--accent-light)' }};color:{{ $puedeEnviar ? 'var(--success)' : 'var(--accent)' }};">
+                    {{ $progresoSolicitud }}%
+                </span>
+            </div>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:{{ $progresoSolicitud }}%;border-radius:99px;transition:width .4s ease;
+                background:{{ $puedeEnviar ? 'linear-gradient(90deg,#10b981,#34d399)' : 'linear-gradient(90deg,#2563eb,#7c3aed)' }};"></div>
+        </div>
+    </div>
+
+    {{-- ═══ PESTAÑAS DE NAVEGACIÓN ═══ --}}
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 20px;margin-bottom:6px;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            @foreach($tabs as $key => $tabData)
+                @php $done = $secciones[$key]; @endphp
+                <button type="button"
+                    @click="goTo('{{ $key }}')"
+                    style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:2px solid;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:var(--font);
+                        {{ $done
+                            ? 'background:#ecfdf5;border-color:#10b981;color:#10b981;'
+                            : 'background:#f8fafc;border-color:var(--border);color:var(--text-muted);' }}"
+                    :style="isActive('{{ $key }}')
+                        ? 'background:#eff6ff;border-color:var(--accent);color:var(--accent);'
+                        : ''">
+
+                    {{-- Número / check badge --}}
+                    <span style="width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0;
+                        {{ $done
+                            ? 'background:#10b981;color:#fff;'
+                            : 'background:#cbd5e1;color:#fff;' }}"
+                        :style="isActive('{{ $key }}') ? 'background:var(--accent);color:#fff;' : ''">
+                        @if($done)
+                            <span x-show="isActive('{{ $key }}')">{{ $tabData['numero'] }}</span>
+                            <span x-show="!isActive('{{ $key }}')">✓</span>
+                        @else
+                            {{ $tabData['numero'] }}
+                        @endif
+                    </span>
+
+                    {{ $tabData['titulo'] }}
+                </button>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Alertas --}}
+    @if(session('exito'))<div class="alert alert-success" style="margin-bottom:6px;">{{ session('exito') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger" style="margin-bottom:6px;">{{ session('error') }}</div>@endif
+    @error('solicitud')<div class="alert alert-danger" style="margin-bottom:6px;">{{ $message }}</div>@enderror
+    @if($yaEnviada && !$modoAdmin)
+        <div class="alert alert-info" style="margin-bottom:6px;">Tu solicitud fue enviada. Puedes seguir corrigiendo datos antes de que sea revisada.</div>
+    @endif
+    @if($accesoPendiente && !$modoAdmin)
+        <div class="alert alert-warning" style="margin-bottom:6px;">Tu acceso está en revisión. Cuando sea aprobado podrás completar tu solicitud.</div>
+    @endif
+
+    @if($accesoPendiente && !$modoAdmin)
+        <div style="padding:28px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--text-muted);text-align:center;">
+            Tu perfil no está habilitado aún. Cuando seas aprobado podrás completar tu expediente.
         </div>
     @else
-        <div class="card fade-in">
-            <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px;">
-                <h3 style="font-size: 1.15rem; font-weight: 600;">Solicitud de Empleo</h3>
-                <span class="text-muted text-sm font-medium">Paso {{ $pasoActual }} de 6</span>
-            </div>
 
-            @if($pasoActual == 1)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">1. Datos Personales</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                        <div class="form-group"><label class="form-label">Nombre(s)</label><input type="text" wire:model="nombre" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Apellido Paterno</label><input type="text" wire:model="apellido_paterno" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Apellido Materno</label><input type="text" wire:model="apellido_materno" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Fecha de Nacimiento</label><input type="date" wire:model="fecha_nacimiento" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Edad</label><input type="number" wire:model="edad" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Sexo</label>
-                            <select wire:model="sexo" class="form-input">
-                                <option value="">Seleccione</option><option value="M">Masculino</option><option value="F">Femenino</option><option value="Otro">Otro</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label class="form-label">Lugar de Nacimiento</label><input type="text" wire:model="lugar_nacimiento" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Nacionalidad</label><input type="text" wire:model="nacionalidad" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Estado Civil</label>
-                            <select wire:model="estado_civil" class="form-input">
-                                <option value="">Seleccione</option><option value="Soltero(a)">Soltero(a)</option><option value="Casado(a)">Casado(a)</option><option value="Unión Libre">Unión Libre</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label class="form-label">Peso (kg)</label><input type="text" wire:model="peso" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Estatura (m)</label><input type="text" wire:model="estatura" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Vive Con</label><input type="text" wire:model="vive_con" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3;"><label class="form-label">Dependientes</label><input type="text" wire:model="dependientes" class="form-input"></div>
-                    </div>
-                </div>
+    {{-- ═══ PANELES POR PASO ═══ --}}
+    {{-- x-cloak solo en cada panel para evitar flash; la barra de pestañas ya es visible --}}
+
+    {{-- Sin x-cloak en paneles: conflicta con morphdom de Livewire al re-renderizar --}}
+    {{-- style="display:none" en los paneles no-default para evitar flash inicial   --}}
+
+    <div x-show="tab === 'personales'">
+        @include('livewire.solicitud-sections.personales')
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+            @if($secciones['personales'])
+                <button type="button" class="btn btn-primary" @click="next('personales')">Continuar →</button>
+            @else
+                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
             @endif
+        </div>
+    </div>
 
-            @if($pasoActual == 2)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">2. Contacto y Domicilio</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group"><label class="form-label">Teléfono</label><input type="text" wire:model="telefono" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Celular</label><input type="text" wire:model="celular" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 2;"><label class="form-label">Domicilio</label><input type="text" wire:model="domicilio" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Colonia</label><input type="text" wire:model="colonia" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">C.P.</label><input type="text" wire:model="codigo_postal" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Municipio</label><input type="text" wire:model="municipio" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Ciudad / Estado</label><input type="text" wire:model="ciudad" class="form-input"></div>
-                    </div>
-                </div>
+    <div x-show="tab === 'contacto'" style="display:none;">
+        @include('livewire.solicitud-sections.contacto')
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+            <button type="button" class="btn btn-ghost" @click="prev('contacto')">← Atrás</button>
+            @if($secciones['contacto'])
+                <button type="button" class="btn btn-primary" @click="next('contacto')">Continuar →</button>
+            @else
+                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
             @endif
+        </div>
+    </div>
 
-            @if($pasoActual == 3)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">3. Documentación y Redes</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                        <div class="form-group"><label class="form-label">CURP</label><input type="text" wire:model="curp" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">RFC</label><input type="text" wire:model="rfc" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">NSS</label><input type="text" wire:model="nore_seguro_social" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">AFORE</label><input type="text" wire:model="afore" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Cartilla Militar</label><input type="text" wire:model="cartilla_militar" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Pasaporte</label><input type="text" wire:model="pasaporte" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3; padding-top: 8px;"><label class="form-label font-semibold">Licencia</label></div>
-                        <div class="form-group"><label class="form-label">¿Tiene?</label><select wire:model="licencia_conducir.tiene" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">Clase</label><input type="text" wire:model="licencia_conducir.clase" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Vigencia</label><input type="text" wire:model="licencia_conducir.vigencia" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3; padding-top: 8px;"><label class="form-label font-semibold">Redes Sociales</label></div>
-                        <div class="form-group"><label class="form-label">Facebook</label><input type="text" wire:model="redes_sociales.facebook" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">LinkedIn</label><input type="text" wire:model="redes_sociales.linkedin" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Instagram</label><input type="text" wire:model="redes_sociales.instagram" class="form-input"></div>
-                    </div>
-                </div>
+    <div x-show="tab === 'estudios'" style="display:none;">
+        @include('livewire.solicitud-sections.estudios')
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+            <button type="button" class="btn btn-ghost" @click="prev('estudios')">← Atrás</button>
+            @if($secciones['estudios'])
+                <button type="button" class="btn btn-primary" @click="next('estudios')">Continuar →</button>
+            @else
+                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
             @endif
+        </div>
+    </div>
 
-            @if($pasoActual == 4)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">4. Salud y Conocimientos</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                        <div class="form-group" style="grid-column: span 3;"><label class="form-label font-semibold">Salud</label></div>
-                        <div class="form-group"><label class="form-label">Estado</label><select wire:model="estado_salud.estado" class="form-input"><option value="">-</option><option value="Bueno">Bueno</option><option value="Regular">Regular</option><option value="Malo">Malo</option></select></div>
-                        <div class="form-group"><label class="form-label">¿Enfermedad Crónica?</label><select wire:model="estado_salud.cronica_tiene" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">¿Cuál?</label><input type="text" wire:model="estado_salud.cronica_detalle" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">¿Fuma?</label><select wire:model="estado_salud.fuma" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">¿Bebe?</label><select wire:model="estado_salud.bebe" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">Deporte</label><input type="text" wire:model="estado_salud.deporte" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3;"><label class="form-label">Meta en la vida</label><input type="text" wire:model="estado_salud.meta" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3;"><label class="form-label font-semibold">Conocimientos</label></div>
-                        <div class="form-group"><label class="form-label">Idiomas</label><input type="text" wire:model="conocimientos_generales.idiomas" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Software</label><input type="text" wire:model="conocimientos_generales.software" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Máquinas</label><input type="text" wire:model="conocimientos_generales.maquinas" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 3;"><label class="form-label font-semibold">Disponibilidad</label></div>
-                        <div class="form-group"><label class="form-label">¿Viajar?</label><select wire:model="datos_generales.viajar" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">¿Cambio residencia?</label><select wire:model="datos_generales.cambio_residencia" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                        <div class="form-group"><label class="form-label">Fecha disponible</label><input type="date" wire:model="datos_generales.fecha_disponible" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Deudas mensuales</label><input type="text" wire:model="datos_economicos.deudas" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Gastos mensuales</label><input type="text" wire:model="datos_economicos.gastos_mensuales" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">¿Auto propio?</label><select wire:model="datos_economicos.auto_propio" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                    </div>
-                </div>
+    <div x-show="tab === 'laboral'" style="display:none;">
+        @include('livewire.solicitud-sections.laboral')
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+            <button type="button" class="btn btn-ghost" @click="prev('laboral')">← Atrás</button>
+            @if($secciones['laboral'])
+                <button type="button" class="btn btn-primary" @click="next('laboral')">Continuar →</button>
+            @else
+                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
             @endif
+        </div>
+    </div>
 
-            @if($pasoActual == 5)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">5. Familia y Escolaridad</h4>
-                    <div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
-                        <h5 style="font-weight: 600; margin-bottom: 12px;">Datos Familiares</h5>
-                        @foreach(['Padre', 'Madre', 'Esposa(o)'] as $familiar)
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 12px; margin-bottom: 8px;">
-                            <div><label class="form-label">{{ $familiar }}</label><input type="text" wire:model="datos_familiares.{{ $familiar }}.nombre" class="form-input"></div>
-                            <div><label class="form-label">¿Vive?</label><select wire:model="datos_familiares.{{ $familiar }}.vive" class="form-input"><option value="">-</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-                            <div><label class="form-label">Ocupación</label><input type="text" wire:model="datos_familiares.{{ $familiar }}.ocupacion" class="form-input"></div>
-                        </div>
-                        @endforeach
-                        <div style="margin-top: 8px;"><label class="form-label">Hijos</label><textarea wire:model="datos_familiares.hijos" class="form-input" rows="2"></textarea></div>
-                    </div>
-                    <div style="border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
-                        <div class="flex items-center justify-between mb-4">
-                            <h5 style="font-weight: 600; margin: 0;">Escolaridad</h5>
-                            <button wire:click="agregarEscolaridad" class="btn btn-secondary btn-sm">+ Agregar</button>
-                        </div>
-                        @foreach($escolaridad_detallada as $index => $escuela)
-                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; position: relative;">
-                            @if(count($escolaridad_detallada) > 1)
-                                <button wire:click="eliminarEscolaridad({{ $index }})" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem;">✕</button>
-                            @endif
-                            <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 2fr; gap: 12px;">
-                                <div><label class="form-label">Nivel</label>
-                                    <select wire:model="escolaridad_detallada.{{ $index }}.nivel" class="form-input">
-                                        <option value="">-</option>
-                                        <option value="Primaria">Primaria</option>
-                                        <option value="Secundaria">Secundaria</option>
-                                        <option value="Preparatoria">Preparatoria</option>
-                                        <option value="Profesional">Profesional</option>
-                                        <option value="Maestría">Maestría</option>
-                                        <option value="Curso/Diplomado">Curso/Diplomado</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div><label class="form-label">Escuela</label><input type="text" wire:model="escolaridad_detallada.{{ $index }}.nombre" class="form-input"></div>
-                                <div><label class="form-label">Años</label><input type="text" wire:model="escolaridad_detallada.{{ $index }}.anios" class="form-input"></div>
-                                <div><label class="form-label">Título</label><input type="text" wire:model="escolaridad_detallada.{{ $index }}.titulo" class="form-input"></div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
+    <div x-show="tab === 'extras'" style="display:none;">
+        @include('livewire.solicitud-sections.extras')
+
+        {{-- ═══ RESUMEN DE VALIDACIÓN ═══ --}}
+        @if(!$modoAdmin && !$puedeEnviar)
+            @php $faltantes = $this->camposRequeridos(); @endphp
+            <div style="margin-top:16px;background:#fff;border:1.5px solid var(--warning);border-radius:14px;overflow:hidden;">
+                <div style="padding:14px 18px;background:var(--warning-light);display:flex;align-items:center;gap:10px;">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">La solicitud no puede enviarse aún — faltan campos obligatorios</span>
                 </div>
-            @endif
-
-            @if($pasoActual == 6)
-                <div class="fade-in">
-                    <h4 style="font-weight: 600; color: var(--accent); margin-bottom: 16px;">6. Perfil y Experiencia</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                        <div class="form-group"><label class="form-label">Puesto Deseado</label><input type="text" wire:model="puesto_deseado" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Sueldo Deseado</label><input type="text" wire:model="sueldo_deseado" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Años Exp.</label><input type="number" wire:model="experiencia_anios" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Escolaridad (resumen)</label><input type="text" wire:model="escolaridad" class="form-input"></div>
-                        <div class="form-group" style="grid-column: span 2;"><label class="form-label">Habilidades</label><textarea wire:model="habilidades" class="form-input" rows="2"></textarea></div>
-                    </div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h5 style="font-weight: 600; margin: 0;">Historial Laboral</h5>
-                        <button wire:click="agregarEmpleo" class="btn btn-secondary btn-sm">+ Agregar</button>
-                    </div>
-                    @foreach($historial_laboral as $index => $empleo)
-                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; position: relative;">
-                            @if(count($historial_laboral) > 1)
-                                <button wire:click="eliminarEmpleo({{ $index }})" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem;">✕</button>
-                            @endif
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                                <div><label class="form-label">Empresa</label><input type="text" wire:model="historial_laboral.{{ $index }}.empresa" class="form-input"></div>
-                                <div><label class="form-label">Puesto</label><input type="text" wire:model="historial_laboral.{{ $index }}.puesto" class="form-input"></div>
-                                <div><label class="form-label">Jefe</label><input type="text" wire:model="historial_laboral.{{ $index }}.jefe" class="form-input"></div>
-                                <div><label class="form-label">Sueldo</label><input type="text" wire:model="historial_laboral.{{ $index }}.sueldo" class="form-input"></div>
-                                <div><label class="form-label">Desde</label><input type="text" wire:model="historial_laboral.{{ $index }}.desde" class="form-input"></div>
-                                <div><label class="form-label">Hasta</label><input type="text" wire:model="historial_laboral.{{ $index }}.hasta" class="form-input"></div>
-                                <div style="grid-column: span 3;"><label class="form-label">Motivo de Salida</label><input type="text" wire:model="historial_laboral.{{ $index }}.motivo" class="form-input"></div>
-                            </div>
-                        </div>
-                    @endforeach
-                    <div class="flex items-center justify-between mb-4" style="margin-top: 24px;">
-                        <h5 style="font-weight: 600; margin: 0;">Referencias Personales</h5>
-                        <button wire:click="agregarReferencia" class="btn btn-secondary btn-sm">+ Agregar</button>
-                    </div>
-                    @foreach($referencias_personales as $index => $ref)
-                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; position: relative;">
-                            @if(count($referencias_personales) > 1)
-                                <button wire:click="eliminarReferencia({{ $index }})" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem;">✕</button>
-                            @endif
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <div><label class="form-label">Nombre</label><input type="text" wire:model="referencias_personales.{{ $index }}.nombre" class="form-input"></div>
-                                <div><label class="form-label">Teléfono</label><input type="text" wire:model="referencias_personales.{{ $index }}.telefono" class="form-input"></div>
-                                <div><label class="form-label">Ocupación</label><input type="text" wire:model="referencias_personales.{{ $index }}.ocupacion" class="form-input"></div>
-                                <div><label class="form-label">Domicilio / Tiempo</label><input type="text" wire:model="referencias_personales.{{ $index }}.domicilio" class="form-input"></div>
-                            </div>
+                <div style="padding:16px 18px;display:grid;gap:10px;">
+                    @foreach($faltantes as $seccion => $campos)
+                        @php
+                            $labels = ['personales'=>'Datos personales','contacto'=>'Contacto','estudios'=>'Escolaridad','laboral'=>'Experiencia','extras'=>'Documentos'];
+                        @endphp
+                        <div>
+                            <button type="button"
+                                @click="goTo('{{ $seccion }}')"
+                                style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:var(--font);padding:0;margin-bottom:6px;">
+                                <span style="width:20px;height:20px;border-radius:50%;background:var(--danger-light);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">!</span>
+                                <span style="font-size:.8rem;font-weight:700;color:var(--danger);text-decoration:underline;">{{ $labels[$seccion] ?? $seccion }} →</span>
+                            </button>
+                            <ul style="margin:0;padding-left:28px;list-style:disc;">
+                                @foreach($campos as $campo)
+                                    <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                                @endforeach
+                            </ul>
                         </div>
                     @endforeach
                 </div>
-            @endif
-
-            <div class="flex items-center justify-between" style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 24px;">
-                @if($pasoActual > 1)
-                    <button wire:click="pasoAnterior" class="btn btn-secondary">← Atrás</button>
-                @else
-                    <div></div>
-                @endif
-                @if($pasoActual < 6)
-                    <button wire:click="siguientePaso" class="btn btn-primary">Siguiente →</button>
-                @else
-                    <button wire:click="enviarSolicitud" class="btn btn-success">Enviar Solicitud</button>
-                @endif
             </div>
+        @endif
 
-            <div wire:loading class="text-center mt-4">
-                <span class="text-muted text-sm">Guardando...</span>
+        {{-- ═══ BOTONES FINALES ═══ --}}
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+            <button type="button" class="btn btn-ghost" @click="prev('extras')">← Atrás</button>
+            <div style="display:flex;gap:10px;">
+                <button type="button" class="btn btn-secondary" wire:click="guardarBorrador" wire:loading.attr="disabled">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0z"/></svg>
+                    Guardar avance
+                </button>
+
+                @if(!$modoAdmin)
+                    @if($puedeEnviar)
+                        <button type="button" class="btn btn-primary" wire:click="enviarSolicitud" wire:loading.attr="disabled"
+                            style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,.3);">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>
+                            Enviar solicitud
+                        </button>
+                    @else
+                        <button type="button" disabled
+                            title="Completa todos los campos obligatorios para enviar"
+                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:500;background:#e2e8f0;color:#94a3b8;cursor:not-allowed;border:1px solid var(--border);">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
+                            Enviar solicitud
+                        </button>
+                    @endif
+                @else
+                    <button type="button" class="btn btn-primary" wire:click="guardarBorrador" wire:loading.attr="disabled">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                        Guardar cambios
+                    </button>
+                @endif
             </div>
         </div>
+    </div>
+
     @endif
 </div>

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Admin</a>
+            <a href="{{ route('admin.dashboard') }}">Administración</a>
             <span class="breadcrumb-sep">›</span>
             <span>Personal Externo</span>
         </nav>
@@ -29,9 +29,9 @@
         </select>
         <select name="disponibilidad" class="form-input" style="width: auto;" onchange="this.form.submit()">
             <option value="">Cualquier disponibilidad</option>
-            <option value="disponible" {{ request('disponibilidad') === 'disponible' ? 'selected' : '' }}>Disponible</option>
-            <option value="ocupado"    {{ request('disponibilidad') === 'ocupado'    ? 'selected' : '' }}>Ocupado</option>
-            <option value="inactivo"   {{ request('disponibilidad') === 'inactivo'   ? 'selected' : '' }}>Inactivo</option>
+            @foreach (\App\Models\PersonalExterno::disponibilidades() as $key => $label)
+                <option value="{{ $key }}" {{ request('disponibilidad') === $key ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
         </select>
         <button type="submit" class="btn btn-secondary">Buscar</button>
         @if (request()->hasAny(['buscar', 'especialidad', 'disponibilidad']))
@@ -62,13 +62,12 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge badge-secondary">
+                            <span class="badge badge-blue">
                                 {{ \App\Models\CatalogoServicio::tipos()[$persona->especialidad] ?? $persona->especialidad }}
                             </span>
                         </td>
                         <td style="font-size: 0.8rem; color: #94a3b8; max-width: 160px;">
-                            @php $niveles = \App\Models\CatalogoServicio::nivelesJerarquicos(); @endphp
-                            {{ collect($persona->niveles_jerarquicos)->map(fn ($n) => $niveles[$n] ?? $n)->implode(', ') }}
+                            {{ collect($persona->niveles_jerarquicos)->map(fn ($n) => \App\Models\CatalogoServicio::nivelJerarquicoLabel($n))->implode(', ') }}
                         </td>
                         <td style="font-size: 0.85rem; color: #94a3b8;">{{ $persona->empresa_o_razon_social ?? '—' }}</td>
                         <td style="font-size: 0.82rem;">
@@ -78,19 +77,15 @@
                             @endif
                         </td>
                         <td>
-                            @php
-                                $disp = ['disponible' => 'success', 'ocupado' => 'warning', 'inactivo' => 'danger'];
-                                $dispLabel = ['disponible' => 'Disponible', 'ocupado' => 'Ocupado', 'inactivo' => 'Inactivo'];
-                            @endphp
-                            <span class="badge badge-{{ $disp[$persona->disponibilidad] ?? 'secondary' }}">
-                                {{ $dispLabel[$persona->disponibilidad] ?? $persona->disponibilidad }}
+                            <span class="badge {{ \App\Models\PersonalExterno::disponibilidadBadgeClass($persona->disponibilidad) }}">
+                                {{ \App\Models\PersonalExterno::disponibilidadLabel($persona->disponibilidad) }}
                             </span>
                         </td>
                         <td style="white-space: nowrap;">
                             <div style="display:flex;gap:6px;align-items:center;">
                                 <button onclick="rhModal('{{ route('admin.personal-externo.modal', $persona) }}')"
                                         title="Ver detalle"
-                                        style="width:30px;height:30px;background:#1e293b;border:1px solid #334155;border-radius:7px;cursor:pointer;color:#94a3b8;display:flex;align-items:center;justify-content:center;">
+                                        class="btn btn-ghost" style="width:30px;height:30px;padding:0;">
                                     <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 </button>
                                 <a href="{{ route('admin.personal-externo.edit', $persona) }}" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">Editar</a>

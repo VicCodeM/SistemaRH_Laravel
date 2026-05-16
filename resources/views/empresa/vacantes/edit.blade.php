@@ -1,15 +1,19 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
+            <a href="{{ route('empresa.dashboard') }}">Mi panel</a>
             <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.vacantes') }}">Mis Vacantes</a>
+            <a href="{{ route('empresa.vacantes') }}">Mis Solicitudes</a>
             <span class="breadcrumb-sep">›</span>
             <span>Editar solicitud</span>
         </nav>
         <h1 class="page-title">Editar solicitud de vacante</h1>
         <p class="page-subtitle">Solo puedes editar solicitudes que aún no han sido aprobadas.</p>
     </x-slot>
+
+    @php
+        $nivelActual = \App\Models\CatalogoServicio::normalizarNivelJerarquico(old('nivel_jerarquico', $vacante->nivel_jerarquico));
+    @endphp
 
     <div style="max-width: 520px;">
         <form method="POST" action="{{ route('empresa.vacantes.actualizar', $vacante) }}">
@@ -25,7 +29,7 @@
                 <label class="form-label" for="nivel_jerarquico">Nivel jerárquico <span style="color: #ef4444;">*</span></label>
                 <select id="nivel_jerarquico" class="form-input" name="nivel_jerarquico" required>
                     @foreach ($niveles as $key => $label)
-                        <option value="{{ $key }}" {{ old('nivel_jerarquico', $vacante->nivel_jerarquico) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                        <option value="{{ $key }}" {{ $nivelActual === $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
                 @error('nivel_jerarquico') <p class="form-error">{{ $message }}</p> @enderror

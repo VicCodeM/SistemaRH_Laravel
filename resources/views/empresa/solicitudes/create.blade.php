@@ -1,51 +1,45 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('empresa.dashboard') }}">Mi Panel</a>
-            <span class="breadcrumb-sep">›</span>
-            <a href="{{ route('empresa.solicitudes') }}">Mis Servicios</a>
-            <span class="breadcrumb-sep">›</span>
+            <a href="{{ route('empresa.dashboard') }}">Inicio</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
+            <a href="{{ route('empresa.solicitudes') }}">Solicitudes</a>
+            <span class="breadcrumb-sep">&rsaquo;</span>
             <span>Nueva solicitud</span>
         </nav>
-        <h1 class="page-title">Solicitar un servicio</h1>
-        <p class="page-subtitle">Cuéntanos qué necesitas y nuestro equipo lo atenderá.</p>
+        <h1 class="page-title">Nueva solicitud</h1>
+        <p class="page-subtitle">La empresa registra su necesidad y el administrador la canaliza.</p>
     </x-slot>
 
-    <div style="max-width:680px;">
+    <div style="max-width:860px;">
         <div class="card">
             <form method="POST" action="{{ route('empresa.solicitudes.guardar') }}">
                 @csrf
 
-                {{-- Tipo de servicio --}}
                 <div class="form-group">
-                    <label class="form-label">¿Qué tipo de servicio necesitas? <span style="color:var(--danger)">*</span></label>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-top:8px;">
+                    <label class="form-label">Tipo de servicio <span style="color:var(--danger)">*</span></label>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:8px;">
                         @foreach($tipos as $key => $label)
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid {{ old('tipo_servicio') === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ old('tipo_servicio') === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }}; transition:border-color 0.15s;">
-                                <input type="radio" name="tipo_servicio" value="{{ $key }}" {{ old('tipo_servicio') === $key ? 'checked' : '' }}
-                                       style="accent-color:var(--accent);"
-                                       onchange="this.closest('form').querySelectorAll('label[data-type]').forEach(l=>l.style.borderColor='var(--border)'); this.closest('label').style.borderColor='var(--accent)';">
-                                <span style="font-size:0.88rem; font-weight:500;">{{ $label }}</span>
+                            <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid {{ old('tipo_servicio') === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ old('tipo_servicio') === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }};">
+                                <input type="radio" name="tipo_servicio" value="{{ $key }}" {{ old('tipo_servicio') === $key ? 'checked' : '' }} style="accent-color:var(--accent);">
+                                <span style="font-size:0.85rem; font-weight:500;">{{ $label }}</span>
                             </label>
                         @endforeach
                     </div>
                     @error('tipo_servicio')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Título / puesto --}}
-                <div class="form-group" style="margin-top:24px;">
-                    <label class="form-label" for="titulo">Título o puesto <span style="color:var(--danger)">*</span></label>
+                <div class="form-group" style="margin-top:22px;">
+                    <label class="form-label" for="titulo">Título / Puesto <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror"
-                           placeholder="Ej: Gerente de Ventas, Capacitación en liderazgo…"
-                           value="{{ old('titulo') }}" maxlength="200">
+                           value="{{ old('titulo') }}" maxlength="200" placeholder="Ej: Gerente de ventas, capacitación en liderazgo...">
                     @error('titulo')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Nivel jerárquico --}}
-                <div class="form-group" style="margin-top:20px;">
+                <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="nivel_jerarquico">Nivel jerárquico <span style="color:var(--danger)">*</span></label>
                     <select id="nivel_jerarquico" name="nivel_jerarquico" class="form-input @error('nivel_jerarquico') is-invalid @enderror">
-                        <option value="">— Selecciona el nivel —</option>
+                        <option value="">— Selecciona —</option>
                         @foreach($niveles as $key => $label)
                             <option value="{{ $key }}" {{ old('nivel_jerarquico') === $key ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
@@ -53,27 +47,49 @@
                     @error('nivel_jerarquico')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Requerimientos --}}
-                <div class="form-group" style="margin-top:20px;">
+                <div class="card" style="margin-top:18px; padding:18px; background:var(--surface-2);">
+                    <h2 style="margin:0 0 6px; font-size:0.98rem;">Requisitos de compatibilidad</h2>
+                    <p style="margin:0 0 14px; font-size:0.84rem; color:#64748b;">Si la empresa necesita un perfil específico, complétalo aquí para que el sistema filtre mejor.</p>
+
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="nivel_estudios_minimo">Nivel mínimo de estudios</label>
+                            <select id="nivel_estudios_minimo" name="nivel_estudios_minimo" class="form-input @error('nivel_estudios_minimo') is-invalid @enderror">
+                                <option value="">Sin requisito</option>
+                                @foreach($estudios as $key => $label)
+                                    <option value="{{ $key }}" {{ old('nivel_estudios_minimo') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('nivel_estudios_minimo')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="area_requerida">Área o carrera requerida</label>
+                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror"
+                                   value="{{ old('area_requerida') }}" maxlength="150" placeholder="Ej: Sistemas, Medicina, RH">
+                            @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="experiencia_minima">Experiencia mínima (años)</label>
+                            <input type="number" id="experiencia_minima" name="experiencia_minima" class="form-input @error('experiencia_minima') is-invalid @enderror"
+                                   value="{{ old('experiencia_minima') }}" min="0" step="1" placeholder="0">
+                            @error('experiencia_minima')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="requerimientos">Descripción y requerimientos</label>
-                    <textarea id="requerimientos" name="requerimientos"
-                              class="form-input @error('requerimientos') is-invalid @enderror"
-                              rows="5"
-                              placeholder="Describe el perfil, habilidades, experiencia requerida, número de posiciones, fecha objetivo, etc."
-                              maxlength="2000">{{ old('requerimientos') }}</textarea>
-                    <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Opcional · máx. 2000 caracteres</div>
+                    <textarea id="requerimientos" name="requerimientos" class="form-input @error('requerimientos') is-invalid @enderror" rows="5" placeholder="Describe el perfil, habilidades, experiencia requerida, número de posiciones, fecha objetivo, etc." maxlength="2000">{{ old('requerimientos') }}</textarea>
                     @error('requerimientos')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                <div style="display:flex; gap:12px; margin-top:28px;">
+                <div style="display:flex; gap:12px; margin-top:24px; padding-top:20px; border-top:1px solid var(--border);">
                     <button type="submit" class="btn btn-primary">Enviar solicitud</button>
                     <a href="{{ route('empresa.solicitudes') }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>
-        </div>
-
-        <div style="margin-top:16px; padding:14px 16px; background:rgba(59,130,246,0.06); border-radius:8px; border-left:3px solid var(--accent); font-size:0.83rem; color:#94a3b8;">
-            Una vez enviada, nuestro equipo revisará tu solicitud y te contactará para coordinar los siguientes pasos.
         </div>
     </div>
 </x-app-layout>

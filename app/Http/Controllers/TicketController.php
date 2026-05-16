@@ -14,10 +14,11 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->esAdmin()) {
+        if ($user->esAdmin() || $user->esInterno()) {
             $tickets = Ticket::with('empresa.usuario')
-                ->orderByRaw("FIELD(estado, 'abierto', 'en_proceso', 'resuelto', 'cerrado')")
-                ->orderBy('sla_due_at')
+                ->orderByRaw("CASE estado WHEN 'abierto' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'resuelto' THEN 3 ELSE 4 END")
+                ->orderByRaw("CASE prioridad WHEN 'urgente' THEN 1 WHEN 'alta' THEN 2 WHEN 'media' THEN 3 ELSE 4 END")
+                ->orderByRaw('COALESCE(sla_due_at, created_at) ASC')
                 ->paginate(15);
         } else {
             $empresa = $user->empresa;
@@ -45,8 +46,8 @@ class TicketController extends Controller
         $data = $request->validate([
             'asunto'      => 'required|string|max:200',
             'descripcion' => 'required|string|max:3000',
-            'categoria'   => 'required|string|max:100',
-            'prioridad'   => 'required|in:baja,media,alta,urgente',
+            'categoria'   => 'required|in:' . implode(',', array_keys(Ticket::categorias())),
+            'prioridad'   => 'required|in:' . implode(',', array_keys(Ticket::prioridades())),
         ]);
 
         // Calcular SLA inteligente
@@ -69,7 +70,7 @@ class TicketController extends Controller
         ]);
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', "Ticket creado. SLA: {$clasificacion['sla_minutes']} minutos ({$clasificacion['prioridad']}).");
+            ->with('success', "Ticket creado. SLA estimado: {$clasificacion['sla_minutes']} minutos.");
     }
 
     public function show(Ticket $ticket)
@@ -82,6 +83,7 @@ class TicketController extends Controller
     public function responder(Request $request, Ticket $ticket)
     {
         $this->autorizar($ticket);
+        abort_if(in_array($ticket->estado, ['resuelto', 'cerrado'], true), 422, 'El ticket ya fue cerrado.');
 
         $request->validate(['mensaje' => 'required|string|max:3000']);
 
@@ -91,29 +93,50 @@ class TicketController extends Controller
             'mensaje'   => $request->mensaje,
         ]);
 
-        return back()->with('success', 'Respuesta enviada.');
+        if ($ticket->estado === 'abierto') {
+            $ticket->update(['estado' => 'en_proceso']);
+        }
+
+        return back()->with('success', 'Respuesta enviada correctamente.');
     }
 
     public function cambiarEstado(Request $request, Ticket $ticket)
     {
-        abort_unless(Auth::user()->esAdmin(), 403);
+        abort_unless(Auth::user()->esAdmin() || Auth::user()->esInterno(), 403);
 
-        $request->validate(['estado' => 'required|in:abierto,en_proceso,resuelto,cerrado']);
+        $request->validate([
+            'estado' => 'required|in:' . implode(',', array_keys(Ticket::estados())),
+        ]);
 
         $updates = ['estado' => $request->estado];
-        if ($request->estado === 'resuelto') {
+        if (in_array($request->estado, ['resuelto', 'cerrado'], true)) {
             $updates['resuelto_at'] = now();
         }
 
         $ticket->update($updates);
 
-        return back()->with('success', 'Estado del ticket actualizado.');
+        return back()->with('success', 'Estado del ticket actualizado correctamente.');
+    }
+
+    public function asignar(Request $request, Ticket $ticket)
+    {
+        abort_unless(Auth::user()->esAdmin() || Auth::user()->esInterno(), 403);
+
+        $data = $request->validate([
+            'asignado_a' => ['nullable', 'exists:users,id'],
+        ]);
+
+        $ticket->update(['asignado_a' => $data['asignado_a'] ?? null]);
+
+        return back()->with('success', 'Ticket asignado correctamente.');
     }
 
     private function autorizar(Ticket $ticket): void
     {
         $user = Auth::user();
-        if ($user->esAdmin()) return;
+        if ($user->esAdmin() || $user->esInterno()) {
+            return;
+        }
 
         $empresa = $user->empresa;
         abort_unless($empresa && $ticket->empresa_id === $empresa->id, 403);

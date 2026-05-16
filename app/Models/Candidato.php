@@ -49,4 +49,134 @@ class Candidato extends Model
     {
         return $this->hasMany(Postulacion::class);
     }
+
+    public function nombreCompleto(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->nombre,
+            $this->apellido_paterno,
+            $this->apellido_materno,
+        ])));
+    }
+
+    public static function solicitudEstados(): array
+    {
+        return CatalogoOpcion::opciones('candidato_estados', [
+            'borrador' => 'Borrador',
+            'enviada' => 'Enviada',
+            'aprobada' => 'Aprobada',
+            'rechazada' => 'Rechazada',
+        ]);
+    }
+
+    public static function solicitudEstadoLabel(?string $estado): string
+    {
+        return CatalogoOpcion::label('candidato_estados', $estado);
+    }
+
+    public static function solicitudEstadoBadgeClass(?string $estado): string
+    {
+        return match ($estado) {
+            'borrador' => 'badge-gray',
+            'enviada', 'en_revision' => 'badge-yellow',
+            'aprobada' => 'badge-green',
+            'rechazada' => 'badge-red',
+            default => 'badge-gray',
+        };
+    }
+
+    public function solicitudSeccionesCompletas(): array
+    {
+        return [
+            'personales' => $this->seccionPersonalesCompleta(),
+            'contacto' => $this->seccionContactoCompleta(),
+            'estudios' => $this->seccionEstudiosCompleta(),
+            'laboral' => $this->seccionLaboralCompleta(),
+            'extras' => $this->seccionExtrasCompleta(),
+        ];
+    }
+
+    public function solicitudProgreso(): int
+    {
+        $secciones = $this->solicitudSeccionesCompletas();
+        $total = count($secciones);
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completas = count(array_filter($secciones));
+
+        return (int) round(($completas / $total) * 100);
+    }
+
+    public function solicitudCompleta(): bool
+    {
+        return ! in_array(false, $this->solicitudSeccionesCompletas(), true);
+    }
+
+    private function seccionPersonalesCompleta(): bool
+    {
+        return $this->campoLleno($this->nombre)
+            && $this->campoLleno($this->apellido_paterno)
+            && $this->campoLleno($this->apellido_materno)
+            && $this->campoLleno($this->edad)
+            && $this->campoLleno($this->sexo)
+            && $this->campoLleno($this->fecha_nacimiento)
+            && $this->campoLleno($this->lugar_nacimiento)
+            && $this->campoLleno($this->nacionalidad)
+            && $this->campoLleno($this->estado_civil)
+            && $this->campoLleno($this->vive_con)
+            && $this->campoLleno($this->peso)
+            && $this->campoLleno($this->estatura)
+            && $this->campoLleno($this->dependientes);
+    }
+
+    private function seccionContactoCompleta(): bool
+    {
+        return $this->campoLleno($this->celular)
+            && $this->campoLleno($this->domicilio)
+            && $this->campoLleno($this->colonia)
+            && $this->campoLleno($this->codigo_postal)
+            && $this->campoLleno($this->municipio)
+            && $this->campoLleno($this->ciudad);
+    }
+
+    private function seccionEstudiosCompleta(): bool
+    {
+        return $this->campoLleno($this->escolaridad)
+            && $this->campoLleno($this->puesto_deseado)
+            && $this->campoLleno($this->habilidades);
+    }
+
+    private function seccionLaboralCompleta(): bool
+    {
+        return $this->campoLleno($this->sueldo_deseado);
+    }
+
+    private function seccionExtrasCompleta(): bool
+    {
+        return $this->campoLleno($this->curp)
+            && $this->campoLleno($this->nore_seguro_social)
+            && $this->campoLleno($this->rfc)
+            && $this->campoLleno($this->afore);
+    }
+
+    private function campoLleno(mixed $valor): bool
+    {
+        return ! blank($valor);
+    }
+
+    private function primerElemento(?array $elementos): ?array
+    {
+        $elementos = array_values($elementos ?? []);
+
+        foreach ($elementos as $elemento) {
+            if (is_array($elemento)) {
+                return $elemento;
+            }
+        }
+
+        return null;
+    }
 }
