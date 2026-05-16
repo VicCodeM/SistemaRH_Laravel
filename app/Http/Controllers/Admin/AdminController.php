@@ -10,6 +10,7 @@ use App\Models\Postulacion;
 use App\Models\Ticket;
 use App\Models\ServicioAsignado;
 use App\Models\Vacante;
+use App\Services\PostulacionService;
 use App\Services\SolicitudCompatibilidadService;
 use App\Services\VacanteService;
 use Illuminate\Database\Eloquent\Builder;
@@ -420,23 +421,15 @@ class AdminController extends Controller
         return redirect()->route('admin.vacantes')->with('success', "Solicitud \"{$vacante->titulo}\" actualizada.");
     }
 
-    public function moverPostulacion(Request $request, Postulacion $postulacion)
+    public function moverPostulacion(Request $request, Postulacion $postulacion, PostulacionService $postulacionService)
     {
         $request->validate([
             'estado' => 'required|in:' . implode(',', array_keys(Postulacion::estadosProceso())),
         ]);
 
-        $postulacion->update(['estado' => $request->estado]);
+        $postulacionService->mover($postulacion, $request->estado);
 
-        $msg = match ($request->estado) {
-            'entrevista'   => 'Candidato marcado como ya entrevistado.',
-            'seleccionado' => 'Candidato seleccionado.',
-            'rechazado'    => 'Candidato rechazado.',
-            'retirado'     => 'Candidato retirado de la vacante.',
-            default        => 'Estado actualizado.',
-        };
-
-        return back()->with('success', $msg);
+        return back()->with('success', $postulacionService->mensajeParaEstado($request->estado));
     }
 
     public function destroyEmpresa(Empresa $empresa)
@@ -508,7 +501,7 @@ class AdminController extends Controller
         return view('admin.vacantes.matching', compact('vacante', 'grupos', 'asignados', 'requisitos'));
     }
 
-    public function asignarCandidato(Request $request, Vacante $vacante)
+    public function asignarCandidato(Request $request, Vacante $vacante, PostulacionService $postulacionService)
     {
         $data = $request->validate([
             'candidato_id' => ['required', 'exists:candidatos,id'],
@@ -516,37 +509,18 @@ class AdminController extends Controller
             'motivo_asignacion' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $candidato = Candidato::where('id', $data['candidato_id'])
-            ->where('solicitud_estado', 'aprobada')
-            ->firstOrFail();
-
-        $evaluacion = app(SolicitudCompatibilidadService::class)->evaluar($vacante, $candidato);
-        $forzar = $request->boolean('forzar');
-
-        if ($evaluacion['categoria'] === 'no_aptos' && ! $forzar) {
-            return back()->with('error', 'Ese candidato no cumple los requisitos mínimos. Usa la asignación con excepción.');
-        }
-
-        if ($evaluacion['categoria'] === 'no_aptos' && trim((string) ($data['motivo_asignacion'] ?? '')) === '') {
-            return back()->with('error', 'Indica un motivo para justificar la excepción.');
-        }
-
-        Postulacion::updateOrCreate(
-            [
-                'vacante_id' => $vacante->id,
-                'candidato_id' => $candidato->id,
-            ],
-            [
-                'estado' => 'postulado',
-                'fecha_postulacion' => now(),
-                'asignacion_forzada' => $forzar && $evaluacion['categoria'] === 'no_aptos',
-                'motivo_asignacion' => trim((string) ($data['motivo_asignacion'] ?? '')) ?: $evaluacion['resumen'],
-            ]
+        $resultado = $postulacionService->asignar(
+            $vacante,
+            (int) $data['candidato_id'],
+            $request->boolean('forzar'),
+            $data['motivo_asignacion'] ?? null
         );
 
-        return back()->with('success', $forzar && $evaluacion['categoria'] === 'no_aptos'
-            ? 'Candidato asignado con excepción registrada.'
-            : 'Candidato asignado a la solicitud.');
+        if (! $resultado['exito']) {
+            return back()->with('error', $resultado['mensaje']);
+        }
+
+        return back()->with('success', $resultado['mensaje']);
     }
 
     public function buscarGlobal(Request $request)

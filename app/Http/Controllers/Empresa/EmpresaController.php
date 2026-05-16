@@ -7,6 +7,7 @@ use App\Models\CatalogoServicio;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Vacante;
+use App\Services\PostulacionService;
 use App\Services\VacanteService;
 use App\Services\WorkflowService;
 use Illuminate\Http\RedirectResponse;
@@ -162,7 +163,7 @@ class EmpresaController extends Controller
         return redirect()->route('empresa.solicitudes')->with('success', 'Solicitud actualizada correctamente.');
     }
 
-    public function moverPostulacion(Request $request, Postulacion $postulacion)
+    public function moverPostulacion(Request $request, Postulacion $postulacion, PostulacionService $postulacionService)
     {
         if ($redirigir = $this->redirigirSiPendiente()) {
             return $redirigir;
@@ -171,7 +172,7 @@ class EmpresaController extends Controller
         $this->autorizarPostulacion($postulacion);
 
         $request->validate(['estado' => 'required|in:' . implode(',', array_keys(Postulacion::estadosProceso()))]);
-        $postulacion->update(['estado' => $request->estado]);
+        $postulacionService->mover($postulacion, $request->estado);
 
         return back()->with('success', 'Estado actualizado correctamente.');
     }
