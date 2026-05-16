@@ -2,8 +2,9 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\Postulacion;
 use App\Services\PostulacionService;
+use Livewire\Component;
 
 class KanbanBoard extends Component
 {
@@ -23,5 +24,21 @@ class KanbanBoard extends Component
         return view('livewire.kanban-board', array_merge($data, [
             'vacantes' => $vacantes,
         ]));
+    }
+
+    /**
+     * Cambia el estado de una postulación desde el tablero Kanban.
+     * Solo admin o interno pueden mover tarjetas.
+     */
+    public function moverEstado(int $postulacionId, string $nuevoEstado): void
+    {
+        $user = auth()->user();
+
+        if (! $user || (! $user->esAdmin() && ! $user->esInterno())) {
+            return;
+        }
+
+        $postulacion = Postulacion::findOrFail($postulacionId);
+        $this->postulacionService->mover($postulacion, $nuevoEstado);
     }
 }

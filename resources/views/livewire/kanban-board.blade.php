@@ -30,6 +30,14 @@
                         <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px; border-left: 3px solid var(--border);">
                             <div style="font-weight: 600; font-size: 0.85rem;">{{ $p->candidato->nombre ?? 'Candidato' }}</div>
                             <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">{{ $p->updated_at->diffForHumans() }}</div>
+                            @if(auth()->user() && (auth()->user()->esAdmin() || auth()->user()->esInterno()))
+                                <select wire:change="moverEstado({{ $p->id }}, $event.target.value)" style="font-size: 0.72rem; padding: 3px 6px; margin-top: 6px; width: 100%; border-radius: var(--radius); border: 1px solid var(--border); background: white;">
+                                    <option value="postulado" @if($estado === 'postulado') selected @endif>Postulado</option>
+                                    <option value="entrevista" @if($estado === 'entrevista') selected @endif>Entrevista</option>
+                                    <option value="seleccionado" @if($estado === 'seleccionado') selected @endif>Seleccionado</option>
+                                    <option value="rechazado" @if($estado === 'rechazado') selected @endif>Rechazado</option>
+                                </select>
+                            @endif
                         </div>
                     @empty
                         <div class="text-muted text-center" style="padding: 16px 0; font-size: 0.8rem;">Sin candidatos</div>
