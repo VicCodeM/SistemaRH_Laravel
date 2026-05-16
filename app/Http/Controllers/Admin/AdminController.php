@@ -10,6 +10,7 @@ use App\Models\Postulacion;
 use App\Models\Ticket;
 use App\Models\ServicioAsignado;
 use App\Models\Vacante;
+use App\Services\DashboardService;
 use App\Services\PostulacionService;
 use App\Services\SolicitudCompatibilidadService;
 use App\Services\VacanteService;
@@ -18,78 +19,9 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(DashboardService $dashboard)
     {
-        $stats = [
-            'empresas_pendientes'   => Empresa::where('estado', 'pendiente')->count(),
-            'empresas_activas'      => Empresa::where('estado', 'activa')->count(),
-            'candidatos_pendientes' => Candidato::where('solicitud_estado', 'enviada')->count(),
-            'candidatos_aprobados'  => Candidato::where('solicitud_estado', 'aprobada')->count(),
-            'solicitudes_activas'   => Vacante::where('estado', 'activa')->count(),
-            'solicitudes_pendientes'=> Vacante::where('estado', 'pendiente')->count(),
-            'personal_disponible'   => \App\Models\PersonalExterno::where('disponibilidad', 'disponible')->count(),
-            'tareas_activas'        => ServicioAsignado::whereIn('estado', ['activo', 'en_proceso'])->count(),
-            'internos_activos'      => \App\Models\User::where('rol', 'interno')->where('estado', 'activo')->count(),
-        ];
-
-        $empresas_pendientes = Empresa::where('estado', 'pendiente')
-            ->with('usuario')->latest()->take(6)->get();
-
-        $candidatos_pendientes = Candidato::where('solicitud_estado', 'enviada')
-            ->with('usuario')->latest('solicitud_enviada_at')->take(6)->get();
-
-        $solicitudes_recientes = Vacante::with('empresa')
-            ->whereIn('estado', ['pendiente', 'activa'])
-            ->latest()->take(5)->get();
-
-        $tareas_recientes = ServicioAsignado::with(['servicio', 'asignable', 'asignadoA'])
-            ->orderByRaw("CASE estado WHEN 'activo' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'completado' THEN 3 ELSE 4 END")
-            ->orderByDesc('created_at')
-            ->take(5)
-            ->get();
-
-        $alertas = [];
-
-        $ticketsVencidos = Ticket::whereNotNull('sla_due_at')
-            ->where('sla_due_at', '<', now())
-            ->whereNotIn('estado', ['resuelto', 'cerrado'])
-            ->count();
-
-        if ($ticketsVencidos > 0) {
-            $alertas[] = [
-                'tipo' => 'danger',
-                'mensaje' => "Hay {$ticketsVencidos} ticket(s) vencido(s) sin resolver. Revisa el módulo de soporte.",
-                'link' => route('tickets.index'),
-            ];
-        }
-
-        $empresasViejas = Empresa::where('estado', 'pendiente')
-            ->where('created_at', '<', now()->subDays(7))
-            ->count();
-
-        if ($empresasViejas > 0) {
-            $alertas[] = [
-                'tipo' => 'warning',
-                'mensaje' => "{$empresasViejas} empresa(s) lleva(n) más de 7 días esperando aprobación de acceso.",
-                'link' => route('admin.empresas', ['estado' => 'pendiente']),
-            ];
-        }
-
-        $candidatosViejos = Candidato::where('solicitud_estado', 'enviada')
-            ->where('solicitud_enviada_at', '<', now()->subDays(7))
-            ->count();
-
-        if ($candidatosViejos > 0) {
-            $alertas[] = [
-                'tipo' => 'warning',
-                'mensaje' => "{$candidatosViejos} candidato(s) lleva(n) más de 7 días esperando revisión.",
-                'link' => route('admin.candidatos', ['estado' => 'enviada']),
-            ];
-        }
-
-        return view('admin.dashboard', compact(
-            'stats', 'empresas_pendientes', 'candidatos_pendientes', 'solicitudes_recientes', 'tareas_recientes', 'alertas'
-        ));
+        return view('admin.dashboard', $dashboard->datosAdmin());
     }
 
     public function reportes()
