@@ -371,7 +371,7 @@ class AdminController extends Controller
         return back()->with('success', $resultado['mensaje']);
     }
 
-    public function buscarGlobal(Request $request)
+    public function buscarGlobal(Request $request, BusquedaService $busqueda)
     {
         $q = trim((string) $request->input('q'));
 
@@ -379,43 +379,7 @@ class AdminController extends Controller
             return view('admin.buscar', ['resultados' => [], 'q' => '']);
         }
 
-        $like = "%{$q}%";
-
-        $empresas = Empresa::where('nombre_empresa', 'like', $like)
-            ->orWhere('rfc', 'like', $like)
-            ->orWhereHas('usuario', fn ($u) => $u->where('email', 'like', $like))
-            ->with('usuario')
-            ->limit(8)
-            ->get()
-            ->map(fn ($e) => ['tipo' => 'empresa', 'titulo' => $e->nombre_empresa, 'sub' => $e->rfc ?? 'Sin RFC', 'url' => route('admin.empresas'), 'estado' => $e->estado]);
-
-        $candidatos = Candidato::where('nombre', 'like', $like)
-            ->orWhere('apellido_paterno', 'like', $like)
-            ->orWhere('apellido_materno', 'like', $like)
-            ->orWhere('curp', 'like', $like)
-            ->orWhereHas('usuario', fn ($u) => $u->where('email', 'like', $like))
-            ->with('usuario')
-            ->limit(8)
-            ->get()
-            ->map(fn ($c) => ['tipo' => 'candidato', 'titulo' => $c->nombreCompleto(), 'sub' => $c->puesto_deseado ?? 'Sin puesto', 'url' => route('admin.candidatos'), 'estado' => $c->solicitud_estado]);
-
-        $vacantes = Vacante::where('titulo', 'like', $like)
-            ->orWhere('descripcion', 'like', $like)
-            ->orWhereHas('empresa', fn ($e) => $e->where('nombre_empresa', 'like', $like))
-            ->with('empresa')
-            ->limit(8)
-            ->get()
-            ->map(fn ($v) => ['tipo' => 'vacante', 'titulo' => $v->titulo, 'sub' => $v->empresa?->nombre_empresa ?? 'Sin empresa', 'url' => route('admin.vacantes'), 'estado' => $v->estado]);
-
-        $tickets = Ticket::where('asunto', 'like', $like)
-            ->orWhere('descripcion', 'like', $like)
-            ->orWhereHas('empresa', fn ($e) => $e->where('nombre_empresa', 'like', $like))
-            ->with('empresa')
-            ->limit(8)
-            ->get()
-            ->map(fn ($t) => ['tipo' => 'ticket', 'titulo' => $t->asunto, 'sub' => $t->empresa?->nombre_empresa ?? 'Sin empresa', 'url' => route('tickets.show', $t), 'estado' => $t->estado]);
-
-        $resultados = $empresas->merge($candidatos)->merge($vacantes)->merge($tickets);
+        $resultados = $busqueda->global($q);
 
         return view('admin.buscar', compact('resultados', 'q'));
     }
