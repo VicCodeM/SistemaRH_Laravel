@@ -1,53 +1,53 @@
 @php
-    $pillBase  = "padding:8px 22px;border-radius:8px;border:1.5px solid;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font);";
-    $pillOn    = "background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(37,99,235,.28);";
+    $pillBase  = "padding:9px 22px;border-radius:10px;border:1.5px solid;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font);white-space:nowrap;";
+    $pillOn    = "background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 10px rgba(37,99,235,.28);";
     $pillOff   = "background:#fff;color:var(--text-muted);border-color:var(--border);";
-    $pillDanger = "background:#fff;color:var(--danger);border-color:var(--danger);";
+    $pillYes   = "background:#f0fdf4;color:#10b981;border-color:#10b981;box-shadow:0 2px 10px rgba(16,185,129,.2);";
 
     $licenciaTiene = $licencia_conducir['tiene'] ?? '';
 @endphp
 
-<div style="background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);margin-top:6px;">
-    <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fff1f2,#f8fafc);">
-        <div style="width:36px;height:36px;border-radius:10px;background:rgba(244,63,94,.12);color:#f43f5e;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+<div class="solicitud-card" style="margin-top:6px;">
+    <div class="solicitud-card-header" style="background:linear-gradient(135deg,#fff1f2,#f8fafc);">
+        <div class="solicitud-card-icon" style="background:rgba(244,63,94,.12);color:#f43f5e;">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
         </div>
         <div>
-            <h3 style="margin:0;font-size:.95rem;font-weight:700;color:var(--text);">Documentos y datos extras</h3>
-            <p style="margin:2px 0 0;font-size:.78rem;color:var(--text-muted);">CURP, NSS, documentos, licencia, redes y referencias</p>
+            <h3 class="solicitud-card-title">Documentos y datos extras</h3>
+            <p class="solicitud-card-subtitle">CURP, NSS, documentos, licencia, redes y referencias</p>
         </div>
     </div>
 
-    <div style="padding:22px 24px;display:grid;gap:20px;">
+    <div style="padding:24px;">
 
-        {{-- ── DOCUMENTOS OFICIALES ── --}}
-        <div>
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 10px;">Documentos oficiales</p>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+        {{-- Documentos oficiales --}}
+        <div style="margin-bottom:22px;">
+            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Documentos oficiales</p>
+            <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">CURP</label>
+                    <label class="form-label">CURP <span style="color:var(--danger);">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="curp" placeholder="CURP (18 caracteres)">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">NSS — Número de seguro social</label>
+                    <label class="form-label">NSS — Número de seguro social <span style="color:var(--danger);">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="nore_seguro_social" placeholder="Número de seguro social">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">RFC</label>
+                    <label class="form-label">RFC <span style="color:var(--danger);">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="rfc" placeholder="RFC">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">Afore</label>
+                    <label class="form-label">Afore <span style="color:var(--danger);">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="afore" placeholder="Nombre de tu Afore">
                 </div>
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);"></div>
+        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
 
-        {{-- ── CARTILLA MILITAR ── --}}
-        <div>
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 10px;">Cartilla militar</p>
+        {{-- Cartilla militar --}}
+        <div style="margin-bottom:22px;">
+            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Cartilla militar</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $cartilla_tiene === 'si' ? '12px' : '0' }};">
                     <label class="form-label">¿Tienes cartilla militar?</label>
@@ -57,7 +57,7 @@
                             Sí, tengo
                         </button>
                         <button type="button" wire:click="setCartillaTiene('no')"
-                            style="{{ $cartilla_tiene === 'no' ? 'background:#f0fdf4;color:#10b981;border-color:#10b981;box-shadow:0 2px 8px rgba(16,185,129,.2);' : $pillOff }}{{ $pillBase }}">
+                            style="{{ $cartilla_tiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
                             No tengo
                         </button>
                     </div>
@@ -71,11 +71,11 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);"></div>
+        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
 
-        {{-- ── PASAPORTE ── --}}
-        <div>
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 10px;">Pasaporte</p>
+        {{-- Pasaporte --}}
+        <div style="margin-bottom:22px;">
+            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Pasaporte</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $pasaporte_tiene === 'si' ? '12px' : '0' }};">
                     <label class="form-label">¿Tienes pasaporte?</label>
@@ -85,7 +85,7 @@
                             Sí, tengo
                         </button>
                         <button type="button" wire:click="setPasaporteTiene('no')"
-                            style="{{ $pasaporte_tiene === 'no' ? 'background:#f0fdf4;color:#10b981;border-color:#10b981;box-shadow:0 2px 8px rgba(16,185,129,.2);' : $pillOff }}{{ $pillBase }}">
+                            style="{{ $pasaporte_tiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
                             No tengo
                         </button>
                     </div>
@@ -99,11 +99,11 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);"></div>
+        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
 
-        {{-- ── LICENCIA DE CONDUCIR ── --}}
-        <div>
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 10px;">Licencia de conducir</p>
+        {{-- Licencia de conducir --}}
+        <div style="margin-bottom:22px;">
+            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Licencia de conducir</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $licenciaTiene === 'si' ? '14px' : '0' }};">
                     <label class="form-label">¿Tienes licencia de conducir?</label>
@@ -113,13 +113,13 @@
                             Sí, tengo
                         </button>
                         <button type="button" wire:click="setLicenciaTiene('no')"
-                            style="{{ $licenciaTiene === 'no' ? 'background:#f0fdf4;color:#10b981;border-color:#10b981;box-shadow:0 2px 8px rgba(16,185,129,.2);' : $pillOff }}{{ $pillBase }}">
+                            style="{{ $licenciaTiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
                             No tengo
                         </button>
                     </div>
                 </div>
                 @if($licenciaTiene === 'si')
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                    <div class="solicitud-grid-3">
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Clase</label>
                             <input type="text" class="form-input" wire:model.blur="licencia_conducir.clase" placeholder="Ej. A, B, C">
@@ -137,9 +137,9 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);"></div>
+        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
 
-        {{-- ── REFERENCIAS PERSONALES ── --}}
+        {{-- Referencias personales --}}
         <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
                 <div>
@@ -153,7 +153,7 @@
                 <div style="display:grid;gap:10px;">
                     @foreach($referencias_personales as $index => $referencia)
                         <div wire:key="referencia-{{ $index }}" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface-2);">
-                            <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+                            <div class="solicitud-grid-4" style="margin-bottom:10px;">
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Nombre</label>
                                     <input type="text" class="form-input" wire:model.blur="referencias_personales.{{ $index }}.nombre" placeholder="Nombre completo">
