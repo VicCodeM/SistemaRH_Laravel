@@ -11,7 +11,9 @@ use App\Models\Ticket;
 use App\Models\ServicioAsignado;
 use App\Models\Vacante;
 use App\Services\DashboardService;
+use App\Services\ExportService;
 use App\Services\PostulacionService;
+use App\Services\ReporteService;
 use App\Services\SolicitudCompatibilidadService;
 use App\Services\VacanteService;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,75 +26,16 @@ class AdminController extends Controller
         return view('admin.dashboard', $dashboard->datosAdmin());
     }
 
-    public function reportes()
+    public function reportes(ReporteService $reporteService)
     {
-        $resumen = [
-            'empresas_total' => Empresa::count(),
-            'empresas_activas' => Empresa::where('estado', 'activa')->count(),
-            'empresas_pendientes' => Empresa::where('estado', 'pendiente')->count(),
-            'candidatos_total' => Candidato::count(),
-            'candidatos_aprobados' => Candidato::where('solicitud_estado', 'aprobada')->count(),
-            'candidatos_pendientes' => Candidato::where('solicitud_estado', 'enviada')->count(),
-            'solicitudes_total' => Vacante::count(),
-            'solicitudes_activas' => Vacante::where('estado', 'activa')->count(),
-            'solicitudes_pendientes' => Vacante::where('estado', 'pendiente')->count(),
-            'tareas_total' => ServicioAsignado::count(),
-            'tareas_activas' => ServicioAsignado::whereIn('estado', ['activo', 'en_proceso'])->count(),
-            'tickets_total' => Ticket::count(),
-            'tickets_abiertos' => Ticket::where('estado', 'abierto')->count(),
-            'tickets_vencidos' => Ticket::whereNotNull('sla_due_at')
-                ->where('sla_due_at', '<', now())
-                ->whereNotIn('estado', ['resuelto', 'cerrado'])
-                ->count(),
-        ];
-
-        $empresasTop = Empresa::withCount('vacantes')
-            ->orderByDesc('vacantes_count')
-            ->orderBy('nombre_empresa')
-            ->limit(8)
-            ->get();
-
-        $solicitudesActivas = Vacante::with('empresa')
-            ->where('estado', 'activa')
-            ->latest('fecha_publicacion')
-            ->limit(8)
-            ->get();
-
-        $ticketsRecientes = Ticket::with(['empresa', 'asignado'])
-            ->latest()
-            ->limit(8)
-            ->get();
-
-        $tareasRecientes = ServicioAsignado::with(['servicio', 'asignadoA'])
-            ->latest()
-            ->limit(8)
-            ->get();
-
-        // Datos para gráficas mensuales (últimos 6 meses)
-        $meses = collect(range(5, 0))->map(function ($i) {
-            return now()->subMonths($i);
-        });
-
-        $graficaVacantes = $meses->map(function ($mes) {
-            return [
-                'label' => $mes->format('M Y'),
-                'valor' => Vacante::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
-            ];
-        });
-
-        $graficaPostulaciones = $meses->map(function ($mes) {
-            return [
-                'label' => $mes->format('M Y'),
-                'valor' => Postulacion::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
-            ];
-        });
-
-        $graficaTickets = $meses->map(function ($mes) {
-            return [
-                'label' => $mes->format('M Y'),
-                'valor' => Ticket::whereYear('created_at', $mes->year)->whereMonth('created_at', $mes->month)->count(),
-            ];
-        });
+        $resumen = $reporteService->resumen();
+        $empresasTop = $reporteService->empresasTop();
+        $solicitudesActivas = $reporteService->solicitudesActivas();
+        $ticketsRecientes = $reporteService->ticketsRecientes();
+        $tareasRecientes = $reporteService->tareasRecientes();
+        $graficaVacantes = $reporteService->graficaMensual(Vacante::class);
+        $graficaPostulaciones = $reporteService->graficaMensual(Postulacion::class);
+        $graficaTickets = $reporteService->graficaMensual(Ticket::class);
 
         return view('admin.reportes.index', compact(
             'resumen',
@@ -106,36 +49,9 @@ class AdminController extends Controller
         ));
     }
 
-    public function exportarCsv()
+    public function exportarCsv(ExportService $exportService)
     {
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="reporte_sistema_' . now()->format('Y-m-d') . '.csv"',
-        ];
-
-        $callback = function () {
-            $output = fopen('php://output', 'w');
-            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            fputcsv($output, ['Reporte del Sistema RH - ' . now()->format('d/m/Y')]);
-            fputcsv($output, []);
-            fputcsv($output, ['Resumen']);
-            fputcsv($output, ['Empresas totales', Empresa::count()]);
-            fputcsv($output, ['Empresas activas', Empresa::where('estado', 'activa')->count()]);
-            fputcsv($output, ['Empresas pendientes', Empresa::where('estado', 'pendiente')->count()]);
-            fputcsv($output, ['Candidatos totales', Candidato::count()]);
-            fputcsv($output, ['Candidatos aprobados', Candidato::where('solicitud_estado', 'aprobada')->count()]);
-            fputcsv($output, ['Solicitudes de servicio', Vacante::count()]);
-            fputcsv($output, ['Solicitudes activas', Vacante::where('estado', 'activa')->count()]);
-            fputcsv($output, ['Tareas totales', ServicioAsignado::count()]);
-            fputcsv($output, ['Tickets totales', Ticket::count()]);
-            fputcsv($output, ['Tickets abiertos', Ticket::where('estado', 'abierto')->count()]);
-            fputcsv($output, ['Tickets vencidos', Ticket::whereNotNull('sla_due_at')->where('sla_due_at', '<', now())->whereNotIn('estado', ['resuelto', 'cerrado'])->count()]);
-
-            fclose($output);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return $exportService->reporteSistema();
     }
 
     public function empresas(Request $request)
