@@ -205,55 +205,21 @@ class CandidatoSolicitud extends Component
         $this->referencias_personales = array_values($this->referencias_personales);
     }
 
-    public function setSexo(string $val): void
+    public function updated(string $property): void
     {
-        $this->sexo = $val;
-        $this->autoGuardar();
-    }
-
-    public function setEstadoCivil(string $val): void
-    {
-        $this->estado_civil = $val;
-        $this->autoGuardar();
-    }
-
-    public function setViveCon(string $val): void
-    {
-        $this->vive_con = $val;
-        $this->autoGuardar();
-    }
-
-    public function setLicenciaTiene(string $val): void
-    {
-        $this->licencia_conducir['tiene'] = $val;
-        if ($val === 'no') {
+        // Limpieza condicional al cambiar selecciones Sí/No
+        if ($property === 'cartilla_tiene' && $this->cartilla_tiene === 'no') {
+            $this->cartilla_militar = '';
+        }
+        if ($property === 'pasaporte_tiene' && $this->pasaporte_tiene === 'no') {
+            $this->pasaporte = '';
+        }
+        if ($property === 'licencia_conducir.tiene' && ($this->licencia_conducir['tiene'] ?? '') === 'no') {
             $this->licencia_conducir['clase']    = '';
             $this->licencia_conducir['numero']   = '';
             $this->licencia_conducir['vigencia'] = '';
         }
-        $this->autoGuardar();
-    }
 
-    public function setCartillaTiene(string $val): void
-    {
-        $this->cartilla_tiene = $val;
-        if ($val === 'no') {
-            $this->cartilla_militar = '';
-        }
-        $this->autoGuardar();
-    }
-
-    public function setPasaporteTiene(string $val): void
-    {
-        $this->pasaporte_tiene = $val;
-        if ($val === 'no') {
-            $this->pasaporte = '';
-        }
-        $this->autoGuardar();
-    }
-
-    public function updated(string $property): void
-    {
         $this->autoGuardar();
     }
 
@@ -382,6 +348,31 @@ class CandidatoSolicitud extends Component
             && $this->seccionEstudiosCompleta()
             && $this->seccionLaboralCompleta()
             && $this->seccionExtrasCompleta();
+    }
+
+    public function irAPestana(string $pestana): void
+    {
+        if (! $this->pestanaDesbloqueada($pestana)) {
+            $this->addError('solicitud', 'Completa la sección anterior para continuar.');
+            return;
+        }
+        $this->dispatch('cambiarPestana', pestana: $pestana);
+    }
+
+    public function pestanaDesbloqueada(string $pestana): bool
+    {
+        $orden = ['personales', 'contacto', 'estudios', 'laboral', 'extras'];
+        $idx = array_search($pestana, $orden, true);
+        if ($idx === false || $idx === 0) {
+            return true;
+        }
+        $secciones = $this->seccionesCompletadas();
+        for ($i = 0; $i < $idx; $i++) {
+            if (! $secciones[$orden[$i]]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public function enviarSolicitud(): void

@@ -11,23 +11,38 @@
         'laboral'    => ['numero' => 4, 'titulo' => 'Experiencia', 'detalle' => 'Historial laboral'],
         'extras'     => ['numero' => 5, 'titulo' => 'Extras',      'detalle' => 'CURP y documentos'],
     ];
-
-    $btnLocked = "display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.82rem;font-weight:600;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;border:1.5px solid #e2e8f0;";
-    $lockIcon  = '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>';
 @endphp
 
-{{-- SIN x-cloak en el div raíz: cabecera y pestañas siempre visibles --}}
 <div x-data="{
-    tab: 'personales',
+    tab: localStorage.getItem('solicitud_tab_{{ $candidatoId ?? Auth::id() ?? 0 }}') || 'personales',
     order: ['personales','contacto','estudios','laboral','extras'],
-    goTo(t) { this.tab = t; window.scrollTo({top:0,behavior:'smooth'}); },
-    next(c) { const i = this.order.indexOf(c); if(i < this.order.length-1) this.goTo(this.order[i+1]); },
-    prev(c) { const i = this.order.indexOf(c); if(i > 0) this.goTo(this.order[i-1]); },
+    secciones: JSON.parse($el.dataset.secciones || '{}'),
+    goTo(t) {
+        const idx = this.order.indexOf(t);
+        if (idx > 0 && !this.secciones[this.order[idx-1]]) {
+            return;
+        }
+        this.tab = t;
+        localStorage.setItem('solicitud_tab_{{ $candidatoId ?? Auth::id() ?? 0 }}', t);
+        window.scrollTo({top:0, behavior:'smooth'});
+    },
+    next() {
+        const i = this.order.indexOf(this.tab);
+        if (i < this.order.length - 1) this.goTo(this.order[i+1]);
+    },
+    prev() {
+        const i = this.order.indexOf(this.tab);
+        if (i > 0) this.goTo(this.order[i-1]);
+    },
     isActive(k) { return this.tab === k; },
-}">
+    isLocked(k) {
+        const idx = this.order.indexOf(k);
+        return idx > 0 && !this.secciones[this.order[idx-1]];
+    }
+}" data-secciones='@json($secciones)'>
 
     {{-- ═══ CABECERA ═══ --}}
-    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:6px;box-shadow:var(--shadow-sm);">
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:10px;box-shadow:var(--shadow-sm);">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
             <div style="display:flex;align-items:center;gap:12px;">
                 <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -51,50 +66,43 @@
         </div>
     </div>
 
-    {{-- ═══ PESTAÑAS DE NAVEGACIÓN ═══ --}}
-    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 20px;margin-bottom:6px;box-shadow:var(--shadow-sm);">
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    {{-- ═══ STEPPER / PESTAÑAS ═══ --}}
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 16px;margin-bottom:10px;box-shadow:var(--shadow-sm);">
+        <div class="stepper">
             @foreach($tabs as $key => $tabData)
-                @php $done = $secciones[$key]; @endphp
-                <button type="button"
-                    @click="goTo('{{ $key }}')"
-                    style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:2px solid;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:var(--font);
-                        {{ $done
-                            ? 'background:#ecfdf5;border-color:#10b981;color:#10b981;'
-                            : 'background:#f8fafc;border-color:var(--border);color:var(--text-muted);' }}"
-                    :style="isActive('{{ $key }}')
-                        ? 'background:#eff6ff;border-color:var(--accent);color:var(--accent);'
-                        : ''">
-
-                    {{-- Número / check badge --}}
-                    <span style="width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0;
-                        {{ $done
-                            ? 'background:#10b981;color:#fff;'
-                            : 'background:#cbd5e1;color:#fff;' }}"
-                        :style="isActive('{{ $key }}') ? 'background:var(--accent);color:#fff;' : ''">
+                @php
+                    $done = $secciones[$key];
+                    $locked = !$this->pestanaDesbloqueada($key);
+                @endphp
+                <div class="stepper-step">
+                    <button type="button"
+                        @click="goTo('{{ $key }}')"
+                        :class="tab === '{{ $key }}' ? 'step-circle-active' : ''"
+                        class="step-circle {{ $done ? 'step-circle-done' : '' }} {{ $locked ? 'step-circle-locked' : '' }}">
                         @if($done)
-                            <span x-show="isActive('{{ $key }}')">{{ $tabData['numero'] }}</span>
-                            <span x-show="!isActive('{{ $key }}')">✓</span>
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                         @else
-                            {{ $tabData['numero'] }}
+                            <span style="font-size:.8rem;font-weight:700;">{{ $tabData['numero'] }}</span>
                         @endif
-                    </span>
-
-                    {{ $tabData['titulo'] }}
-                </button>
+                    </button>
+                    <span class="step-label" :class="tab === '{{ $key }}' ? 'step-label-active' : ''">{{ $tabData['titulo'] }}</span>
+                </div>
+                @if(!$loop->last)
+                    <div class="step-line {{ $done ? 'step-line-done' : '' }}"></div>
+                @endif
             @endforeach
         </div>
     </div>
 
     {{-- Alertas --}}
-    @if(session('exito'))<div class="alert alert-success" style="margin-bottom:6px;">{{ session('exito') }}</div>@endif
-    @if(session('error'))<div class="alert alert-danger" style="margin-bottom:6px;">{{ session('error') }}</div>@endif
-    @error('solicitud')<div class="alert alert-danger" style="margin-bottom:6px;">{{ $message }}</div>@enderror
+    @if(session('exito'))<div class="alert alert-success" style="margin-bottom:10px;">{{ session('exito') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger" style="margin-bottom:10px;">{{ session('error') }}</div>@endif
+    @error('solicitud')<div class="alert alert-danger" style="margin-bottom:10px;">{{ $message }}</div>@enderror
     @if($yaEnviada && !$modoAdmin)
-        <div class="alert alert-info" style="margin-bottom:6px;">Tu solicitud fue enviada. Puedes seguir corrigiendo datos antes de que sea revisada.</div>
+        <div class="alert alert-info" style="margin-bottom:10px;">Tu solicitud fue enviada. Puedes seguir corrigiendo datos antes de que sea revisada.</div>
     @endif
     @if($accesoPendiente && !$modoAdmin)
-        <div class="alert alert-warning" style="margin-bottom:6px;">Tu acceso está en revisión. Cuando sea aprobado podrás completar tu solicitud.</div>
+        <div class="alert alert-warning" style="margin-bottom:10px;">Tu acceso está en revisión. Cuando sea aprobado podrás completar tu solicitud.</div>
     @endif
 
     @if($accesoPendiente && !$modoAdmin)
@@ -104,59 +112,66 @@
     @else
 
     {{-- ═══ PANELES POR PASO ═══ --}}
-    {{-- x-cloak solo en cada panel para evitar flash; la barra de pestañas ya es visible --}}
-
-    {{-- Sin x-cloak en paneles: conflicta con morphdom de Livewire al re-renderizar --}}
-    {{-- style="display:none" en los paneles no-default para evitar flash inicial   --}}
-
-    <div x-show="tab === 'personales'">
+    <div x-show="tab === 'personales'" x-cloak>
         @include('livewire.solicitud-sections.personales')
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
             @if($secciones['personales'])
-                <button type="button" class="btn btn-primary" @click="next('personales')">Continuar →</button>
+                <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
+                <button type="button" disabled class="btn-locked">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
+                    Completa esta sección
+                </button>
             @endif
         </div>
     </div>
 
-    <div x-show="tab === 'contacto'" style="display:none;">
+    <div x-show="tab === 'contacto'" x-cloak>
         @include('livewire.solicitud-sections.contacto')
         <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
-            <button type="button" class="btn btn-ghost" @click="prev('contacto')">← Atrás</button>
+            <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['contacto'])
-                <button type="button" class="btn btn-primary" @click="next('contacto')">Continuar →</button>
+                <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
+                <button type="button" disabled class="btn-locked">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
+                    Completa esta sección
+                </button>
             @endif
         </div>
     </div>
 
-    <div x-show="tab === 'estudios'" style="display:none;">
+    <div x-show="tab === 'estudios'" x-cloak>
         @include('livewire.solicitud-sections.estudios')
         <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
-            <button type="button" class="btn btn-ghost" @click="prev('estudios')">← Atrás</button>
+            <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['estudios'])
-                <button type="button" class="btn btn-primary" @click="next('estudios')">Continuar →</button>
+                <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
+                <button type="button" disabled class="btn-locked">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
+                    Completa esta sección
+                </button>
             @endif
         </div>
     </div>
 
-    <div x-show="tab === 'laboral'" style="display:none;">
+    <div x-show="tab === 'laboral'" x-cloak>
         @include('livewire.solicitud-sections.laboral')
         <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
-            <button type="button" class="btn btn-ghost" @click="prev('laboral')">← Atrás</button>
+            <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['laboral'])
-                <button type="button" class="btn btn-primary" @click="next('laboral')">Continuar →</button>
+                <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled title="Completa todos los campos de esta sección" style="{{ $btnLocked }}">{!! $lockIcon !!} Completa esta sección</button>
+                <button type="button" disabled class="btn-locked">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
+                    Completa esta sección
+                </button>
             @endif
         </div>
     </div>
 
-    <div x-show="tab === 'extras'" style="display:none;">
+    <div x-show="tab === 'extras'" x-cloak>
         @include('livewire.solicitud-sections.extras')
 
         {{-- ═══ RESUMEN DE VALIDACIÓN ═══ --}}
@@ -192,7 +207,7 @@
 
         {{-- ═══ BOTONES FINALES ═══ --}}
         <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
-            <button type="button" class="btn btn-ghost" @click="prev('extras')">← Atrás</button>
+            <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             <div style="display:flex;gap:10px;">
                 <button type="button" class="btn btn-secondary" wire:click="guardarBorrador" wire:loading.attr="disabled">
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0z"/></svg>
@@ -207,9 +222,8 @@
                             Enviar solicitud
                         </button>
                     @else
-                        <button type="button" disabled
-                            title="Completa todos los campos obligatorios para enviar"
-                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:500;background:#e2e8f0;color:#94a3b8;cursor:not-allowed;border:1px solid var(--border);">
+                        <button type="button" disabled class="btn-locked"
+                            title="Completa todos los campos obligatorios para enviar">
                             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
                             Enviar solicitud
                         </button>
@@ -225,4 +239,99 @@
     </div>
 
     @endif
+
+    {{-- Estilos del stepper --}}
+    <style>
+    .stepper {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 4px;
+    }
+    .stepper-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+    }
+    .step-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid #cbd5e1;
+        background: #fff;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .2s ease;
+        padding: 0;
+        font-family: var(--font);
+    }
+    .step-circle:hover:not(.step-circle-locked):not(.step-circle-done) {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .step-circle-active {
+        border-color: var(--accent) !important;
+        background: var(--accent) !important;
+        color: #fff !important;
+        box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+    }
+    .step-circle-done {
+        border-color: #10b981;
+        background: #10b981;
+        color: #fff;
+    }
+    .step-circle-locked {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+    .step-label {
+        font-size: .72rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-align: center;
+        white-space: nowrap;
+        transition: color .2s;
+    }
+    .step-label-active {
+        color: var(--accent);
+        font-weight: 700;
+    }
+    .step-line {
+        flex: 1 1 auto;
+        height: 2px;
+        background: #e2e8f0;
+        margin-top: 18px;
+        min-width: 20px;
+        border-radius: 1px;
+        transition: background .3s;
+    }
+    .step-line-done {
+        background: #10b981;
+    }
+    .btn-locked {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: .82rem;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+        border: 1.5px solid #e2e8f0;
+        font-family: var(--font);
+    }
+    @media (max-width: 640px) {
+        .step-label { display: none; }
+        .step-circle { width: 32px; height: 32px; }
+        .step-line { margin-top: 15px; min-width: 8px; }
+    }
+    [x-cloak] { display: none !important; }
+    </style>
 </div>

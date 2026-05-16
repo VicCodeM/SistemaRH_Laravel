@@ -1,9 +1,4 @@
 @php
-    $pillBase  = "padding:9px 22px;border-radius:10px;border:1.5px solid;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font);white-space:nowrap;";
-    $pillOn    = "background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 10px rgba(37,99,235,.28);";
-    $pillOff   = "background:#fff;color:var(--text-muted);border-color:var(--border);";
-    $pillYes   = "background:#f0fdf4;color:#10b981;border-color:#10b981;box-shadow:0 2px 10px rgba(16,185,129,.2);";
-
     $licenciaTiene = $licencia_conducir['tiene'] ?? '';
 @endphp
 
@@ -22,44 +17,44 @@
 
         {{-- Documentos oficiales --}}
         <div style="margin-bottom:22px;">
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Documentos oficiales</p>
+            <p class="section-label" style="color:#f43f5e;">Documentos oficiales</p>
             <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">CURP <span style="color:var(--danger);">*</span></label>
+                    <label class="form-label">CURP <span class="req">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="curp" placeholder="CURP (18 caracteres)">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">NSS — Número de seguro social <span style="color:var(--danger);">*</span></label>
+                    <label class="form-label">NSS — Número de seguro social <span class="req">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="nore_seguro_social" placeholder="Número de seguro social">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">RFC <span style="color:var(--danger);">*</span></label>
+                    <label class="form-label">RFC <span class="req">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="rfc" placeholder="RFC">
                 </div>
                 <div class="form-group" style="margin:0;">
-                    <label class="form-label">Afore <span style="color:var(--danger);">*</span></label>
+                    <label class="form-label">Afore <span class="req">*</span></label>
                     <input type="text" class="form-input" wire:model.blur="afore" placeholder="Nombre de tu Afore">
                 </div>
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
+        <div class="section-divider"></div>
 
         {{-- Cartilla militar --}}
         <div style="margin-bottom:22px;">
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Cartilla militar</p>
+            <p class="section-label" style="color:#f43f5e;">Cartilla militar</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $cartilla_tiene === 'si' ? '12px' : '0' }};">
-                    <label class="form-label">¿Tienes cartilla militar?</label>
-                    <div style="display:flex;gap:8px;margin-top:4px;">
-                        <button type="button" wire:click="setCartillaTiene('si')"
-                            style="{{ $cartilla_tiene === 'si' ? $pillOn : $pillOff }}{{ $pillBase }}">
-                            Sí, tengo
-                        </button>
-                        <button type="button" wire:click="setCartillaTiene('no')"
-                            style="{{ $cartilla_tiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
-                            No tengo
-                        </button>
+                    <label class="form-label">¿Tienes cartilla militar? <span class="req">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="cartilla_tiene" value="si">
+                            <span>Sí, tengo</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="cartilla_tiene" value="no">
+                            <span>No tengo</span>
+                        </label>
                     </div>
                 </div>
                 @if($cartilla_tiene === 'si')
@@ -71,23 +66,23 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
+        <div class="section-divider"></div>
 
         {{-- Pasaporte --}}
         <div style="margin-bottom:22px;">
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Pasaporte</p>
+            <p class="section-label" style="color:#f43f5e;">Pasaporte</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $pasaporte_tiene === 'si' ? '12px' : '0' }};">
-                    <label class="form-label">¿Tienes pasaporte?</label>
-                    <div style="display:flex;gap:8px;margin-top:4px;">
-                        <button type="button" wire:click="setPasaporteTiene('si')"
-                            style="{{ $pasaporte_tiene === 'si' ? $pillOn : $pillOff }}{{ $pillBase }}">
-                            Sí, tengo
-                        </button>
-                        <button type="button" wire:click="setPasaporteTiene('no')"
-                            style="{{ $pasaporte_tiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
-                            No tengo
-                        </button>
+                    <label class="form-label">¿Tienes pasaporte? <span class="req">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="pasaporte_tiene" value="si">
+                            <span>Sí, tengo</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="pasaporte_tiene" value="no">
+                            <span>No tengo</span>
+                        </label>
                     </div>
                 </div>
                 @if($pasaporte_tiene === 'si')
@@ -99,23 +94,23 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
+        <div class="section-divider"></div>
 
         {{-- Licencia de conducir --}}
         <div style="margin-bottom:22px;">
-            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0 0 12px;">Licencia de conducir</p>
+            <p class="section-label" style="color:#f43f5e;">Licencia de conducir</p>
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px;">
                 <div class="form-group" style="margin:0 0 {{ $licenciaTiene === 'si' ? '14px' : '0' }};">
-                    <label class="form-label">¿Tienes licencia de conducir?</label>
-                    <div style="display:flex;gap:8px;margin-top:4px;">
-                        <button type="button" wire:click="setLicenciaTiene('si')"
-                            style="{{ $licenciaTiene === 'si' ? $pillOn : $pillOff }}{{ $pillBase }}">
-                            Sí, tengo
-                        </button>
-                        <button type="button" wire:click="setLicenciaTiene('no')"
-                            style="{{ $licenciaTiene === 'no' ? $pillYes : $pillOff }}{{ $pillBase }}">
-                            No tengo
-                        </button>
+                    <label class="form-label">¿Tienes licencia de conducir? <span class="req">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="licencia_conducir.tiene" value="si">
+                            <span>Sí, tengo</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" wire:model.live="licencia_conducir.tiene" value="no">
+                            <span>No tengo</span>
+                        </label>
                     </div>
                 </div>
                 @if($licenciaTiene === 'si')
@@ -137,13 +132,13 @@
             </div>
         </div>
 
-        <div style="height:1px;background:var(--border);margin-bottom:22px;"></div>
+        <div class="section-divider"></div>
 
         {{-- Referencias personales --}}
         <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
                 <div>
-                    <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#f43f5e;margin:0;">Referencias personales</p>
+                    <p class="section-label" style="color:#f43f5e;">Referencias personales</p>
                     <p style="font-size:.75rem;color:var(--text-muted);margin:3px 0 0;">Opcional — personas que puedan dar referencias de ti</p>
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm" wire:click="agregarReferencia">+ Agregar referencia</button>
@@ -190,3 +185,121 @@
 
     </div>
 </div>
+
+<style>
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.radio-pill {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+.radio-pill input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.radio-pill span {
+    display: inline-block;
+    padding: 9px 22px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--text-muted);
+    font-size: .84rem;
+    font-weight: 600;
+    font-family: var(--font);
+    transition: all .18s;
+    white-space: nowrap;
+}
+.radio-pill:hover span {
+    border-color: #cbd5e1;
+}
+.radio-pill input[type="radio"]:checked + span {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 2px 10px rgba(37,99,235,.28);
+}
+.radio-pill input[type="radio"]:checked[value="no"] + span {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 2px 10px rgba(16,185,129,.2);
+}
+.req { color: var(--danger); }
+.section-label {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin: 0 0 12px;
+}
+.section-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 22px;
+}
+.solicitud-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+.solicitud-card-header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.solicitud-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.solicitud-card-title {
+    margin: 0;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.solicitud-card-subtitle {
+    margin: 2px 0 0;
+    font-size: .78rem;
+    color: var(--text-muted);
+}
+.solicitud-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+.solicitud-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.solicitud-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+@media (max-width: 900px) {
+    .solicitud-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .solicitud-grid-4,
+    .solicitud-grid-3,
+    .solicitud-grid-2 { grid-template-columns: 1fr; }
+    .solicitud-card-header { padding: 14px 16px 10px; }
+}
+</style>
