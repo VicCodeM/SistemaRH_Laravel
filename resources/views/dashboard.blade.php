@@ -2,12 +2,9 @@
     @php
         use App\Models\Vacante;
         use App\Models\Postulacion;
-        use App\Models\Ticket;
         $vacantesActivas = Vacante::where('estado', 'activa')->count();
         $postulacionesTotal = Postulacion::count();
         $entrevistasCount = Postulacion::where('estado', 'entrevista')->count();
-        $ticketsSinAsignar = Ticket::whereNull('asignado_a')->where('estado', 'abierto')->count();
-        $ticketsTotal = Ticket::where('estado', 'abierto')->count();
     @endphp
     <x-slot name="header">
         <nav class="breadcrumbs">
@@ -53,20 +50,6 @@
             <div class="metric-change" style="color:var(--text-muted);">En proceso</div>
         </div>
 
-        <div class="metric-card">
-            <div class="metric-top">
-                <span class="metric-label">Tickets</span>
-                <div class="metric-icon" style="background:var(--danger-light); color:var(--danger);">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-6.75-1.5a3 3 0 01-3-3v-3a3 3 0 013-3h.75v6h-.75zm3-3a3 3 0 013-3h.75v6H16.5a3 3 0 01-3-3v-3z"/></svg>
-                </div>
-            </div>
-            <div class="metric-value">{{ $ticketsTotal }}</div>
-            @if($ticketsSinAsignar > 0)
-                <div class="metric-change" style="color:var(--warning);">{{ $ticketsSinAsignar }} sin asignar</div>
-            @else
-                <div class="metric-change" style="color:var(--success);">Todos asignados</div>
-            @endif
-        </div>
     </div>
 
     <div style="margin-top:32px;">

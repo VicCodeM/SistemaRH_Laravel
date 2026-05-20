@@ -13,9 +13,10 @@
         <div id="rh-prog"></div>
 
         {{-- Botón mobile --}}
-        <button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" aria-label="Menú">
+        <button class="sidebar-toggle" onclick="rhSidebarToggle()" aria-label="Menú">
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
         </button>
+        <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="rhSidebarToggle(false)"></div>
 
         <div class="app-layout">
             @include('layouts.navigation')
@@ -80,8 +81,31 @@
         // Completar al cargar la página (post-redirect)
         window.addEventListener('pageshow', () => RHP.done());
 
+        function rhSidebarToggle(forceOpen) {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+
+            if (!sidebar) return;
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (!isMobile) {
+                sidebar.classList.remove('open');
+                backdrop?.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+                return;
+            }
+
+            const open = typeof forceOpen === 'boolean' ? forceOpen : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', open);
+            backdrop?.classList.toggle('show', open);
+            document.body.classList.toggle('sidebar-open', open);
+        }
+
         // Hook Livewire navigate
-        document.addEventListener('livewire:navigate', () => RHP.start());
+        document.addEventListener('livewire:navigate', () => {
+            RHP.start();
+            rhSidebarToggle(false);
+        });
         document.addEventListener('livewire:navigated', () => { setTimeout(() => RHP.done(), 80); });
 
         // ── Toast system ──────────────────────────────────────────────
@@ -157,14 +181,22 @@
         }
 
         // ── Keyboard & sidebar ────────────────────────────────────────
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') rhModalClose(); });
-        document.addEventListener('click', e => {
-            const sb = document.querySelector('.sidebar');
-            const btn = document.querySelector('.sidebar-toggle');
-            if (sb?.classList.contains('open') && !sb.contains(e.target) && !btn?.contains(e.target)) {
-                sb.classList.remove('open');
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                rhModalClose();
+                rhSidebarToggle(false);
             }
         });
+        document.addEventListener('click', e => {
+            if (!window.matchMedia('(max-width: 768px)').matches) {
+                return;
+            }
+
+            if (e.target.closest('.sidebar a, .sidebar button[type=submit]')) {
+                setTimeout(() => rhSidebarToggle(false), 40);
+            }
+        });
+        window.addEventListener('resize', () => rhSidebarToggle(false));
         </script>
 
         {{-- Flash toasts (se ejecutan después de que rhToast esté definido) --}}

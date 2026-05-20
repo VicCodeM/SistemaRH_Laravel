@@ -75,6 +75,28 @@ class CatalogoServicioController extends Controller
         return back()->with('success', $catalogo->activo ? 'Servicio activado.' : 'Servicio desactivado.');
     }
 
+    public function accionModal(CatalogoServicio $catalogo, string $accion)
+    {
+        abort_if($accion !== 'eliminar', 404);
+
+        $config = [
+            'titulo' => 'Eliminar servicio del catalogo',
+            'descripcion' => 'El servicio dejara de aparecer para empresas y candidatos.',
+            'mensaje' => 'Confirma si deseas eliminar este servicio del catalogo. Esta accion no se puede deshacer.',
+            'ruta' => route('admin.catalogo.destroy', $catalogo),
+            'metodo' => 'DELETE',
+            'boton' => 'Eliminar servicio',
+            'clase' => 'btn-danger',
+        ];
+
+        $registro = [
+            'titulo' => $catalogo->nombre,
+            'detalle' => (CatalogoServicio::tipos()[$catalogo->tipo] ?? $catalogo->tipo) . ' · ' . (CatalogoServicio::nivelJerarquicoLabel($catalogo->nivel_jerarquico)),
+        ];
+
+        return view('admin.partials.modal-accion', compact('config', 'registro'));
+    }
+
     public function destroy(CatalogoServicio $catalogo)
     {
         $catalogo->delete();

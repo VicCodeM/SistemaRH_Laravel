@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\ServicioAsignadoController;
 use App\Http\Controllers\Admin\PersonalExternoController;
 use App\Http\Controllers\Admin\PersonalInternoController;
 use App\Http\Controllers\Candidato\CandidatoController;
+use App\Http\Controllers\Candidato\ServicioController as CandidatoServicioController;
+use App\Http\Controllers\ComentarioServicioController;
+use App\Http\Controllers\Empresa\ServicioController as EmpresaServicioController;
 use App\Http\Controllers\Interno\InternoController;
 use App\Http\Controllers\Interno\TareaController;
 use App\Http\Controllers\Empresa\EmpresaController;
@@ -44,6 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/empresas', [AdminController::class, 'empresas'])->name('empresas');
         Route::get('/empresas/{empresa}/modal', [AdminController::class, 'showEmpresa'])->name('empresas.modal');
+        Route::get('/empresas/{empresa}/acciones/{accion}/modal', [AdminController::class, 'accionEmpresaModal'])->name('empresas.accion.modal');
+        Route::get('/empresas/{empresa}/pdf', [AdminController::class, 'exportarEmpresaPdf'])->name('empresas.pdf');
+        Route::get('/empresas/{empresa}/editar', [AdminController::class, 'editarEmpresa'])->name('empresas.editar');
+        Route::put('/empresas/{empresa}', [AdminController::class, 'actualizarEmpresa'])->name('empresas.actualizar');
         Route::get('/empresas/{empresa}/rechazar/modal', [AdminController::class, 'rechazarEmpresaModal'])->name('empresas.rechazar.modal');
         Route::patch('/empresas/{empresa}/aprobar', [AdminController::class, 'aprobarEmpresa'])->name('empresas.aprobar');
         Route::patch('/empresas/{empresa}/rechazar', [AdminController::class, 'rechazarEmpresa'])->name('empresas.rechazar');
@@ -52,7 +59,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/candidatos', [AdminController::class, 'candidatos'])->name('candidatos');
         Route::get('/candidatos/{candidato}/modal', [AdminController::class, 'showCandidato'])->name('candidatos.modal');
+        Route::get('/candidatos/{candidato}/acciones/{accion}/modal', [AdminController::class, 'accionCandidatoModal'])->name('candidatos.accion.modal');
         Route::get('/candidatos/{candidato}/solicitud', [AdminController::class, 'editarSolicitudCandidato'])->name('candidatos.solicitud');
+        Route::get('/candidatos/{candidato}/solicitud/pdf', [AdminController::class, 'exportarSolicitudCandidatoPdf'])->name('candidatos.solicitud.pdf');
         Route::get('/candidatos/{candidato}/rechazar/modal', [AdminController::class, 'rechazarCandidatoModal'])->name('candidatos.rechazar.modal');
         Route::patch('/candidatos/{candidato}/aprobar', [AdminController::class, 'aprobarCandidato'])->name('candidatos.aprobar');
         Route::patch('/candidatos/{candidato}/rechazar', [AdminController::class, 'rechazarCandidato'])->name('candidatos.rechazar');
@@ -61,31 +70,45 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vacantes', [AdminController::class, 'vacantes'])->name('vacantes');
         Route::get('/vacantes/crear', [AdminController::class, 'crearVacante'])->name('vacantes.crear');
         Route::post('/vacantes', [AdminController::class, 'guardarVacante'])->name('vacantes.guardar');
+        Route::get('/vacantes/{vacante}/modal', [AdminController::class, 'showVacante'])->name('vacantes.modal');
+        Route::get('/vacantes/{vacante}/acciones/{accion}/modal', [AdminController::class, 'accionVacanteModal'])->name('vacantes.accion.modal');
         Route::patch('/vacantes/{vacante}/activar', [AdminController::class, 'activarVacante'])->name('vacantes.activar');
+        Route::patch('/vacantes/{vacante}/rechazar', [AdminController::class, 'rechazarVacante'])->name('vacantes.rechazar');
         Route::patch('/vacantes/{vacante}/cerrar', [AdminController::class, 'cerrarVacante'])->name('vacantes.cerrar');
+        Route::post('/vacantes/{vacante}/cerrar-manual', [AdminController::class, 'cerrarVacanteManual'])->name('vacantes.cerrar-manual');
+        Route::patch('/vacantes/{vacante}/reabrir', [AdminController::class, 'reabrirVacante'])->name('vacantes.reabrir');
         Route::delete('/vacantes/{vacante}', [AdminController::class, 'destroyVacante'])->name('vacantes.destroy');
         Route::get('/vacantes/{vacante}/editar', [AdminController::class, 'editarVacante'])->name('vacantes.editar');
         Route::put('/vacantes/{vacante}', [AdminController::class, 'actualizarVacante'])->name('vacantes.actualizar');
         Route::get('/vacantes/{vacante}/matching', [AdminController::class, 'matchingVacante'])->name('vacantes.matching');
+        Route::get('/vacantes/{vacante}/candidatos/exportar/csv', [AdminController::class, 'exportarCandidatosCsv'])->name('vacantes.candidatos.csv');
+        Route::get('/vacantes/{vacante}/candidatos/exportar/pdf', [AdminController::class, 'exportarCandidatosPdf'])->name('vacantes.candidatos.pdf');
         Route::post('/vacantes/{vacante}/asignar', [AdminController::class, 'asignarCandidato'])->name('vacantes.asignar');
+        Route::post('/vacantes/{vacante}/tarea', [AdminController::class, 'crearTareaDesdeVacante'])->name('vacantes.tarea');
         Route::patch('/postulaciones/{postulacion}/estado', [AdminController::class, 'moverPostulacion'])->name('postulaciones.mover');
 
         Route::resource('catalogos', CatalogoOpcionController::class)->except(['show']);
         Route::patch('/catalogos/{catalogo}/toggle', [CatalogoOpcionController::class, 'toggle'])->name('catalogos.toggle');
+        Route::get('/catalogos/{catalogo}/acciones/{accion}/modal', [CatalogoOpcionController::class, 'accionModal'])->name('catalogos.accion.modal');
 
         Route::resource('catalogo', CatalogoServicioController::class)->except(['show']);
         Route::patch('/catalogo/{catalogo}/toggle', [CatalogoServicioController::class, 'toggle'])->name('catalogo.toggle');
+        Route::get('/catalogo/{catalogo}/acciones/{accion}/modal', [CatalogoServicioController::class, 'accionModal'])->name('catalogo.accion.modal');
 
         Route::get('/buscar', [AdminController::class, 'buscarGlobal'])->name('buscar');
+        Route::get('/buscar-json', [AdminController::class, 'buscarJson'])->name('buscar.json');
         Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
         Route::post('/configuracion/parametros', [ConfiguracionController::class, 'guardarParametros'])->name('configuracion.parametros.guardar');
         Route::get('/configuracion/usuarios/nuevo', [ConfiguracionController::class, 'nuevoUsuarioModal'])->name('configuracion.usuarios.nuevo');
         Route::post('/configuracion/usuarios', [ConfiguracionController::class, 'guardarUsuario'])->name('configuracion.usuarios.guardar');
         Route::get('/configuracion/usuarios/{usuario}/modal', [ConfiguracionController::class, 'usuarioModal'])->name('configuracion.usuarios.modal');
+        Route::get('/configuracion/usuarios/{usuario}/acciones/{accion}/modal', [ConfiguracionController::class, 'accionUsuarioModal'])->name('configuracion.usuarios.accion.modal');
         Route::patch('/configuracion/usuarios/{usuario}', [ConfiguracionController::class, 'actualizarUsuario'])->name('configuracion.usuarios.actualizar');
         Route::patch('/configuracion/usuarios/{usuario}/estado', [ConfiguracionController::class, 'cambiarEstadoUsuario'])->name('configuracion.usuarios.estado');
         Route::post('/configuracion/usuarios/{usuario}/recuperar', [ConfiguracionController::class, 'reenviarAcceso'])->name('configuracion.usuarios.recuperar');
 
+        Route::get('/tareas/exportar/csv', [ServicioAsignadoController::class, 'exportarCsv'])->name('tareas.exportar.csv');
+        Route::get('/tareas/exportar/pdf', [ServicioAsignadoController::class, 'exportarPdf'])->name('tareas.exportar.pdf');
         Route::get('/tareas', [ServicioAsignadoController::class, 'index'])->name('tareas.index');
         Route::get('/tareas/crear', [ServicioAsignadoController::class, 'create'])->name('tareas.crear');
         Route::post('/tareas', [ServicioAsignadoController::class, 'store'])->name('tareas.guardar');
@@ -93,15 +116,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tareas/{tarea}/editar', [ServicioAsignadoController::class, 'edit'])->name('tareas.editar');
         Route::put('/tareas/{tarea}', [ServicioAsignadoController::class, 'update'])->name('tareas.actualizar');
         Route::delete('/tareas/{tarea}', [ServicioAsignadoController::class, 'destroy'])->name('tareas.eliminar');
+        Route::get('/tareas/{tarea}/acciones/{accion}/modal', [ServicioAsignadoController::class, 'accionModal'])->name('tareas.accion.modal');
+        Route::post('/tareas/{tarea}/asignar', [ServicioAsignadoController::class, 'asignar'])->name('tareas.asignar');
+        Route::post('/tareas/{tarea}/liberar', [ServicioAsignadoController::class, 'liberarInterno'])->name('tareas.liberar');
+        Route::get('/tareas/{tarea}/matching', [ServicioAsignadoController::class, 'matching'])->name('tareas.matching');
+        Route::patch('/tareas/{tarea}/estado', [ServicioAsignadoController::class, 'cambiarEstado'])->name('tareas.estado');
+        Route::get('/tareas/internos-capacitados', [ServicioAsignadoController::class, 'internosCapacitados'])->name('tareas.internos-capacitados');
+        Route::get('/tareas-kanban', function () {
+            return view('admin.servicios-asignados.kanban');
+        })->name('tareas.kanban');
 
         Route::resource('personal-externo', PersonalExternoController::class)->except(['show']);
         Route::get('/personal-externo/{personalExterno}/modal', [PersonalExternoController::class, 'modal'])->name('personal-externo.modal');
+        Route::get('/personal-externo/{personalExterno}/acciones/{accion}/modal', [PersonalExternoController::class, 'accionModal'])->name('personal-externo.accion.modal');
 
+        Route::get('/personal-interno/exportar/csv', [PersonalInternoController::class, 'exportarCsv'])->name('personal-interno.exportar.csv');
+        Route::get('/personal-interno/exportar/pdf', [PersonalInternoController::class, 'exportarPdf'])->name('personal-interno.exportar.pdf');
         Route::get('/personal-interno', [PersonalInternoController::class, 'index'])->name('personal-interno.index');
         Route::get('/personal-interno/nuevo', [PersonalInternoController::class, 'create'])->name('personal-interno.crear');
         Route::post('/personal-interno', [PersonalInternoController::class, 'store'])->name('personal-interno.guardar');
         Route::get('/personal-interno/{interno}/modal', [PersonalInternoController::class, 'modal'])->name('personal-interno.modal');
+        Route::get('/personal-interno/{interno}/acciones/{accion}/modal', [PersonalInternoController::class, 'accionModal'])->name('personal-interno.accion.modal');
+        Route::get('/personal-interno/{interno}/pdf', [PersonalInternoController::class, 'exportarFichaPdf'])->name('personal-interno.pdf');
         Route::patch('/personal-interno/{interno}/estado', [PersonalInternoController::class, 'toggleEstado'])->name('personal-interno.estado');
+        Route::post('/personal-interno/{interno}/capacidades', [PersonalInternoController::class, 'actualizarCapacidades'])->name('personal-interno.capacidades');
     });
 
     Route::middleware(['role:empresa'])->prefix('empresa')->name('empresa.')->group(function () {
@@ -115,6 +153,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/solicitudes/{vacante}', [EmpresaController::class, 'actualizarSolicitud'])->name('solicitudes.actualizar');
 
         Route::patch('/postulaciones/{postulacion}/mover', [EmpresaController::class, 'moverPostulacion'])->name('postulaciones.mover');
+
+        // Solicitudes de servicio de la empresa (capacitación, coaching, etc.)
+        Route::get('/servicios', [EmpresaServicioController::class, 'index'])->name('servicios.index');
+        Route::get('/servicios/nuevo', [EmpresaServicioController::class, 'create'])->name('servicios.crear');
+        Route::post('/servicios', [EmpresaServicioController::class, 'store'])->name('servicios.guardar');
+        Route::get('/servicios/{servicio}', [EmpresaServicioController::class, 'show'])->name('servicios.ver');
+        Route::delete('/servicios/{servicio}', [EmpresaServicioController::class, 'cancelar'])->name('servicios.cancelar');
 
         Route::get('/vacantes', [EmpresaController::class, 'solicitudes'])->name('vacantes');
         Route::get('/vacantes/crear', [EmpresaController::class, 'crearSolicitud'])->name('vacantes.crear');
@@ -131,17 +176,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vacantes/{vacante}/modal', [CandidatoController::class, 'vacanteModal'])->name('vacantes.modal');
         Route::get('/postulaciones', [CandidatoController::class, 'postulaciones'])->name('postulaciones');
         Route::post('/vacantes/{vacante}/postular', [CandidatoController::class, 'postular'])->name('postular');
+
+        // Servicios solicitados por el candidato (cursos, coaching, etc.)
+        Route::get('/servicios', [CandidatoServicioController::class, 'index'])->name('servicios.index');
+        Route::get('/servicios/nuevo', [CandidatoServicioController::class, 'create'])->name('servicios.crear');
+        Route::post('/servicios', [CandidatoServicioController::class, 'store'])->name('servicios.guardar');
+        Route::get('/servicios/{servicio}', [CandidatoServicioController::class, 'show'])->name('servicios.ver');
+        Route::delete('/servicios/{servicio}', [CandidatoServicioController::class, 'cancelar'])->name('servicios.cancelar');
     });
 
-    Route::prefix('tickets')->name('tickets.')->middleware('role:empresa,admin,interno')->group(function () {
-        Route::get('/', [TicketController::class, 'index'])->name('index');
-        Route::get('/crear', [TicketController::class, 'crear'])->name('crear');
-        Route::post('/', [TicketController::class, 'guardar'])->name('guardar');
-        Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
-        Route::post('/{ticket}/responder', [TicketController::class, 'responder'])->name('responder');
-        Route::patch('/{ticket}/estado', [TicketController::class, 'cambiarEstado'])->name('estado');
-        Route::patch('/{ticket}/asignar', [TicketController::class, 'asignar'])->name('asignar');
-    });
+    // Comentarios en pedidos de servicio (accesible por admin/interno/empresa/candidato dueño)
+    Route::post('/pedidos-servicio/{servicio}/comentarios', [ComentarioServicioController::class, 'store'])->name('pedidos.comentarios.store');
+    Route::get('/pedidos-servicio/comentarios/{comentario}/eliminar/modal', [ComentarioServicioController::class, 'destroyModal'])->name('pedidos.comentarios.destroy.modal');
+    Route::delete('/pedidos-servicio/comentarios/{comentario}', [ComentarioServicioController::class, 'destroy'])->name('pedidos.comentarios.destroy');
 
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', fn () => view('chat.index'))->name('index');

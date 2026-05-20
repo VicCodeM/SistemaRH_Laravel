@@ -5,7 +5,7 @@
             <span class="breadcrumb-sep">&rsaquo;</span>
             <span>Panel</span>
         </nav>
-        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div class="toolbar-wrap" style="gap:12px;">
             <h1 class="page-title" style="margin:0;">{{ $empresa->nombre_empresa }}</h1>
             <span class="badge {{ \App\Models\Empresa::estadoBadgeClass($empresa->estado) }}">
                 {{ \App\Models\Empresa::estadoLabel($empresa->estado) }}
@@ -13,6 +13,10 @@
         </div>
         <p class="page-subtitle">Resumen operativo de solicitudes, candidatos y seguimiento.</p>
     </x-slot>
+
+    @isset($acciones)
+        <x-acciones-pendientes titulo="Que sigue?" :acciones="$acciones" />
+    @endisset
 
     @if(session('success'))
         <div style="margin-bottom:16px; padding:12px 16px; background:var(--success-light); color:var(--success); border-radius:8px; border-left:4px solid var(--success);">
@@ -40,7 +44,7 @@
 
         <div class="metric-card">
             <div class="metric-top">
-                <span class="metric-label">Solicitudes en revisión</span>
+                <span class="metric-label">Solicitudes en revision</span>
                 <div class="metric-icon" style="background:var(--warning-light); color:var(--warning);">
                     <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
@@ -73,9 +77,9 @@
     </div>
 
     <div class="card fade-in" style="margin-top:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div class="candidate-inline-meta" style="margin-bottom:16px;">
             <h3 style="font-weight:600; margin:0;">Solicitudes recientes</h3>
-            <a href="{{ route('empresa.solicitudes.crear') }}" style="padding:8px 14px; background:var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:13px; font-weight:500;">+ Nueva solicitud</a>
+            <a href="{{ route('empresa.solicitudes.crear') }}" class="btn btn-primary btn-sm">+ Nueva solicitud</a>
         </div>
 
         @php
@@ -84,38 +88,70 @@
 
         @if($solicitudes_recientes->isEmpty())
             <div style="text-align:center; padding:40px 0;">
-                <p style="color:#64748b; font-size:0.9rem;">Aún no has enviado ninguna solicitud.</p>
-                <a href="{{ route('empresa.solicitudes.crear') }}" style="display:inline-block; margin-top:12px; padding:10px 20px; background:var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:14px;">Hacer tu primera solicitud</a>
+                <p style="color:#64748b; font-size:0.9rem;">Aun no has enviado ninguna solicitud.</p>
+                <a href="{{ route('empresa.solicitudes.crear') }}" class="btn btn-primary" style="margin-top:12px;">Hacer tu primera solicitud</a>
             </div>
         @else
-            <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                <thead>
-                    <tr style="border-bottom:2px solid var(--border);">
-                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Solicitud</th>
-                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Tipo</th>
-                        <th style="text-align:center; padding:10px 8px; color:var(--text-muted); font-weight:500;">Candidatos</th>
-                        <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Estado</th>
-                        <th style="text-align:right; padding:10px 8px; color:var(--text-muted); font-weight:500;"></th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="desktop-only table-scroll">
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead>
+                        <tr style="border-bottom:2px solid var(--border);">
+                            <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Solicitud</th>
+                            <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Tipo</th>
+                            <th style="text-align:center; padding:10px 8px; color:var(--text-muted); font-weight:500;">Candidatos</th>
+                            <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Estado</th>
+                            <th style="text-align:right; padding:10px 8px; color:var(--text-muted); font-weight:500;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($solicitudes_recientes as $sol)
+                            <tr style="border-bottom:1px solid var(--border);">
+                                <td style="padding:10px 8px; font-weight:500;">{{ $sol->titulo }}</td>
+                                <td style="padding:10px 8px; font-size:0.8rem; color:#94a3b8;">{{ $tipos[$sol->tipo_servicio] ?? '—' }}</td>
+                                <td style="padding:10px 8px; text-align:center; font-weight:600;">{{ $sol->postulaciones_count }}</td>
+                                <td style="padding:10px 8px;">
+                                    <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($sol->estado) }}" style="font-size:12px;">
+                                        {{ \App\Models\Vacante::estadoLabel($sol->estado) }}
+                                    </span>
+                                </td>
+                                <td style="padding:10px 8px; text-align:right;">
+                                    <a href="{{ route('empresa.solicitudes.ver', $sol) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver &rarr;</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mobile-only">
+                <div class="candidate-mobile-list">
                     @foreach($solicitudes_recientes as $sol)
-                        <tr style="border-bottom:1px solid var(--border);">
-                            <td style="padding:10px 8px; font-weight:500;">{{ $sol->titulo }}</td>
-                            <td style="padding:10px 8px; font-size:0.8rem; color:#94a3b8;">{{ $tipos[$sol->tipo_servicio] ?? '—' }}</td>
-                            <td style="padding:10px 8px; text-align:center; font-weight:600;">{{ $sol->postulaciones_count }}</td>
-                            <td style="padding:10px 8px;">
-                                <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($sol->estado) }}" style="font-size:12px;">
+                        <article class="candidate-mobile-card">
+                            <div class="candidate-inline-meta">
+                                <div>
+                                    <h4 class="candidate-mobile-card-title">{{ $sol->titulo }}</h4>
+                                    <p class="candidate-mobile-card-subtitle">{{ $tipos[$sol->tipo_servicio] ?? '—' }}</p>
+                                </div>
+                                <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($sol->estado) }}">
                                     {{ \App\Models\Vacante::estadoLabel($sol->estado) }}
                                 </span>
-                            </td>
-                            <td style="padding:10px 8px; text-align:right;">
-                                <a href="{{ route('empresa.solicitudes.ver', $sol) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver &rarr;</a>
-                            </td>
-                        </tr>
+                            </div>
+
+                            <div class="candidate-mobile-meta">
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Candidatos</p>
+                                    <p class="candidate-mobile-meta-value">{{ $sol->postulaciones_count }}</p>
+                                </div>
+                            </div>
+
+                            <div class="toolbar-wrap mt-4">
+                                <a href="{{ route('empresa.solicitudes.ver', $sol) }}" class="btn btn-secondary btn-sm">Ver solicitud</a>
+                            </div>
+                        </article>
                     @endforeach
-                </tbody>
-            </table>
+                </div>
+            </div>
+
             <div style="margin-top:12px; text-align:right;">
                 <a href="{{ route('empresa.solicitudes') }}" style="font-size:13px; color:var(--accent); text-decoration:none;">Ver todas mis solicitudes &rarr;</a>
             </div>

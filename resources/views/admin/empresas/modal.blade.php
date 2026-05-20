@@ -3,10 +3,8 @@
 
     {{-- Header --}}
     <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div class="modal-header-icon" style="background:rgba(37,99,235,.1);color:#2563eb;">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
-            </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <x-avatar :src="$empresa->usuario?->avatar_url" :nombre="$empresa->nombre_empresa" :tamano="48" />
             <div>
                 <h2 class="modal-title">{{ $empresa->nombre_empresa }}</h2>
                 <span class="modal-subtitle">Registrada el {{ $empresa->created_at?->format('d/m/Y') ?? '—' }}</span>
@@ -23,7 +21,7 @@
     {{-- Cuerpo --}}
     <div class="modal-body">
         <p class="modal-section-label">Datos de la empresa</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;">
+        <div class="modal-grid-2" style="margin-bottom:24px;">
             @foreach (['RFC' => $empresa->rfc, 'Teléfono' => $empresa->telefono, 'Ciudad' => $empresa->ciudad, 'Giro / Industria' => $empresa->descripcion] as $label => $valor)
                 <div>
                     <p class="modal-field-label">{{ $label }}</p>
@@ -33,7 +31,7 @@
         </div>
 
         <p class="modal-section-label">Contacto principal</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;">
+        <div class="modal-grid-2" style="margin-bottom:24px;">
             <div>
                 <p class="modal-field-label">Nombre</p>
                 <p class="modal-field-value">{{ $empresa->usuario?->name ?? '—' }}</p>
@@ -45,7 +43,7 @@
         </div>
 
         @if ($empresa->vacantes->isNotEmpty())
-            <p class="modal-section-label">Solicitudes de servicio</p>
+            <p class="modal-section-label">Vacantes</p>
             @foreach ($empresa->vacantes as $v)
                 <div class="modal-list-item">
                     <div>
@@ -61,7 +59,8 @@
     </div>
 
     {{-- Acciones --}}
-    <div class="modal-footer" style="border-top:1px solid var(--border);padding-top:20px;">
+    <div class="modal-footer modal-actions-wrap" style="border-top:1px solid var(--border);padding-top:20px;">
+        <a href="{{ route('admin.empresas.pdf', $empresa) }}" target="_blank" class="btn btn-secondary" title="Descargar ficha completa en PDF">📄 PDF</a>
         @if ($empresa->estado === 'pendiente')
             <form method="POST" action="{{ route('admin.empresas.aprobar', $empresa) }}" style="margin:0;">@csrf @method('PATCH')
                 <button type="submit" onclick="rhModalClose()" class="btn btn-success">✓ Aprobar empresa</button>

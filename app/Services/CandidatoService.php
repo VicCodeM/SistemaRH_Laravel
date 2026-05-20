@@ -13,6 +13,7 @@ class CandidatoService
     public function guardarBorrador(int $usuarioId, ?int $candidatoId, array $datos): Candidato
     {
         $datos['usuario_id'] = $usuarioId;
+        $datos = $this->normalizarVacios($datos);
 
         if ($candidatoId) {
             $candidato = Candidato::findOrFail($candidatoId);
@@ -21,6 +22,21 @@ class CandidatoService
         }
 
         return Candidato::create($datos);
+    }
+
+    /**
+     * Convierte strings vacíos a null para evitar errores de truncamiento
+     * en columnas ENUM, DATE y otros tipos que no admiten '' en MySQL.
+     */
+    private function normalizarVacios(array $datos): array
+    {
+        return array_map(function ($valor) {
+            if (is_string($valor) && $valor === '') {
+                return null;
+            }
+
+            return $valor;
+        }, $datos);
     }
 
     public function enviarSolicitud(int $candidatoId): Candidato

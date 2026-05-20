@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 class EmpresaController extends Controller
 {
-    public function dashboard()
+    public function dashboard(\App\Services\ResumenRapidoService $resumen)
     {
         $empresa = Auth::user()->empresa;
 
@@ -47,7 +47,9 @@ class EmpresaController extends Controller
             ->take(5)
             ->get();
 
-        return view('empresa.dashboard', compact('empresa', 'stats', 'solicitudes_recientes'));
+        $acciones = $resumen->paraEmpresa($empresa);
+
+        return view('empresa.dashboard', compact('empresa', 'stats', 'solicitudes_recientes', 'acciones'));
     }
 
     public function solicitudes()
@@ -69,11 +71,12 @@ class EmpresaController extends Controller
             return $redirigir;
         }
 
-        $niveles = CatalogoServicio::nivelesJerarquicosFormulario();
-        $tipos = Vacante::tiposServicio();
-        $estudios = Vacante::nivelesEstudios();
+        $niveles   = CatalogoServicio::nivelesJerarquicosFormulario();
+        $estudios  = Vacante::nivelesEstudios();
+        $areas     = \App\Models\CatalogoOpcion::opciones('areas_carreras', []);
+        $contratos = \App\Models\CatalogoOpcion::opciones('tipos_contrato', []);
 
-        return view('empresa.solicitudes.create', compact('niveles', 'tipos', 'estudios'));
+        return view('empresa.solicitudes.create', compact('niveles', 'estudios', 'areas', 'contratos'));
     }
 
     public function guardarSolicitud(Request $request, WorkflowService $workflow, VacanteService $vacanteService)
@@ -85,18 +88,21 @@ class EmpresaController extends Controller
         $nivelesValidos = implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()));
 
         $data = $request->validate([
-            'tipo_servicio' => 'required|in:' . implode(',', array_keys(Vacante::tiposServicio())),
-            'titulo' => 'required|string|max:200',
-            'nivel_jerarquico' => "required|in:{$nivelesValidos}",
+            'titulo'                => 'required|string|max:200',
+            'nivel_jerarquico'      => "required|in:{$nivelesValidos}",
+            'cupos'                 => 'nullable|integer|min:1|max:100',
             'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
-            'area_requerida' => 'nullable|string|max:150',
-            'experiencia_minima' => 'nullable|integer|min:0|max:60',
-            'descripcion' => 'nullable|string|max:5000',
-            'requerimientos' => 'nullable|string|max:2000',
-            'salario_min' => 'nullable|numeric|min:0',
-            'salario_max' => 'nullable|numeric|min:0',
-            'ubicacion' => 'nullable|string|max:200',
+            'area_requerida'        => 'nullable|string|max:150',
+            'tipo_contrato'         => 'nullable|string|max:50',
+            'experiencia_minima'    => 'nullable|integer|min:0|max:60',
+            'requerimientos'        => 'nullable|string|max:2000',
+            'salario_min'           => 'nullable|numeric|min:0',
+            'salario_max'           => 'nullable|numeric|min:0',
+            'ubicacion'             => 'nullable|string|max:200',
         ]);
+
+        // Vacante = solo reclutamiento (los demás servicios van por SolicitudServicio)
+        $data['tipo_servicio'] = 'reclutamiento';
 
         $empresa = Auth::user()->empresa;
         abort_if(! $empresa, 403, 'Tu perfil de empresa todavía no está configurado.');
@@ -106,7 +112,7 @@ class EmpresaController extends Controller
 
         return redirect()
             ->route('empresa.solicitudes')
-            ->with('success', 'Solicitud enviada. El administrador la revisará a la brevedad.');
+            ->with('success', '¡Solicitud enviada! Buscaremos candidatos y te avisaremos pronto.');
     }
 
     public function verSolicitud(Vacante $vacante)
@@ -130,11 +136,12 @@ class EmpresaController extends Controller
         $this->autorizarVacante($vacante);
         abort_if($vacante->estado !== 'pendiente', 403, 'Solo puedes editar solicitudes pendientes.');
 
-        $niveles = CatalogoServicio::nivelesJerarquicosFormulario();
-        $tipos = Vacante::tiposServicio();
-        $estudios = Vacante::nivelesEstudios();
+        $niveles   = CatalogoServicio::nivelesJerarquicosFormulario();
+        $estudios  = Vacante::nivelesEstudios();
+        $areas     = \App\Models\CatalogoOpcion::opciones('areas_carreras', []);
+        $contratos = \App\Models\CatalogoOpcion::opciones('tipos_contrato', []);
 
-        return view('empresa.solicitudes.edit', compact('vacante', 'niveles', 'tipos', 'estudios'));
+        return view('empresa.solicitudes.edit', compact('vacante', 'niveles', 'estudios', 'areas', 'contratos'));
     }
 
     public function actualizarSolicitud(Request $request, Vacante $vacante, VacanteService $vacanteService)
@@ -149,18 +156,29 @@ class EmpresaController extends Controller
         $nivelesValidos = implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()));
 
         $data = $request->validate([
-            'tipo_servicio' => 'required|in:' . implode(',', array_keys(Vacante::tiposServicio())),
-            'titulo' => 'required|string|max:200',
-            'nivel_jerarquico' => "required|in:{$nivelesValidos}",
+            'titulo'                => 'required|string|max:200',
+            'nivel_jerarquico'      => "required|in:{$nivelesValidos}",
+            'cupos'                 => 'nullable|integer|min:1|max:100',
             'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
-            'area_requerida' => 'nullable|string|max:150',
-            'experiencia_minima' => 'nullable|integer|min:0|max:60',
-            'requerimientos' => 'nullable|string|max:2000',
+            'area_requerida'        => 'nullable|string|max:150',
+            'tipo_contrato'         => 'nullable|string|max:50',
+            'experiencia_minima'    => 'nullable|integer|min:0|max:60',
+            'requerimientos'        => 'nullable|string|max:2000',
+            'salario_min'           => 'nullable|numeric|min:0',
+            'salario_max'           => 'nullable|numeric|min:0',
+            'ubicacion'             => 'nullable|string|max:200',
         ]);
 
-        $vacanteService->actualizar($vacante, $data);
+        // Vacante = solo reclutamiento (los demás servicios van por ServicioAsignado)
+        $data['tipo_servicio'] = 'reclutamiento';
 
-        return redirect()->route('empresa.solicitudes')->with('success', 'Solicitud actualizada correctamente.');
+        try {
+            $vacanteService->actualizar($vacante, $data);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+
+        return redirect()->route('empresa.solicitudes')->with('success', 'Vacante actualizada correctamente.');
     }
 
     public function moverPostulacion(Request $request, Postulacion $postulacion, PostulacionService $postulacionService)
@@ -172,7 +190,12 @@ class EmpresaController extends Controller
         $this->autorizarPostulacion($postulacion);
 
         $request->validate(['estado' => 'required|in:' . implode(',', array_keys(Postulacion::estadosProceso()))]);
-        $postulacionService->mover($postulacion, $request->estado);
+
+        try {
+            $postulacionService->mover($postulacion, $request->estado);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Estado actualizado correctamente.');
     }
@@ -199,13 +222,13 @@ class EmpresaController extends Controller
     private function autorizarVacante(Vacante $vacante): void
     {
         $empresa = Auth::user()->empresa;
-        abort_if(! $empresa || $vacante->empresa_id !== $empresa->id, 403);
+        abort_if(! $empresa || $vacante->empresa_id !== $empresa->id, 403, 'Esta vacante pertenece a otra empresa.');
     }
 
     private function autorizarPostulacion(Postulacion $postulacion): void
     {
         $empresa = Auth::user()->empresa;
         $postulacion->load('vacante');
-        abort_if(! $empresa || $postulacion->vacante->empresa_id !== $empresa->id, 403);
+        abort_if(! $empresa || $postulacion->vacante->empresa_id !== $empresa->id, 403, 'Esta postulación no es de una vacante tuya.');
     }
 }

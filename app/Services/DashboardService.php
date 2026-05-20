@@ -6,7 +6,6 @@ use App\Models\Candidato;
 use App\Models\Empresa;
 use App\Models\PersonalExterno;
 use App\Models\ServicioAsignado;
-use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Vacante;
 
@@ -105,19 +104,6 @@ class DashboardService
     public function alertasAdmin(): array
     {
         $alertas = [];
-
-        $ticketsVencidos = Ticket::whereNotNull('sla_due_at')
-            ->where('sla_due_at', '<', now())
-            ->whereNotIn('estado', ['resuelto', 'cerrado'])
-            ->count();
-
-        if ($ticketsVencidos > 0) {
-            $alertas[] = [
-                'tipo' => 'danger',
-                'mensaje' => "Hay {$ticketsVencidos} ticket(s) vencido(s) sin resolver. Revisa el módulo de soporte.",
-                'link' => route('tickets.index'),
-            ];
-        }
 
         $empresasViejas = Empresa::where('estado', 'pendiente')
             ->where('created_at', '<', now()->subDays(7))

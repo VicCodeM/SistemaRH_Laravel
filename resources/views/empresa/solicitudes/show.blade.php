@@ -65,13 +65,16 @@
                     <div style="display:grid; gap:10px;">
                         @foreach($vacante->postulaciones as $postulacion)
                             @php $candidato = $postulacion->candidato; $usuario = $candidato?->usuario; @endphp
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--surface-2); border-radius:8px; border:1px solid var(--border);">
-                                <div>
-                                    <div style="font-weight:600; font-size:0.9rem;">{{ $usuario?->name ?? 'Candidato' }}</div>
-                                    <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">{{ $usuario?->email }}</div>
-                                    @if($candidato?->puesto_deseado)
-                                        <div style="font-size:0.78rem; color:#94a3b8; margin-top:1px;">{{ $candidato->puesto_deseado }}</div>
-                                    @endif
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--surface-2); border-radius:8px; border:1px solid var(--border); gap:10px;">
+                                <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+                                    <x-avatar :src="$usuario?->avatar_url" :nombre="$usuario?->name ?? '?'" :tamano="36" />
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="font-weight:600; font-size:0.9rem;">{{ $usuario?->name ?? 'Candidato' }}</div>
+                                        <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">{{ $usuario?->email }}</div>
+                                        @if($candidato?->puesto_deseado)
+                                            <div style="font-size:0.78rem; color:#94a3b8; margin-top:1px;">{{ $candidato->puesto_deseado }}</div>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     @if($postulacion->asignacion_forzada)
@@ -125,11 +128,10 @@
             <div class="card" style="margin-top:12px;">
                 <h3 style="font-weight:600; font-size:0.95rem; margin:0 0 12px;">¿Necesitas ayuda?</h3>
                 <div style="font-size:0.83rem; color:#94a3b8; line-height:1.6;">
-                    Si tienes dudas sobre tu solicitud, puedes escribirnos por el chat o abrir un ticket de soporte.
+                    Si tienes dudas sobre tu solicitud, puedes escribirnos por el chat y el equipo te atenderá.
                 </div>
                 <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
                     <a href="{{ route('chat.index') }}" class="btn btn-secondary" style="text-align:center; font-size:0.83rem;">Ir al chat</a>
-                    <a href="{{ route('tickets.crear') }}" class="btn btn-secondary" style="text-align:center; font-size:0.83rem;">Abrir ticket</a>
                 </div>
             </div>
         </div>

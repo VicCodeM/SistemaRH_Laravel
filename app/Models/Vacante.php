@@ -23,6 +23,10 @@ class Vacante extends Model
         'salario_max',
         'ubicacion',
         'tipo_contrato',
+        'cupos',
+        'cierre_motivo',
+        'fecha_cierre',
+        'notas_internas',
         'estado',
         'fecha_publicacion',
     ];
@@ -32,7 +36,35 @@ class Vacante extends Model
         'salario_min' => 'decimal:2',
         'salario_max' => 'decimal:2',
         'experiencia_minima' => 'integer',
+        'cupos' => 'integer',
+        'fecha_cierre' => 'datetime',
     ];
+
+    /**
+     * Candidatos ya seleccionados (cupos ocupados).
+     * Cuenta postulaciones en estado 'seleccionado' (los retirados/rechazados no cuentan).
+     */
+    public function cuposCubiertos(): int
+    {
+        return $this->postulaciones()
+            ->where('estado', 'seleccionado')
+            ->count();
+    }
+
+    public function cuposLibres(): int
+    {
+        return max(0, ($this->cupos ?? 1) - $this->cuposCubiertos());
+    }
+
+    public function estaLlena(): bool
+    {
+        return $this->cuposLibres() <= 0;
+    }
+
+    public function puedeRecibirMasCandidatos(): bool
+    {
+        return ! $this->estaLlena() && in_array($this->estado, ['pendiente', 'activa'], true);
+    }
 
     public static function tiposServicio(): array
     {
@@ -175,6 +207,16 @@ class Vacante extends Model
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function serviciosAsignados(): HasMany
+    {
+        return $this->hasMany(ServicioAsignado::class, 'vacante_id');
+    }
+
+    public function esReclutamiento(): bool
+    {
+        return $this->tipo_servicio === 'reclutamiento';
     }
 
     public function postulaciones(): HasMany

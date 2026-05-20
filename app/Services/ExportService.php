@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Candidato;
 use App\Models\Empresa;
 use App\Models\ServicioAsignado;
-use App\Models\Ticket;
 use App\Models\Vacante;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -39,9 +38,6 @@ class ExportService
             fputcsv($output, ['Solicitudes de servicio', Vacante::count()]);
             fputcsv($output, ['Solicitudes activas', Vacante::where('estado', 'activa')->count()]);
             fputcsv($output, ['Tareas totales', ServicioAsignado::count()]);
-            fputcsv($output, ['Tickets totales', Ticket::count()]);
-            fputcsv($output, ['Tickets abiertos', Ticket::where('estado', 'abierto')->count()]);
-            fputcsv($output, ['Tickets vencidos', Ticket::whereNotNull('sla_due_at')->where('sla_due_at', '<', now())->whereNotIn('estado', ['resuelto', 'cerrado'])->count()]);
 
             fclose($output);
         };

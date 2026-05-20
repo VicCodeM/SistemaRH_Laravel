@@ -1,0 +1,32 @@
+﻿%% DIAGRAMAS DE FLUJO DEL SISTEMA
+%% Contenido válido Mermaid para un solo diagrama general.
+
+graph TD
+    A["Invitado"] --> B["Login/Register"]
+    B --> C["Autenticado"]
+    C --> D["Admin"]
+    C --> E["Empresa"]
+    C --> F["Candidato"]
+    C --> G["Interno"]
+    D --> H["Gestionar empresas"]
+    D --> I["Gestionar candidatos"]
+    D --> J["Gestionar vacantes"]
+    D --> K["Gestionar catálogo"]
+    D --> L["Gestionar personal externo"]
+    D --> M["Tickets"]
+    D --> N["Chat"]
+    E --> O["Dashboard empresa"]
+    E --> P["Solicitudes / Vacantes"]
+    E --> M
+    E --> N
+    F --> Q["Solicitud candidato"]
+    F --> R["Vacantes activas"]
+    F --> S["Postulaciones"]
+    F --> N
+    G --> T["Dashboard interno"]
+    G --> N
+    H --> U["Estado empresas"]
+    I --> V["Estado candidatos"]
+    J --> W["Vacantes + matching"]
+    M --> X["SLA inteligente"]
+    N --> Y["Salas de chat"]

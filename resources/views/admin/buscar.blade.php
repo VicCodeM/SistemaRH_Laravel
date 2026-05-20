@@ -26,7 +26,6 @@
                             'empresa' => ['bg' => 'rgba(245,158,11,.12)', 'color' => '#f59e0b', 'label' => 'Empresa'],
                             'candidato' => ['bg' => 'rgba(96,165,250,.12)', 'color' => '#60a5fa', 'label' => 'Candidato'],
                             'vacante' => ['bg' => 'rgba(167,139,250,.12)', 'color' => '#a78bfa', 'label' => 'Solicitud'],
-                            'ticket' => ['bg' => 'rgba(34,197,94,.12)', 'color' => '#22c55e', 'label' => 'Ticket'],
                         ];
                         $tc = $tipoColors[$r['tipo']] ?? $tipoColors['empresa'];
                     @endphp
@@ -42,14 +41,12 @@
                             'empresa' => \App\Models\Empresa::estadoBadgeClass($r['estado']),
                             'candidato' => \App\Models\Candidato::solicitudEstadoBadgeClass($r['estado']),
                             'vacante' => \App\Models\Vacante::estadoBadgeClass($r['estado']),
-                            'ticket' => \App\Models\Ticket::estadoBadgeClass($r['estado']),
                             default => 'badge-gray'
                         } }}">
                             {{ match($r['tipo']) {
                                 'empresa' => \App\Models\Empresa::estadoLabel($r['estado']),
                                 'candidato' => \App\Models\Candidato::solicitudEstadoLabel($r['estado']),
                                 'vacante' => \App\Models\Vacante::estadoLabel($r['estado']),
-                                'ticket' => \App\Models\Ticket::estadoLabel($r['estado']),
                                 default => $r['estado']
                             } }}
                         </span>

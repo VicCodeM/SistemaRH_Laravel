@@ -112,6 +112,51 @@ class ConfiguracionController extends Controller
         ]);
     }
 
+    public function accionUsuarioModal(User $usuario, string $accion)
+    {
+        $config = match ($accion) {
+            'bloquear' => [
+                'titulo' => 'Bloquear usuario',
+                'descripcion' => 'El usuario conservara su cuenta, pero ya no podra entrar al sistema.',
+                'mensaje' => 'Confirma si deseas bloquear este acceso.',
+                'ruta' => route('admin.configuracion.usuarios.estado', $usuario),
+                'metodo' => 'PATCH',
+                'boton' => 'Bloquear usuario',
+                'clase' => 'btn-danger',
+                'permitido' => auth()->id() !== $usuario->id,
+                'aviso' => auth()->id() === $usuario->id ? 'No puedes bloquear tu propio acceso.' : null,
+            ],
+            'desbloquear' => [
+                'titulo' => 'Desbloquear usuario',
+                'descripcion' => 'El usuario recuperara acceso al sistema.',
+                'mensaje' => 'Confirma si deseas desbloquear esta cuenta.',
+                'ruta' => route('admin.configuracion.usuarios.estado', $usuario),
+                'metodo' => 'PATCH',
+                'boton' => 'Desbloquear usuario',
+                'clase' => 'btn-success',
+            ],
+            'recuperar' => [
+                'titulo' => 'Reenviar acceso',
+                'descripcion' => 'Se generara un nuevo enlace para restablecer la contrasena.',
+                'mensaje' => 'Confirma si deseas generar un nuevo enlace de acceso para este usuario.',
+                'ruta' => route('admin.configuracion.usuarios.recuperar', $usuario),
+                'metodo' => 'POST',
+                'boton' => 'Generar enlace',
+                'clase' => 'btn-primary',
+            ],
+            default => null,
+        };
+
+        abort_if($config === null, 404);
+
+        $registro = [
+            'titulo' => $usuario->name,
+            'detalle' => $usuario->email . ' · Rol: ' . User::rolLabel($usuario->rol),
+        ];
+
+        return view('admin.partials.modal-accion', compact('config', 'registro'));
+    }
+
     public function guardarUsuario(Request $request, BitacoraService $bitacora): RedirectResponse
     {
         $rolesValidos = implode(',', array_keys(User::roles()));

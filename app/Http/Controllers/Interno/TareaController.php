@@ -4,16 +4,23 @@ namespace App\Http\Controllers\Interno;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServicioAsignado;
+use App\Services\ServicioAsignadoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
+/**
+ * Panel del Interno: ve y gestiona sus solicitudes de servicio asignadas.
+ *
+ * Internamente trabaja sobre ServicioAsignado; en la UI se le presenta
+ * al usuario como "Mis tareas asignadas".
+ */
 class TareaController extends Controller
 {
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $interno = auth()->user();
 
-        $query = $user->serviciosAsignados()
+        $query = $interno->serviciosAsignados()
             ->with(['servicio', 'asignable', 'asignadoPor'])
             ->orderByRaw("CASE estado WHEN 'activo' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'completado' THEN 3 ELSE 4 END")
             ->latest();
@@ -23,13 +30,7 @@ class TareaController extends Controller
         }
 
         $tareas = $query->paginate(15)->withQueryString();
-
-        $stats = [
-            'activas'      => $user->serviciosAsignados()->where('estado', 'activo')->count(),
-            'en_proceso'   => $user->serviciosAsignados()->where('estado', 'en_proceso')->count(),
-            'completadas'  => $user->serviciosAsignados()->where('estado', 'completado')->count(),
-            'canceladas'   => $user->serviciosAsignados()->where('estado', 'cancelado')->count(),
-        ];
+        $stats = $this->estadisticasDel($interno);
 
         return view('interno.tareas.index', compact('tareas', 'stats'));
     }
@@ -46,7 +47,6 @@ class TareaController extends Controller
     {
         $this->autorizarTarea($tarea);
         $tarea->load(['servicio', 'asignable', 'asignadoA', 'asignadoPor']);
-
         return view('interno.tareas.modal-tomar', compact('tarea'));
     }
 
@@ -54,7 +54,6 @@ class TareaController extends Controller
     {
         $this->autorizarTarea($tarea);
         $tarea->load(['servicio', 'asignable', 'asignadoA', 'asignadoPor']);
-
         return view('interno.tareas.modal-completar', compact('tarea'));
     }
 
@@ -62,64 +61,64 @@ class TareaController extends Controller
     {
         $this->autorizarTarea($tarea);
         $tarea->load(['servicio', 'asignable', 'asignadoA', 'asignadoPor']);
-
         return view('interno.tareas.modal-cancelar', compact('tarea'));
     }
 
-    public function tomar(ServicioAsignado $tarea)
+    public function tomar(ServicioAsignado $tarea, ServicioAsignadoService $servicio)
     {
         $this->autorizarTarea($tarea);
         abort_if($tarea->estado !== 'activo', 422, 'La tarea ya fue tomada o cerrada.');
 
-        $tarea->update([
-            'estado' => 'en_proceso',
-            'fecha_inicio' => $tarea->fecha_inicio ?? now(),
-        ]);
+        $servicio->cambiarEstado($tarea, 'en_proceso');
 
         return back()->with('success', 'Tarea tomada.');
     }
 
-    public function completar(Request $request, ServicioAsignado $tarea)
+    public function completar(Request $request, ServicioAsignado $tarea, ServicioAsignadoService $servicio)
     {
         $this->autorizarTarea($tarea);
-        abort_if(in_array($tarea->estado, ['completado', 'cancelado'], true), 422, 'La tarea ya fue cerrada.');
+        $this->abortarSiCerrada($tarea);
 
         $data = $request->validate([
             'cierre_resumen' => ['required', 'string', 'max:2000'],
         ]);
 
-        $tarea->update([
-            'estado' => 'completado',
-            'fecha_inicio' => $tarea->fecha_inicio ?? now(),
-            'fecha_fin' => now(),
-            'cierre_resumen' => $data['cierre_resumen'],
-        ]);
+        $servicio->completar($tarea, $data['cierre_resumen']);
 
         return redirect()->route('interno.tareas.index')->with('success', 'Tarea completada.');
     }
 
-    public function cancelar(Request $request, ServicioAsignado $tarea)
+    public function cancelar(Request $request, ServicioAsignado $tarea, ServicioAsignadoService $servicio)
     {
         $this->autorizarTarea($tarea);
-        abort_if(in_array($tarea->estado, ['completado', 'cancelado'], true), 422, 'La tarea ya fue cerrada.');
+        $this->abortarSiCerrada($tarea);
 
         $data = $request->validate([
             'cierre_resumen' => ['required', 'string', 'max:2000'],
         ]);
 
-        $tarea->update([
-            'estado' => 'cancelado',
-            'fecha_inicio' => $tarea->fecha_inicio ?? now(),
-            'fecha_fin' => now(),
-            'cierre_resumen' => $data['cierre_resumen'],
-        ]);
+        $servicio->cancelar($tarea, $data['cierre_resumen']);
 
         return back()->with('success', 'Tarea cancelada.');
     }
 
     private function autorizarTarea(ServicioAsignado $tarea): void
     {
-        $user = auth()->user();
-        abort_unless($tarea->asignado_a === $user->id, 403);
+        abort_unless($tarea->asignado_a === auth()->id(), 403);
+    }
+
+    private function abortarSiCerrada(ServicioAsignado $tarea): void
+    {
+        abort_if(in_array($tarea->estado, ['completado', 'cancelado'], true), 422, 'La tarea ya fue cerrada.');
+    }
+
+    private function estadisticasDel($interno): array
+    {
+        return [
+            'activas'     => $interno->serviciosAsignados()->where('estado', 'activo')->count(),
+            'en_proceso'  => $interno->serviciosAsignados()->where('estado', 'en_proceso')->count(),
+            'completadas' => $interno->serviciosAsignados()->where('estado', 'completado')->count(),
+            'canceladas'  => $interno->serviciosAsignados()->where('estado', 'cancelado')->count(),
+        ];
     }
 }

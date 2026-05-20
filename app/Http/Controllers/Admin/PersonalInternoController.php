@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CrearInternoRequest;
+use App\Models\CatalogoServicio;
 use App\Models\ServicioAsignado;
 use App\Models\User;
+use App\Services\ExportadorService;
+use App\Services\PersonalInternoService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 
 class PersonalInternoController extends Controller
 {
@@ -46,30 +46,24 @@ class PersonalInternoController extends Controller
 
     public function create()
     {
-        return view('admin.personal-interno.form', ['interno' => new User()]);
+        $servicios = CatalogoServicio::where('activo', true)->orderBy('nombre')->get();
+
+        return view('admin.personal-interno.form', [
+            'interno'   => new User(),
+            'servicios' => $servicios,
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(CrearInternoRequest $request, PersonalInternoService $servicio)
     {
-        $data = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-        ]);
-
-        $usuario = User::create([
-            'name'   => $data['name'],
-            'email'  => $data['email'],
-            'rol'    => 'interno',
-            'estado' => 'activo',
-            'password' => Hash::make(Str::random(20)),
-            'email_verified_at' => now(),
-        ]);
-
-        Password::sendResetLink(['email' => $usuario->email]);
+        $interno = $servicio->crear(
+            $request->only(['name', 'email', 'capacidad_maxima_horas', 'departamento', 'disponibilidad']),
+            $request->input('servicios', [])
+        );
 
         return redirect()
             ->route('admin.personal-interno.index')
-            ->with('success', "Interno \"{$usuario->name}\" creado. Se envió un enlace de acceso a {$usuario->email}.");
+            ->with('success', "Interno \"{$interno->name}\" creado con sus especialidades. Se envió enlace de acceso a {$interno->email}.");
     }
 
     public function modal(User $interno)
@@ -86,7 +80,60 @@ class PersonalInternoController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.personal-interno.modal', compact('interno', 'tareas'));
+        $servicios = CatalogoServicio::where('activo', true)->orderBy('nombre')->get();
+        $serviciosCapacitados = $interno->serviciosCapacitados()->pluck('catalogo_servicios.id')->toArray();
+
+        return view('admin.personal-interno.modal', compact('interno', 'tareas', 'servicios', 'serviciosCapacitados'));
+    }
+
+    public function accionModal(User $interno, string $accion)
+    {
+        abort_unless($interno->rol === 'interno', 403);
+
+        $config = match ($accion) {
+            'bloquear' => [
+                'titulo' => 'Bloquear interno',
+                'descripcion' => 'El interno perdera acceso, pero conservara su perfil y capacidades.',
+                'mensaje' => 'Confirma si deseas bloquear este acceso.',
+                'ruta' => route('admin.personal-interno.estado', $interno),
+                'metodo' => 'PATCH',
+                'boton' => 'Bloquear interno',
+                'clase' => 'btn-danger',
+            ],
+            'activar' => [
+                'titulo' => 'Activar interno',
+                'descripcion' => 'El interno recuperara acceso y podra volver a operar servicios.',
+                'mensaje' => 'Confirma si deseas activar este acceso.',
+                'ruta' => route('admin.personal-interno.estado', $interno),
+                'metodo' => 'PATCH',
+                'boton' => 'Activar interno',
+                'clase' => 'btn-success',
+            ],
+            default => null,
+        };
+
+        abort_if($config === null, 404);
+
+        $registro = [
+            'titulo' => $interno->name,
+            'detalle' => $interno->email . ' · Estado actual: ' . ($interno->estado === 'activo' ? 'Activo' : 'Bloqueado'),
+        ];
+
+        return view('admin.partials.modal-accion', compact('config', 'registro'));
+    }
+
+    public function actualizarCapacidades(Request $request, User $interno, PersonalInternoService $servicio)
+    {
+        abort_unless($interno->rol === 'interno', 403);
+
+        $data = $request->validate([
+            'servicios'   => ['nullable', 'array'],
+            'servicios.*' => ['integer', 'exists:catalogo_servicios,id'],
+        ]);
+
+        $servicio->actualizarCapacidades($interno, $data['servicios'] ?? []);
+
+        return back()->with('success', 'Capacidades actualizadas correctamente.');
     }
 
     public function toggleEstado(User $interno)
@@ -97,5 +144,57 @@ class PersonalInternoController extends Controller
 
         $msg = $nuevoEstado === 'activo' ? 'Interno activado correctamente.' : 'Interno desactivado.';
         return back()->with('success', $msg);
+    }
+
+    public function exportarCsv(ExportadorService $exportador)
+    {
+        $internos = User::where('rol', 'interno')
+            ->withCount([
+                'serviciosAsignados as tareas_activas' => fn ($q) => $q->whereIn('estado', ['activo', 'en_proceso']),
+                'serviciosAsignados as tareas_completadas' => fn ($q) => $q->where('estado', 'completado'),
+            ])
+            ->orderBy('name')
+            ->get();
+
+        $filas = $internos->map(fn ($i) => [
+            $i->name,
+            $i->email,
+            $i->estado === 'activo' ? 'Activo' : 'Bloqueado',
+            (int) $i->carga_trabajo_horas,
+            (int) $i->capacidad_maxima_horas,
+            (int) round($i->ocupacionPorcentaje()) . '%',
+            $i->disponibilidad ?? '—',
+            $i->departamento ?? '—',
+            (int) $i->tareas_activas,
+            (int) $i->tareas_completadas,
+        ]);
+
+        return $exportador->csv('personal_interno', [
+            'Nombre', 'Correo', 'Estado',
+            'Carga horas', 'Capacidad horas', 'Ocupación',
+            'Disponibilidad', 'Departamento',
+            'Tareas activas', 'Tareas completadas',
+        ], $filas);
+    }
+
+    public function exportarPdf()
+    {
+        $internos = User::where('rol', 'interno')
+            ->withCount([
+                'serviciosAsignados as tareas_activas' => fn ($q) => $q->whereIn('estado', ['activo', 'en_proceso']),
+                'serviciosAsignados as tareas_completadas' => fn ($q) => $q->where('estado', 'completado'),
+            ])
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.personal-interno.imprimible', compact('internos'));
+    }
+
+    public function exportarFichaPdf(User $interno)
+    {
+        abort_unless($interno->rol === 'interno', 403);
+        $interno->load('serviciosCapacitados');
+
+        return view('admin.personal-interno.ficha-imprimible', compact('interno'));
     }
 }

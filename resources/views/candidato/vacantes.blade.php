@@ -10,7 +10,7 @@
     </x-slot>
 
     <div class="card fade-in" style="margin-bottom:20px;">
-        <form method="GET" style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end;">
+        <form method="GET" class="candidate-filter-grid">
             <div>
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Buscar</label>
                 <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Título o empresa..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);">
@@ -20,18 +20,16 @@
     </div>
 
     @if($vacantes->count())
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+        <div class="candidate-vacancy-grid">
             @foreach($vacantes as $vacante)
                 <div class="card fade-in" style="display:flex; flex-direction:column; min-height:240px;">
-                    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;">
+                    <div class="candidate-inline-meta" style="margin-bottom:12px;">
                         <div>
                             <h3 style="font-size:1.05rem; font-weight:600; margin-bottom:4px;">{{ $vacante->titulo }}</h3>
                             <span class="badge badge-blue">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</span>
                         </div>
                         @if($vacante->empresa)
-                            <div class="metric-icon" style="background:var(--accent-light); color:var(--accent); width:36px; height:36px;">
-                                <span style="font-weight:700; font-size:0.85rem;">{{ strtoupper(substr($vacante->empresa->nombre_empresa ?? 'E', 0, 1)) }}</span>
-                            </div>
+                            <x-avatar :src="$vacante->empresa->usuario?->avatar_url" :nombre="$vacante->empresa->nombre_empresa" :tamano="36" />
                         @endif
                     </div>
 
@@ -51,7 +49,7 @@
                         @endif
                     </div>
 
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:auto;">
+                    <div class="candidate-actions" style="margin-top:auto;">
                         <button type="button" class="btn btn-secondary" onclick="rhModal('{{ route('candidato.vacantes.modal', $vacante) }}')">
                             Ver detalle
                         </button>

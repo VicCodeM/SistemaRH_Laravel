@@ -23,6 +23,10 @@
         <div class="alert alert-danger fade-in" style="margin-bottom:16px;">{{ session('error') }}</div>
     @endif
 
+    @isset($acciones)
+        <x-acciones-pendientes titulo="¿Qué sigue?" :acciones="$acciones" />
+    @endisset
+
     <div class="metrics-grid fade-in">
         <div class="metric-card">
             <div class="metric-top">
@@ -72,7 +76,7 @@
         </div>
     </div>
 
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+    <div class="candidate-actions">
         <a href="{{ route('candidato.solicitud') }}" class="btn btn-primary">Mi solicitud</a>
         @if($aprobado)
             <a href="{{ route('candidato.vacantes') }}" class="btn btn-secondary">Solicitudes disponibles</a>
@@ -80,7 +84,7 @@
         @endif
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr .9fr; gap:24px; margin-top:24px;">
+    <div class="content-split" style="margin-top:24px;">
         <div class="card fade-in">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h3 style="font-weight:700; margin:0; font-size:1rem;">Progreso de tu perfil</h3>
@@ -148,7 +152,7 @@
     </div>
 
     <div class="card fade-in" style="margin-top:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
             <h3 style="font-weight:700; margin:0; font-size:1rem;">Últimas postulaciones</h3>
             <a href="{{ route('candidato.postulaciones') }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver todo →</a>
         </div>
@@ -158,7 +162,7 @@
                 Aún no tienes postulaciones registradas.
             </div>
         @else
-            <div style="overflow-x:auto;">
+            <div class="desktop-only table-scroll">
                 <table style="width:100%; border-collapse:collapse; font-size:13px;">
                     <thead>
                         <tr style="border-bottom:1px solid var(--border);">
@@ -191,28 +195,56 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="mobile-only">
+                <div class="candidate-mobile-list">
+                    @foreach($postulacionesRecientes as $postulacion)
+                        <div class="candidate-mobile-card">
+                            <h4 class="candidate-mobile-card-title">{{ $postulacion->vacante?->titulo ?? '—' }}</h4>
+                            <p class="candidate-mobile-card-subtitle">{{ $postulacion->vacante?->empresa?->nombre_empresa ?? '—' }}</p>
+
+                            <div class="candidate-mobile-meta">
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Requisitos</p>
+                                    <p class="candidate-mobile-meta-value">{{ $postulacion->vacante?->requisitoResumen() ?? 'Sin requisitos' }}</p>
+                                </div>
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Estado</p>
+                                    <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacion->estado) }}">
+                                        {{ \App\Models\Postulacion::estadoLabel($postulacion->estado) }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Fecha</p>
+                                    <p class="candidate-mobile-meta-value">{{ $postulacion->fecha_postulacion?->format('d/m/Y H:i') ?? '—' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         @endif
     </div>
 
     @if($aprobado && $vacantesRecientes->isNotEmpty())
         <div class="card fade-in" style="margin-top:24px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
                 <h3 style="font-weight:700; margin:0; font-size:1rem;">Solicitudes activas recomendadas</h3>
                 <span style="font-size:12px; color:#64748b;">Disponible para ti</span>
             </div>
 
-            <div style="display:grid; gap:10px;">
+            <div class="candidate-compact-list">
                 @foreach($vacantesRecientes as $vacante)
-                    <div style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2);">
-                        <div style="display:flex; justify-content:space-between; gap:12px;">
+                    <div class="candidate-compact-item">
+                        <div class="candidate-inline-meta">
                             <div style="min-width:0;">
-                                <div style="font-weight:600; margin-bottom:2px;">{{ $vacante->titulo }}</div>
-                                <div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                <div class="candidate-compact-item-title">{{ $vacante->titulo }}</div>
+                                <div class="candidate-compact-item-subtitle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                     {{ $vacante->empresa?->nombre_empresa ?? 'Empresa' }}
                                 </div>
                             </div>
-                            <div style="text-align:right; flex-shrink:0;">
-                                <div style="font-size:12px; color:#94a3b8;">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</div>
+                            <div style="flex-shrink:0;">
+                                <div class="candidate-compact-item-trailing">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</div>
                                 <div style="margin-top:4px;">
                                     <button type="button" onclick="rhModal('{{ route('candidato.vacantes.modal', $vacante) }}')" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">Ver detalle</button>
                                 </div>

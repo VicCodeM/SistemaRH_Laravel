@@ -5,27 +5,27 @@
         'usuarios' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'usuarios'])),
             'titulo' => 'Usuarios',
-            'detalle' => 'Alta, edición, bloqueo y recuperación.',
+            'detalle' => 'Alta, edicion, bloqueo y recuperacion.',
         ],
         'bitacora' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'bitacora'])),
-            'titulo' => 'Bitácora',
+            'titulo' => 'Bitacora',
             'detalle' => 'Trazabilidad de acciones importantes.',
         ],
         'seguridad' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'seguridad'])),
             'titulo' => 'Seguridad',
-            'detalle' => 'Acceso, estados y recuperación.',
+            'detalle' => 'Acceso, estados y recuperacion.',
         ],
         'parametros' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'parametros'])),
-            'titulo' => 'Parámetros',
+            'titulo' => 'Parametros',
             'detalle' => 'Reglas base del sistema.',
         ],
         'catalogos' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'catalogos'])),
-            'titulo' => 'Catálogos',
-            'detalle' => 'Accesos rápidos a catálogos y opciones.',
+            'titulo' => 'Catalogos',
+            'detalle' => 'Accesos rapidos a catalogos y opciones.',
         ],
     ];
 @endphp
@@ -33,14 +33,14 @@
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Administración</a>
+            <a href="{{ route('admin.dashboard') }}">Administracion</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <span>Configuración</span>
+            <span>Configuracion</span>
         </nav>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div class="candidate-inline-meta">
             <div>
-                <h1 class="page-title">Configuración</h1>
-                <p class="page-subtitle">Usuarios, accesos, bitácora, parámetros y catálogos en un solo hub.</p>
+                <h1 class="page-title">Configuracion</h1>
+                <p class="page-subtitle">Usuarios, accesos, bitacora, parametros y catalogos en un solo hub.</p>
             </div>
 
             @if($tabActivo === 'usuarios')
@@ -95,7 +95,7 @@
                 @foreach($tabs as $key => $tab)
                     <a href="{{ $tab['ruta'] }}"
                        style="display:block; padding:14px 16px; border-radius:16px; text-decoration:none; border:1px solid {{ $tabActivo === $key ? 'rgba(37,99,235,.28)' : 'var(--border)' }}; background:{{ $tabActivo === $key ? 'linear-gradient(135deg, rgba(37,99,235,.12), rgba(37,99,235,.04))' : 'var(--surface)' }}; box-shadow:{{ $tabActivo === $key ? '0 10px 24px rgba(37,99,235,.10)' : 'none' }}; color:var(--text);">
-                        <div style="font-size:0.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#64748b;">Sección {{ str_pad((string) ($loop->index + 1), 2, '0', STR_PAD_LEFT) }}</div>
+                        <div style="font-size:0.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#64748b;">Seccion {{ str_pad((string) ($loop->index + 1), 2, '0', STR_PAD_LEFT) }}</div>
                         <div style="margin-top:6px; font-weight:800; font-size:0.98rem;">{{ $tab['titulo'] }}</div>
                         <div style="margin-top:4px; font-size:0.84rem; color:#64748b;">{{ $tab['detalle'] }}</div>
                     </a>
@@ -130,7 +130,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <div class="toolbar-wrap">
                             <button type="submit" class="btn btn-primary">Filtrar</button>
                             @if(request()->hasAny(['buscar', 'rol', 'estado']))
                                 <a href="{{ route('admin.configuracion', ['tab' => 'usuarios']) }}" class="btn btn-secondary">Limpiar</a>
@@ -140,64 +140,114 @@
                 </div>
 
                 <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>Perfil</th>
-                                <th>Acceso</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($usuarios as $usuario)
-                                <tr>
-                                    <td>
-                                        <div style="font-weight:600; color:var(--text);">{{ $usuario->name }}</div>
-                                        <div style="font-size:0.82rem; color:#64748b;">{{ $usuario->email }}</div>
-                                    </td>
-                                    <td><span class="badge badge-blue">{{ \App\Models\User::rolLabel($usuario->rol) }}</span></td>
-                                    <td><span class="badge {{ \App\Models\User::estadoBadgeClass($usuario->estado) }}">{{ \App\Models\User::estadoLabel($usuario->estado) }}</span></td>
-                                    <td style="font-size:0.82rem; color:#64748b;">
-                                        @if($usuario->empresa)
-                                            Empresa: {{ $usuario->empresa->nombre_empresa }}
-                                        @elseif($usuario->candidato)
-                                            Candidato: {{ $usuario->candidato->nombreCompleto() }}
-                                        @else
-                                            Sin perfil vinculado
-                                        @endif
-                                    </td>
-                                    <td style="font-size:0.82rem; color:#64748b;">
-                                        {{ $usuario->email_verified_at ? 'Verificado' : 'Pendiente' }}
-                                    </td>
-                                    <td>
-                                        <div style="display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;">
-                                            <button onclick="rhModal('{{ route('admin.configuracion.usuarios.modal', $usuario) }}')" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Editar</button>
-                                            <form method="POST" action="{{ route('admin.configuracion.usuarios.estado', $usuario) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">
-                                                    {{ $usuario->estado === 'bloqueado' ? 'Desbloquear' : 'Bloquear' }}
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('admin.configuracion.usuarios.recuperar', $usuario) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-primary" style="padding:4px 10px; font-size:0.8rem;">Reenviar acceso</button>
-                                            </form>
+                    @if($usuarios->isEmpty())
+                        <div style="text-align:center; padding:36px; color:#64748b;">
+                            No hay usuarios que coincidan.
+                        </div>
+                    @else
+                        <div class="desktop-only table-scroll">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Estado</th>
+                                        <th>Perfil</th>
+                                        <th>Acceso</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($usuarios as $usuario)
+                                        <tr>
+                                            <td>
+                                                <div style="display:flex; align-items:center; gap:10px;">
+                                                    <x-avatar :src="$usuario->avatar_url" :nombre="$usuario->name" :tamano="32" />
+                                                    <div>
+                                                        <div style="font-weight:600; color:var(--text);">{{ $usuario->name }}</div>
+                                                        <div style="font-size:0.82rem; color:#64748b;">{{ $usuario->email }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge badge-blue">{{ \App\Models\User::rolLabel($usuario->rol) }}</span></td>
+                                            <td><span class="badge {{ \App\Models\User::estadoBadgeClass($usuario->estado) }}">{{ \App\Models\User::estadoLabel($usuario->estado) }}</span></td>
+                                            <td style="font-size:0.82rem; color:#64748b;">
+                                                @if($usuario->empresa)
+                                                    Empresa: {{ $usuario->empresa->nombre_empresa }}
+                                                @elseif($usuario->candidato)
+                                                    Candidato: {{ $usuario->candidato->nombreCompleto() }}
+                                                @else
+                                                    Sin perfil vinculado
+                                                @endif
+                                            </td>
+                                            <td style="font-size:0.82rem; color:#64748b;">
+                                                {{ $usuario->email_verified_at ? 'Verificado' : 'Pendiente' }}
+                                            </td>
+                                            <td>
+                                                <div class="toolbar-wrap" style="justify-content:flex-end;">
+                                                    <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.modal', $usuario) }}')" class="btn btn-secondary btn-sm">Editar</button>
+                                                    <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.accion.modal', [$usuario, $usuario->estado === 'bloqueado' ? 'desbloquear' : 'bloquear']) }}')" class="btn btn-secondary btn-sm">
+                                                        {{ $usuario->estado === 'bloqueado' ? 'Desbloquear' : 'Bloquear' }}
+                                                    </button>
+                                                    <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.accion.modal', [$usuario, 'recuperar']) }}')" class="btn btn-primary btn-sm">Reenviar acceso</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mobile-only">
+                            <div class="candidate-mobile-list">
+                                @foreach($usuarios as $usuario)
+                                    <article class="candidate-mobile-card">
+                                        <div class="candidate-inline-meta">
+                                            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                                                <x-avatar :src="$usuario->avatar_url" :nombre="$usuario->name" :tamano="40" />
+                                                <div style="min-width:0;">
+                                                    <h3 class="candidate-mobile-card-title">{{ $usuario->name }}</h3>
+                                                    <p class="candidate-mobile-card-subtitle">{{ $usuario->email }}</p>
+                                                </div>
+                                            </div>
+                                            <span class="badge {{ \App\Models\User::estadoBadgeClass($usuario->estado) }}">{{ \App\Models\User::estadoLabel($usuario->estado) }}</span>
                                         </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" style="text-align:center; padding:36px; color:#64748b;">
-                                        No hay usuarios que coincidan.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+
+                                        <div class="candidate-mobile-meta">
+                                            <div>
+                                                <p class="candidate-mobile-meta-label">Rol</p>
+                                                <p class="candidate-mobile-meta-value">{{ \App\Models\User::rolLabel($usuario->rol) }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="candidate-mobile-meta-label">Perfil</p>
+                                                <p class="candidate-mobile-meta-value">
+                                                    @if($usuario->empresa)
+                                                        Empresa: {{ $usuario->empresa->nombre_empresa }}
+                                                    @elseif($usuario->candidato)
+                                                        Candidato: {{ $usuario->candidato->nombreCompleto() }}
+                                                    @else
+                                                        Sin perfil vinculado
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p class="candidate-mobile-meta-label">Acceso</p>
+                                                <p class="candidate-mobile-meta-value">{{ $usuario->email_verified_at ? 'Verificado' : 'Pendiente' }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="candidate-actions" style="margin-top:14px;">
+                                            <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.modal', $usuario) }}')" class="btn btn-secondary btn-sm">Editar</button>
+                                            <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.accion.modal', [$usuario, $usuario->estado === 'bloqueado' ? 'desbloquear' : 'bloquear']) }}')" class="btn btn-secondary btn-sm">
+                                                {{ $usuario->estado === 'bloqueado' ? 'Desbloquear' : 'Bloquear' }}
+                                            </button>
+                                            <button type="button" onclick="rhModal('{{ route('admin.configuracion.usuarios.accion.modal', [$usuario, 'recuperar']) }}')" class="btn btn-primary btn-sm">Reenviar acceso</button>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <div style="margin-top:18px;">
@@ -205,9 +255,9 @@
                 </div>
             @elseif($tabActivo === 'bitacora')
                 <div class="card" style="margin-bottom:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div class="candidate-inline-meta">
                         <div>
-                            <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Bitácora reciente</h2>
+                            <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Bitacora reciente</h2>
                             <p style="margin:0; color:#64748b; font-size:0.84rem;">Acciones importantes registradas por el sistema.</p>
                         </div>
                         <span class="badge badge-blue">{{ $bitacoras->count() }} evento(s)</span>
@@ -215,39 +265,77 @@
                 </div>
 
                 <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Módulo</th>
-                                <th>Acción</th>
-                                <th>Usuario</th>
-                                <th>Detalle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($bitacoras as $evento)
-                                <tr>
-                                    <td style="font-size:0.82rem; color:#64748b;">{{ $evento->created_at?->format('d/m/Y H:i') }}</td>
-                                    <td><span class="badge badge-blue">{{ $evento->modulo }}</span></td>
-                                    <td style="font-weight:600;">{{ $evento->accion }}</td>
-                                    <td style="font-size:0.82rem; color:#64748b;">{{ $evento->usuario?->name ?? 'Sistema' }}</td>
-                                    <td style="font-size:0.82rem; color:#64748b;">{{ $evento->detalle ?: '—' }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" style="text-align:center; padding:36px; color:#64748b;">Todavía no hay eventos registrados.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                    @if($bitacoras->isEmpty())
+                        <div style="text-align:center; padding:36px; color:#64748b;">Todavia no hay eventos registrados.</div>
+                    @else
+                        <div class="desktop-only table-scroll">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Modulo</th>
+                                        <th>Accion</th>
+                                        <th>Usuario</th>
+                                        <th>Detalle</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($bitacoras as $evento)
+                                        <tr>
+                                            <td style="font-size:0.82rem; color:#64748b;">{{ $evento->created_at?->format('d/m/Y H:i') }}</td>
+                                            <td><span class="badge badge-blue">{{ $evento->modulo }}</span></td>
+                                            <td style="font-weight:600;">{{ $evento->accion }}</td>
+                                            <td>
+                                                @if($evento->usuario)
+                                                    <div style="display:flex; align-items:center; gap:6px;">
+                                                        <x-avatar :src="$evento->usuario->avatar_url" :nombre="$evento->usuario->name" :tamano="22" />
+                                                        <span style="font-size:0.82rem;">{{ $evento->usuario->name }}</span>
+                                                    </div>
+                                                @else
+                                                    <span style="font-size:0.82rem; color:#94a3b8;">Sistema</span>
+                                                @endif
+                                            </td>
+                                            <td style="font-size:0.82rem; color:#64748b;">{{ $evento->detalle ?: '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mobile-only">
+                            <div class="candidate-mobile-list">
+                                @foreach($bitacoras as $evento)
+                                    <article class="candidate-mobile-card">
+                                        <div class="candidate-inline-meta">
+                                            <div>
+                                                <h3 class="candidate-mobile-card-title">{{ $evento->accion }}</h3>
+                                                <p class="candidate-mobile-card-subtitle">{{ $evento->created_at?->format('d/m/Y H:i') }}</p>
+                                            </div>
+                                            <span class="badge badge-blue">{{ $evento->modulo }}</span>
+                                        </div>
+
+                                        <div class="candidate-mobile-meta">
+                                            <div>
+                                                <p class="candidate-mobile-meta-label">Usuario</p>
+                                                <p class="candidate-mobile-meta-value">{{ $evento->usuario?->name ?? 'Sistema' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="candidate-mobile-meta-label">Detalle</p>
+                                                <p class="candidate-mobile-meta-value">{{ $evento->detalle ?: '—' }}</p>
+                                            </div>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @elseif($tabActivo === 'seguridad')
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
                     <div class="card">
-                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Recuperación de acceso</h3>
+                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Recuperacion de acceso</h3>
                         <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">
-                            Desde el modal de cada usuario puedes reenviar el enlace de restablecimiento de contraseña.
+                            Desde el modal de cada usuario puedes reenviar el enlace de restablecimiento de contrasena.
                         </p>
                     </div>
                     <div class="card">
@@ -257,9 +345,9 @@
                         </p>
                     </div>
                     <div class="card">
-                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Auditoría</h3>
+                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Auditoria</h3>
                         <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">
-                            Cada cambio importante se registra en la bitácora para mantener trazabilidad.
+                            Cada cambio importante se registra en la bitacora para mantener trazabilidad.
                         </p>
                     </div>
                     <div class="card">
@@ -272,46 +360,46 @@
             @elseif($tabActivo === 'parametros')
                 <form method="POST" action="{{ route('admin.configuracion.parametros.guardar') }}" class="card" style="max-width:920px;">
                     @csrf
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+                    <div class="candidate-inline-meta">
                         <div>
-                            <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Parámetros del sistema</h2>
+                            <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Parametros del sistema</h2>
                             <p style="margin:0; color:#64748b; font-size:0.84rem; line-height:1.6;">
-                                Ajustes cortos que cambian el comportamiento del sistema sin tocar código.
+                                Ajustes cortos que cambian el comportamiento del sistema sin tocar codigo.
                             </p>
                         </div>
-                        <span class="badge badge-blue">Configuración</span>
+                        <span class="badge badge-blue">Configuracion</span>
                     </div>
 
                     <div style="margin-top:18px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--surface-2);">
                         <label style="display:flex; gap:12px; align-items:flex-start; cursor:pointer;">
                             <input type="checkbox" name="candidato_requiere_aprobacion" value="1" {{ $parametros['candidato_requiere_aprobacion'] ? 'checked' : '' }} style="margin-top:4px; width:18px; height:18px;">
                             <div>
-                                <div style="font-weight:700; color:var(--text);">Requerir aprobación previa de candidatos</div>
+                                <div style="font-weight:700; color:var(--text);">Requerir aprobacion previa de candidatos</div>
                                 <div style="margin-top:4px; color:#64748b; font-size:0.84rem; line-height:1.6;">
-                                    Si se activa, cada candidato quedará en revisión al registrarse y no podrá completar su solicitud hasta que el admin lo active.
-                                    Si se desactiva, seguirá el flujo actual y podrá avanzar directamente a su solicitud.
+                                    Si se activa, cada candidato quedara en revision al registrarse y no podra completar su solicitud hasta que el admin lo active.
+                                    Si se desactiva, seguira el flujo actual y podra avanzar directamente a su solicitud.
                                 </div>
                             </div>
                         </label>
                     </div>
 
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;">
-                        <button type="submit" class="btn btn-primary">Guardar parámetros</button>
+                    <div class="toolbar-wrap" style="margin-top:18px;">
+                        <button type="submit" class="btn btn-primary">Guardar parametros</button>
                     </div>
                 </form>
             @else
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
                     <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="card" style="text-decoration:none; color:inherit;">
-                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Catálogo de servicios</h3>
-                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Servicios primero, opciones reutilizables después.</p>
+                        <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Catalogo de servicios</h3>
+                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Servicios primero, opciones reutilizables despues.</p>
                     </a>
                     <a href="{{ route('admin.catalogos.index', ['tab' => 'opciones']) }}" class="card" style="text-decoration:none; color:inherit;">
                         <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Opciones del sistema</h3>
-                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Estados, roles y catálogos generales en un solo hub.</p>
+                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Estados, roles y catalogos generales en un solo hub.</p>
                     </a>
                     <a href="{{ route('admin.configuracion', ['tab' => 'usuarios', 'rol' => 'interno']) }}" class="card" style="text-decoration:none; color:inherit;">
                         <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Equipo interno</h3>
-                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Administra aquí los usuarios con rol <strong>Interno</strong>.</p>
+                        <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Administra aqui los usuarios con rol <strong>Interno</strong>.</p>
                     </a>
                 </div>
             @endif

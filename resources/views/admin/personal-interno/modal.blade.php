@@ -1,9 +1,7 @@
 <div style="padding:28px;">
     {{-- Header --}}
     <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
-        <div style="width:48px;height:48px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0;">
-            {{ strtoupper(substr($interno->name, 0, 1)) }}
-        </div>
+        <x-avatar :src="$interno->avatar_url" :nombre="$interno->name" :tamano="48" />
         <div>
             <h2 style="margin:0;font-size:1.1rem;font-weight:700;">{{ $interno->name }}</h2>
             <p style="margin:3px 0 0;font-size:0.85rem;color:#64748b;">{{ $interno->email }}</p>
@@ -26,6 +24,47 @@
             <div style="font-size:12px; color:#64748b; margin-top:2px;">Completadas</div>
         </div>
     </div>
+
+    {{-- Capacidades --}}
+    <div style="margin-bottom:24px; padding:16px; background:var(--surface-2); border-radius:10px; border:1px solid var(--border);">
+        <p style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin:0 0 12px;">🎓 Especialidades</p>
+        @if($serviciosCapacitados)
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
+                @foreach($servicios->whereIn('id', $serviciosCapacitados) as $s)
+                    <span class="badge badge-success" style="font-size:12px;">✓ {{ $s->nombre }}</span>
+                @endforeach
+            </div>
+        @else
+            <p style="font-size:13px; color:#64748b; margin:0 0 8px;">Sin especialidades asignadas aún.</p>
+        @endif
+    </div>
+
+    <form method="POST" action="{{ route('admin.personal-interno.capacidades', $interno) }}">
+        @csrf
+        <div style="margin-bottom:20px;">
+            <p style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin:0 0 10px;">Editar capacidades</p>
+            @if($servicios->isNotEmpty())
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    @foreach($servicios as $servicio)
+                        <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--surface); cursor:pointer; font-size:13px; transition:all 0.2s;">
+                            <input type="checkbox" name="servicios[]" value="{{ $servicio->id }}"
+                                {{ in_array($servicio->id, $serviciosCapacitados) ? 'checked' : '' }}
+                                style="width:16px;height:16px; accent-color:var(--accent);">
+                            <span>{{ $servicio->nombre }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            @else
+                <div style="padding:12px; border-radius:8px; background:var(--surface-2); text-align:center; color:#94a3b8; font-size:13px;">
+                    No hay servicios activos en el catálogo.
+                </div>
+            @endif
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:12px; border-top:1px solid var(--border);">
+            <button type="submit" class="btn btn-primary" style="font-size:13px;">💾 Guardar cambios</button>
+        </div>
+    </form>
 
     {{-- Tareas recientes --}}
     @if($tareas->isNotEmpty())
@@ -54,6 +93,7 @@
     {{-- Acciones --}}
     <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:16px; border-top:1px solid var(--border);">
         <button type="button" onclick="rhModalClose()" class="btn btn-secondary">Cerrar</button>
+        <a href="{{ route('admin.personal-interno.pdf', $interno) }}" target="_blank" class="btn btn-secondary">📄 PDF</a>
         <form method="POST" action="{{ route('admin.personal-interno.estado', $interno) }}">
             @csrf @method('PATCH')
             <button type="submit" class="btn {{ $interno->estado === 'activo' ? 'btn-danger' : 'btn-success' }}">

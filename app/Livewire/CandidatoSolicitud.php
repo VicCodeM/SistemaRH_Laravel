@@ -24,6 +24,7 @@ class CandidatoSolicitud extends Component
     public bool $requiereAprobacion = false;
     public bool $accesoPendiente = false;
     public string $estadoSolicitud = 'borrador';
+    public bool $tieneCambios = false;
 
     public $nombre = '';
     public $apellido_paterno = '';
@@ -155,12 +156,19 @@ class CandidatoSolicitud extends Component
 
     public function agregarEscolaridad(): void
     {
+        $ultimo = end($this->escolaridad_detallada);
+        if ($ultimo && (! $this->campoLleno($ultimo['nivel'] ?? '') || ! $this->campoLleno($ultimo['nombre'] ?? ''))) {
+            $this->addError('solicitud', 'Completa el nivel y la institución del último estudio antes de agregar otro.');
+            return;
+        }
+
         $this->escolaridad_detallada = array_values([...$this->escolaridad_detallada, [
             'nivel' => '',
             'nombre' => '',
             'anios' => '',
             'titulo' => '',
         ]]);
+        $this->tieneCambios = true;
         $this->autoGuardar();
     }
 
@@ -174,6 +182,12 @@ class CandidatoSolicitud extends Component
 
     public function agregarEmpleo(): void
     {
+        $ultimo = end($this->historial_laboral);
+        if ($ultimo && (! $this->campoLleno($ultimo['empresa'] ?? '') || ! $this->campoLleno($ultimo['puesto'] ?? ''))) {
+            $this->addError('solicitud', 'Completa la empresa y el puesto del último empleo antes de agregar otro.');
+            return;
+        }
+
         $this->historial_laboral = array_values([...$this->historial_laboral, [
             'empresa' => '',
             'puesto' => '',
@@ -183,6 +197,7 @@ class CandidatoSolicitud extends Component
             'hasta' => '',
             'motivo' => '',
         ]]);
+        $this->tieneCambios = true;
         $this->autoGuardar();
     }
 
@@ -196,6 +211,12 @@ class CandidatoSolicitud extends Component
 
     public function agregarReferencia(): void
     {
+        $ultima = end($this->referencias_personales);
+        if ($ultima && (! $this->campoLleno($ultima['nombre'] ?? '') || ! $this->campoLleno($ultima['telefono'] ?? ''))) {
+            $this->addError('solicitud', 'Completa el nombre y teléfono de la última referencia antes de agregar otra.');
+            return;
+        }
+
         $this->referencias_personales = array_values([...$this->referencias_personales, [
             'nombre' => '',
             'telefono' => '',
@@ -203,6 +224,7 @@ class CandidatoSolicitud extends Component
             'tiempo' => '',
             'domicilio' => '',
         ]]);
+        $this->tieneCambios = true;
         $this->autoGuardar();
     }
 
@@ -216,6 +238,8 @@ class CandidatoSolicitud extends Component
 
     public function updated(string $property): void
     {
+        $this->tieneCambios = true;
+
         // Limpieza condicional al cambiar selecciones Sí/No
         if ($property === 'cartilla_tiene' && $this->cartilla_tiene === 'no') {
             $this->cartilla_militar = '';
@@ -235,7 +259,8 @@ class CandidatoSolicitud extends Component
     public function guardarBorrador(): void
     {
         $this->autoGuardar();
-        session()->flash('exito', 'Avance guardado correctamente.');
+        $this->tieneCambios = false;
+        $this->dispatch('notificacion', mensaje: 'Solicitud guardada correctamente.', tipo: 'success');
     }
 
     private function autoGuardar(): void
@@ -486,7 +511,7 @@ class CandidatoSolicitud extends Component
         ];
     }
 
-    private function seccionPersonalesCompleta(): bool
+    public function seccionPersonalesCompleta(): bool
     {
         return $this->campoLleno($this->nombre)
             && $this->campoLleno($this->apellido_paterno)
@@ -503,7 +528,7 @@ class CandidatoSolicitud extends Component
             && $this->campoLleno($this->dependientes);
     }
 
-    private function seccionContactoCompleta(): bool
+    public function seccionContactoCompleta(): bool
     {
         return $this->campoLleno($this->celular)
             && $this->campoLleno($this->domicilio)
@@ -513,19 +538,38 @@ class CandidatoSolicitud extends Component
             && $this->campoLleno($this->ciudad);
     }
 
-    private function seccionEstudiosCompleta(): bool
+    public function seccionEstudiosCompleta(): bool
     {
+        $estudiosOk = true;
+        foreach ($this->escolaridad_detallada as $estudio) {
+            if (! $this->campoLleno($estudio['nivel'] ?? '') || ! $this->campoLleno($estudio['nombre'] ?? '')) {
+                $estudiosOk = false;
+                break;
+            }
+        }
+
         return $this->campoLleno($this->escolaridad)
             && $this->campoLleno($this->puesto_deseado)
-            && $this->campoLleno($this->habilidades);
+            && $this->campoLleno($this->habilidades)
+            && $estudiosOk;
     }
 
-    private function seccionLaboralCompleta(): bool
+    public function seccionLaboralCompleta(): bool
     {
-        return $this->campoLleno($this->sueldo_deseado);
+        $empleosOk = true;
+        foreach ($this->historial_laboral as $empleo) {
+            if (! $this->campoLleno($empleo['empresa'] ?? '')
+                || ! $this->campoLleno($empleo['puesto'] ?? '')
+                || ! $this->campoLleno($empleo['desde'] ?? '')) {
+                $empleosOk = false;
+                break;
+            }
+        }
+
+        return $this->campoLleno($this->sueldo_deseado) && $empleosOk;
     }
 
-    private function seccionExtrasCompleta(): bool
+    public function seccionExtrasCompleta(): bool
     {
         $licenciaTiene = $this->licencia_conducir['tiene'] ?? '';
         $cartillaOk  = $this->cartilla_tiene === 'no'
@@ -538,18 +582,144 @@ class CandidatoSolicitud extends Component
                 && $this->campoLleno($this->licencia_conducir['numero'] ?? '')
                 && $this->campoLleno($this->licencia_conducir['vigencia'] ?? ''));
 
+        $referenciasOk = true;
+        foreach ($this->referencias_personales as $ref) {
+            if (! $this->campoLleno($ref['nombre'] ?? '') || ! $this->campoLleno($ref['telefono'] ?? '')) {
+                $referenciasOk = false;
+                break;
+            }
+        }
+
         return $this->campoLleno($this->curp)
             && $this->campoLleno($this->nore_seguro_social)
             && $this->campoLleno($this->rfc)
             && $this->campoLleno($this->afore)
             && in_array($this->cartilla_tiene, ['si', 'no']) && $cartillaOk
             && in_array($this->pasaporte_tiene, ['si', 'no']) && $pasaporteOk
-            && in_array($licenciaTiene, ['si', 'no']) && $licenciaOk;
+            && in_array($licenciaTiene, ['si', 'no']) && $licenciaOk
+            && $referenciasOk;
     }
 
-    private function campoLleno(mixed $valor): bool
+    public function campoLleno(mixed $valor): bool
     {
         return ! blank($valor);
+    }
+
+    /**
+     * Retorna los nombres de los campos faltantes de una sección específica.
+     */
+    public function camposFaltantesPorSeccion(string $seccion): array
+    {
+        return match ($seccion) {
+            'personales' => $this->camposFaltantesPersonales(),
+            'contacto'   => $this->camposFaltantesContacto(),
+            'estudios'   => $this->camposFaltantesEstudios(),
+            'laboral'    => $this->camposFaltantesLaboral(),
+            'extras'     => $this->camposFaltantesExtras(),
+            default      => [],
+        };
+    }
+
+    private function camposFaltantesPersonales(): array
+    {
+        $faltan = [];
+        if (! $this->campoLleno($this->nombre))           $faltan[] = 'Nombre(s)';
+        if (! $this->campoLleno($this->apellido_paterno)) $faltan[] = 'Apellido paterno';
+        if (! $this->campoLleno($this->apellido_materno)) $faltan[] = 'Apellido materno';
+        if (! $this->campoLleno($this->edad))             $faltan[] = 'Edad';
+        if (! $this->campoLleno($this->sexo))             $faltan[] = 'Sexo';
+        if (! $this->campoLleno($this->fecha_nacimiento)) $faltan[] = 'Fecha de nacimiento';
+        if (! $this->campoLleno($this->lugar_nacimiento)) $faltan[] = 'Lugar de nacimiento';
+        if (! $this->campoLleno($this->nacionalidad))     $faltan[] = 'Nacionalidad';
+        if (! $this->campoLleno($this->estado_civil))     $faltan[] = 'Estado civil';
+        if (! $this->campoLleno($this->vive_con))         $faltan[] = 'Vive con';
+        if (! $this->campoLleno($this->peso))             $faltan[] = 'Peso';
+        if (! $this->campoLleno($this->estatura))         $faltan[] = 'Estatura';
+        if (! $this->campoLleno($this->dependientes))     $faltan[] = 'Dependientes económicos';
+        return $faltan;
+    }
+
+    private function camposFaltantesContacto(): array
+    {
+        $faltan = [];
+        if (! $this->campoLleno($this->celular))       $faltan[] = 'Celular';
+        if (! $this->campoLleno($this->domicilio))     $faltan[] = 'Domicilio';
+        if (! $this->campoLleno($this->colonia))       $faltan[] = 'Colonia';
+        if (! $this->campoLleno($this->codigo_postal)) $faltan[] = 'Código postal';
+        if (! $this->campoLleno($this->municipio))     $faltan[] = 'Municipio';
+        if (! $this->campoLleno($this->ciudad))        $faltan[] = 'Ciudad';
+        return $faltan;
+    }
+
+    private function camposFaltantesEstudios(): array
+    {
+        $faltan = [];
+        if (! $this->campoLleno($this->escolaridad))    $faltan[] = 'Nivel de escolaridad';
+        if (! $this->campoLleno($this->puesto_deseado)) $faltan[] = 'Puesto deseado';
+        if (! $this->campoLleno($this->habilidades))    $faltan[] = 'Habilidades principales';
+        foreach ($this->escolaridad_detallada as $i => $estudio) {
+            if (! $this->campoLleno($estudio['nivel'] ?? ''))  $faltan[] = 'Estudio #' . ($i + 1) . ' — Nivel';
+            if (! $this->campoLleno($estudio['nombre'] ?? '')) $faltan[] = 'Estudio #' . ($i + 1) . ' — Institución / carrera';
+        }
+        return $faltan;
+    }
+
+    private function camposFaltantesLaboral(): array
+    {
+        $faltan = [];
+        if (! $this->campoLleno($this->sueldo_deseado)) $faltan[] = 'Sueldo deseado';
+        foreach ($this->historial_laboral as $i => $empleo) {
+            if (! $this->campoLleno($empleo['empresa'] ?? ''))  $faltan[] = 'Empleo #' . ($i + 1) . ' — Empresa';
+            if (! $this->campoLleno($empleo['puesto'] ?? ''))   $faltan[] = 'Empleo #' . ($i + 1) . ' — Puesto';
+            if (! $this->campoLleno($empleo['desde'] ?? ''))    $faltan[] = 'Empleo #' . ($i + 1) . ' — Fecha desde';
+        }
+        return $faltan;
+    }
+
+    private function camposFaltantesExtras(): array
+    {
+        $faltan = [];
+        $licenciaTiene = $this->licencia_conducir['tiene'] ?? '';
+        if (! $this->campoLleno($this->curp))               $faltan[] = 'CURP';
+        if (! $this->campoLleno($this->nore_seguro_social)) $faltan[] = 'Número de seguro social (NSS)';
+        if (! $this->campoLleno($this->rfc))                $faltan[] = 'RFC';
+        if (! $this->campoLleno($this->afore))              $faltan[] = 'Afore';
+        if (! in_array($this->cartilla_tiene, ['si', 'no']))
+            $faltan[] = 'Cartilla militar — selecciona Sí o No';
+        elseif ($this->cartilla_tiene === 'si' && ! $this->campoLleno($this->cartilla_militar))
+            $faltan[] = 'Número de cartilla militar';
+        if (! in_array($this->pasaporte_tiene, ['si', 'no']))
+            $faltan[] = 'Pasaporte — selecciona Sí o No';
+        elseif ($this->pasaporte_tiene === 'si' && ! $this->campoLleno($this->pasaporte))
+            $faltan[] = 'Número de pasaporte';
+        if (! in_array($licenciaTiene, ['si', 'no']))
+            $faltan[] = 'Licencia de conducir — selecciona Sí o No';
+        elseif ($licenciaTiene === 'si') {
+            if (! $this->campoLleno($this->licencia_conducir['clase'] ?? ''))   $faltan[] = 'Clase de licencia';
+            if (! $this->campoLleno($this->licencia_conducir['numero'] ?? ''))  $faltan[] = 'Número de licencia';
+            if (! $this->campoLleno($this->licencia_conducir['vigencia'] ?? '')) $faltan[] = 'Vigencia de licencia';
+        }
+        foreach ($this->referencias_personales as $i => $ref) {
+            if (! $this->campoLleno($ref['nombre'] ?? ''))    $faltan[] = 'Referencia #' . ($i + 1) . ' — Nombre';
+            if (! $this->campoLleno($ref['telefono'] ?? ''))  $faltan[] = 'Referencia #' . ($i + 1) . ' — Teléfono';
+        }
+        return $faltan;
+    }
+
+    public function verificarYAvanzar(string $pestanaDestino): void
+    {
+        $this->autoGuardar();
+        $orden = ['personales', 'contacto', 'estudios', 'laboral', 'extras'];
+        $idxDestino = array_search($pestanaDestino, $orden, true);
+        $pestanaActual = $orden[$idxDestino - 1] ?? 'personales';
+        $metodo = 'seccion' . ucfirst($pestanaActual) . 'Completa';
+
+        if (method_exists($this, $metodo) && $this->$metodo()) {
+            $this->dispatch('cambiarPestana', pestana: $pestanaDestino);
+        } else {
+            $faltantes = $this->camposFaltantesPorSeccion($pestanaActual);
+            $this->addError('solicitud', 'Completa los siguientes campos para continuar: ' . implode(', ', $faltantes));
+        }
     }
 
     private function primerElemento(?array $elementos): ?array

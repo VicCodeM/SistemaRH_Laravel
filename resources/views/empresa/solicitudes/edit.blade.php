@@ -23,22 +23,21 @@
                 @method('PUT')
 
                 <div class="form-group">
-                    <label class="form-label">Tipo de servicio <span style="color:var(--danger)">*</span></label>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:7px; margin-top:8px;">
-                        @foreach($tipos as $key => $label)
-                            <label style="display:flex; align-items:center; gap:8px; padding:9px 11px; border:1px solid {{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }};">
-                                <input type="radio" name="tipo_servicio" value="{{ $key }}" {{ old('tipo_servicio', $vacante->tipo_servicio) === $key ? 'checked' : '' }} style="accent-color:var(--accent);">
-                                <span style="font-size:0.82rem; font-weight:500;">{{ $label }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('tipo_servicio')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="titulo">Título / Puesto <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror" value="{{ old('titulo', $vacante->titulo) }}" maxlength="200">
                     @error('titulo')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group" style="margin-top:18px;">
+                    <label class="form-label" for="cupos">¿Cuántas personas? *</label>
+                    <input type="number" id="cupos" name="cupos" value="{{ old('cupos', $vacante->cupos ?? 1) }}" required min="1" max="100" class="form-input" style="max-width:160px;">
+                    <p style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                        @if($vacante->cuposCubiertos() > 0)
+                            Actualmente {{ $vacante->cuposCubiertos() }} cubierto(s). No puede ser menor.
+                        @else
+                            Cuántos candidatos contratarás.
+                        @endif
+                    </p>
                 </div>
 
                 <div class="form-group" style="margin-top:16px;">

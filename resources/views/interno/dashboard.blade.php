@@ -6,7 +6,7 @@
             <span>Panel interno</span>
         </nav>
         <h1 class="page-title">Panel de operaciones</h1>
-        <p class="page-subtitle">Resumen diario para atender solicitudes, tickets y seguimiento operativo.</p>
+        <p class="page-subtitle">Resumen diario para atender solicitudes y seguimiento operativo.</p>
     </x-slot>
 
     @if(session('success'))
@@ -15,6 +15,10 @@
     @if(session('error'))
         <div class="alert alert-danger fade-in" style="margin-bottom:16px;">{{ session('error') }}</div>
     @endif
+
+    @isset($acciones)
+        <x-acciones-pendientes titulo="Que sigue?" :acciones="$acciones" />
+    @endisset
 
     <div class="metrics-grid fade-in">
         <div class="metric-card" style="{{ $stats['empresas_pendientes'] > 0 ? 'border-color: rgba(245,158,11,.4);' : '' }}">
@@ -25,7 +29,7 @@
                 </div>
             </div>
             <div class="metric-value">{{ $stats['empresas_pendientes'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">Pendientes de aprobación</div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">Pendientes de aprobacion</div>
         </div>
 
         <div class="metric-card" style="{{ $stats['candidatos_pendientes'] > 0 ? 'border-color: rgba(96,165,250,.4);' : '' }}">
@@ -47,20 +51,7 @@
                 </div>
             </div>
             <div class="metric-value">{{ $stats['solicitudes_pendientes'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">En revisión interna</div>
-        </div>
-
-        <div class="metric-card" style="{{ $stats['tickets_abiertos'] > 0 ? 'border-color: rgba(34,197,94,.35);' : '' }}">
-            <div class="metric-top">
-                <span class="metric-label">Tickets por atender</span>
-                <div class="metric-icon" style="background:rgba(34,197,94,.12);color:#22c55e;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
-                </div>
-            </div>
-            <div class="metric-value">{{ $stats['tickets_abiertos'] }}</div>
-            <div class="metric-change" style="color:{{ $stats['tickets_vencidos'] > 0 ? 'var(--danger)' : '#64748b' }}; font-size:12px;">
-                {{ $stats['tickets_vencidos'] }} vencido(s)
-            </div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">En revision interna</div>
         </div>
 
         <div class="metric-card" style="{{ $stats['tareas_activas'] > 0 ? 'border-color: rgba(14,165,233,.35);' : '' }}">
@@ -77,79 +68,14 @@
         </div>
     </div>
 
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
-        <a href="{{ route('tickets.index') }}" class="btn btn-primary">Ver tickets</a>
+    <div class="candidate-actions">
         <a href="{{ route('interno.tareas.index') }}" class="btn btn-secondary">Mis tareas</a>
         <a href="{{ route('chat.index') }}" class="btn btn-secondary">Abrir chat</a>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1.1fr .9fr; gap:24px; margin-top:24px;">
+    <div class="content-split" style="margin-top:24px;">
         <div class="card fade-in">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="font-weight:700; margin:0; font-size:1rem;">Tickets por atender</h3>
-                <a href="{{ route('tickets.index') }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver todos →</a>
-            </div>
-
-            @if($tickets_recientes->isEmpty())
-                <div style="text-align:center; padding:36px 0; color:#64748b;">
-                    Sin tickets abiertos por el momento.
-                </div>
-            @else
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                        <thead>
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <th style="text-align:left; padding:8px 10px; color:#475569; font-weight:500;">Asunto</th>
-                                <th style="text-align:left; padding:8px 10px; color:#475569; font-weight:500;">Empresa</th>
-                                <th style="text-align:left; padding:8px 10px; color:#475569; font-weight:500;">Prioridad</th>
-                                <th style="text-align:left; padding:8px 10px; color:#475569; font-weight:500;">SLA</th>
-                                <th style="text-align:right; padding:8px 10px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($tickets_recientes as $ticket)
-                                @php
-                                    $prioridadColors = [
-                                        'baja' => ['#64748b', 'rgba(100,116,139,.12)'],
-                                        'media' => ['#0f766e', 'rgba(15,118,110,.12)'],
-                                        'alta' => ['#d97706', 'rgba(245,158,11,.12)'],
-                                        'urgente' => ['#dc2626', 'rgba(220,38,38,.12)'],
-                                    ];
-                                    [$color, $bg] = $prioridadColors[$ticket->prioridad] ?? ['#64748b', 'rgba(100,116,139,.12)'];
-                                @endphp
-                                <tr style="border-bottom:1px solid var(--border); {{ $ticket->estaVencido() ? 'background: rgba(220,38,38,.05);' : '' }}">
-                                    <td style="padding:9px 10px;">
-                                        <div style="font-weight:600;">{{ $ticket->asunto }}</div>
-                                        <div style="font-size:11px; color:#64748b;">{{ \App\Models\Ticket::categoriaLabel($ticket->categoria) }}</div>
-                                    </td>
-                                    <td style="padding:9px 10px; color:#94a3b8;">
-                                        {{ $ticket->empresa?->nombre_empresa ?? '—' }}
-                                    </td>
-                                    <td style="padding:9px 10px;">
-                                        <span style="padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; color:{{ $color }}; background:{{ $bg }};">
-                                            {{ \App\Models\Ticket::prioridadLabel($ticket->prioridad) }}
-                                        </span>
-                                    </td>
-                                    <td style="padding:9px 10px; color:{{ $ticket->estaVencido() ? 'var(--danger)' : '#64748b' }}; font-size:12px;">
-                                        @if($ticket->sla_due_at && !in_array($ticket->estado, ['resuelto', 'cerrado'], true))
-                                            {{ $ticket->estaVencido() ? 'Vencido' : $ticket->sla_due_at->diffForHumans() }}
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td style="padding:9px 10px; text-align:right;">
-                                        <a href="{{ route('tickets.show', $ticket) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Abrir →</a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
-
-        <div class="card fade-in">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="candidate-inline-meta" style="margin-bottom:16px;">
                 <h3 style="font-weight:700; margin:0; font-size:1rem;">Solicitudes recientes</h3>
                 <span style="font-size:12px; color:#64748b;">{{ $stats['solicitudes_activas'] }} activas</span>
             </div>
@@ -159,21 +85,21 @@
                     No hay solicitudes recientes.
                 </div>
             @else
-                <div style="display:grid; gap:10px;">
+                <div class="candidate-compact-list">
                     @foreach($solicitudes_recientes as $solicitud)
-                        <div style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2);">
-                            <div style="display:flex; justify-content:space-between; gap:12px;">
+                        <div class="candidate-compact-item">
+                            <div class="candidate-inline-meta">
                                 <div style="min-width:0;">
-                                    <div style="font-weight:600; margin-bottom:2px;">{{ $solicitud->titulo }}</div>
-                                    <div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <div class="candidate-compact-item-title">{{ $solicitud->titulo }}</div>
+                                    <div class="candidate-compact-item-subtitle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                         {{ $solicitud->empresa?->nombre_empresa ?? 'Empresa' }}
                                     </div>
                                 </div>
-                                <div style="text-align:right; flex-shrink:0;">
-                                    <div style="font-size:12px; color:#94a3b8;">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($solicitud->nivel_jerarquico) }}</div>
+                                <div class="candidate-compact-item-trailing" style="flex-shrink:0;">
+                                    <div>{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($solicitud->nivel_jerarquico) }}</div>
                                     <div style="margin-top:4px;">
                                         <span style="padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; background:{{ $solicitud->estado === 'activa' ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)' }}; color:{{ $solicitud->estado === 'activa' ? '#22c55e' : '#f59e0b' }};">
-                                            {{ $solicitud->estado === 'activa' ? 'Activa' : 'En revisión' }}
+                                            {{ $solicitud->estado === 'activa' ? 'Activa' : 'En revision' }}
                                         </span>
                                     </div>
                                 </div>
@@ -186,17 +112,17 @@
     </div>
 
     <div class="card fade-in" style="margin-top:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div class="candidate-inline-meta" style="margin-bottom:16px;">
             <h3 style="font-weight:700; margin:0; font-size:1rem;">Mis tareas asignadas</h3>
-            <a href="{{ route('interno.tareas.index') }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver todas →</a>
+            <a href="{{ route('interno.tareas.index') }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Ver todas &rarr;</a>
         </div>
 
         @if($tareas_recientes->isEmpty())
             <div style="text-align:center; padding:36px 0; color:#64748b;">
-                No tienes tareas asignadas todavía.
+                No tienes tareas asignadas todavia.
             </div>
         @else
-            <div style="overflow-x:auto;">
+            <div class="desktop-only table-scroll">
                 <table style="width:100%; border-collapse:collapse; font-size:13px;">
                     <thead>
                         <tr style="border-bottom:1px solid var(--border);">
@@ -226,12 +152,45 @@
                                     {{ $tarea->created_at?->diffForHumans() ?? '—' }}
                                 </td>
                                 <td style="padding:9px 10px; text-align:right;">
-                                    <a href="{{ route('interno.tareas.show', $tarea) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Abrir →</a>
+                                    <a href="{{ route('interno.tareas.show', $tarea) }}" style="font-size:12px; color:var(--accent); text-decoration:none;">Abrir &rarr;</a>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <div class="mobile-only">
+                <div class="candidate-mobile-list">
+                    @foreach($tareas_recientes as $tarea)
+                        <article class="candidate-mobile-card">
+                            <div class="candidate-inline-meta">
+                                <div>
+                                    <h4 class="candidate-mobile-card-title">{{ $tarea->servicio?->nombre ?? 'Servicio' }}</h4>
+                                    <p class="candidate-mobile-card-subtitle">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($tarea->servicio?->nivel_jerarquico) }}</p>
+                                </div>
+                                <span class="badge {{ \App\Models\ServicioAsignado::estadoBadgeClass($tarea->estado) }}">
+                                    {{ \App\Models\ServicioAsignado::estadoLabel($tarea->estado) }}
+                                </span>
+                            </div>
+
+                            <div class="candidate-mobile-meta">
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Objetivo</p>
+                                    <p class="candidate-mobile-meta-value">{{ \App\Models\ServicioAsignado::asignableTipoLabel($tarea->asignable_type) }} · {{ $tarea->asignableNombre() }}</p>
+                                </div>
+                                <div>
+                                    <p class="candidate-mobile-meta-label">Asignada</p>
+                                    <p class="candidate-mobile-meta-value">{{ $tarea->created_at?->diffForHumans() ?? '—' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="toolbar-wrap mt-4">
+                                <a href="{{ route('interno.tareas.show', $tarea) }}" class="btn btn-secondary btn-sm">Abrir</a>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
             </div>
         @endif
     </div>

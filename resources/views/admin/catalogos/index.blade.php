@@ -1,26 +1,37 @@
 @php
     $tabActivo = $tabActivo ?? request('tab', 'servicios');
-    $baseQuery = request()->except(['tab', 'page']);
-    $irOpciones = route('admin.catalogos.index', array_merge($baseQuery, ['tab' => 'opciones']));
-    $irServicios = route('admin.catalogos.index', array_merge($baseQuery, ['tab' => 'servicios']));
+    $baseQuery = request()->except(['tab', 'page', 'grupo', 'buscar', 'buscar_servicio']);
+
+    $tabs = [
+        'servicios' => ['icono' => 'Servicios', 'label' => 'Servicios'],
+        'vacantes' => ['icono' => 'Vacantes', 'label' => 'Vacantes'],
+        'empresas' => ['icono' => 'Empresas', 'label' => 'Empresas'],
+    ];
+
+    $hints = [
+        'servicios' => 'Servicios que tu empresa ofrece y los tipos que se pueden solicitar.',
+        'vacantes' => 'Listas que usa el formulario de vacantes: areas, niveles de estudio, contratos y jerarquias.',
+        'empresas' => 'Datos de las empresas clientes: sectores economicos.',
+    ];
 @endphp
 
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Administración</a>
+            <a href="{{ route('admin.dashboard') }}">Administracion</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <span>Catálogos del sistema</span>
+            <span>Personalizar el sistema</span>
         </nav>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div class="candidate-inline-meta">
             <div>
-                <h1 class="page-title">Catálogos del sistema</h1>
-                <p class="page-subtitle">Catálogo de servicios primero y opciones reutilizables después, todo en una sola pantalla con pestañas internas.</p>
+                <h1 class="page-title">Personalizar el sistema</h1>
+                <p class="page-subtitle">Decide que servicios ofreces y que opciones aparecen en los formularios.</p>
             </div>
             @if($tabActivo === 'servicios')
-                <a href="{{ route('admin.catalogo.create') }}" class="btn btn-primary">+ Agregar servicio</a>
+                <a href="{{ route('admin.catalogo.create') }}" class="btn btn-primary" style="font-size:14px; padding:10px 18px;">+ Nuevo servicio</a>
             @else
-                <a href="{{ route('admin.catalogos.create', ['grupo' => request('grupo')]) }}" class="btn btn-primary">+ Nueva opción</a>
+                @php $gruposModulo = \App\Models\CatalogoOpcion::gruposDelModulo($tabActivo); @endphp
+                <a href="{{ route('admin.catalogos.create', ['grupo' => request('grupo', $gruposModulo[0] ?? null), 'tab' => $tabActivo]) }}" class="btn btn-primary" style="font-size:14px; padding:10px 18px;">+ Nueva opcion</a>
             @endif
         </div>
     </x-slot>
@@ -32,303 +43,326 @@
         <div class="alert alert-danger mb-4">{{ session('error') }}</div>
     @endif
 
-    <div class="metrics-grid fade-in">
-        <div class="metric-card">
-            <div class="metric-top">
-                <span class="metric-label">Servicios totales</span>
-                <div class="metric-icon" style="background:rgba(245,158,11,.12);color:#f59e0b;">S</div>
-            </div>
-            <div class="metric-value">{{ $serviciosStats['total'] }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-top">
-                <span class="metric-label">Servicios activos</span>
-                <div class="metric-icon" style="background:rgba(168,85,247,.12);color:#a855f7;">A</div>
-            </div>
-            <div class="metric-value">{{ $serviciosStats['activos'] }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-top">
-                <span class="metric-label">Opciones totales</span>
-                <div class="metric-icon" style="background:rgba(14,165,233,.12);color:#0ea5e9;">#</div>
-            </div>
-            <div class="metric-value">{{ $stats['opciones_total'] }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-top">
-                <span class="metric-label">Grupos activos</span>
-                <div class="metric-icon" style="background:rgba(34,197,94,.12);color:#22c55e;">G</div>
-            </div>
-            <div class="metric-value">{{ $stats['grupos_activos'] }}</div>
-        </div>
+    <div style="display:flex; gap:0; margin-bottom:18px; border-bottom:2px solid var(--border); flex-wrap:wrap;">
+        @foreach($tabs as $key => $cfg)
+            <a href="{{ route('admin.catalogos.index', array_merge($baseQuery, ['tab' => $key])) }}"
+               style="padding:14px 24px; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:3px solid {{ $tabActivo === $key ? 'var(--accent)' : 'transparent' }}; color:{{ $tabActivo === $key ? 'var(--accent)' : 'var(--text-muted)' }}; margin-bottom:-2px;">
+                {{ $cfg['label'] }}
+            </a>
+        @endforeach
     </div>
 
-    <div class="card fade-in" style="margin-top:24px; padding:0; overflow:hidden;">
-        <div style="display:flex; gap:8px; padding:14px 16px; border-bottom:1px solid var(--border); background:var(--surface-2); flex-wrap:wrap;">
-            <a href="{{ $irServicios }}"
-               style="padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.9rem; border:1px solid {{ $tabActivo === 'servicios' ? 'transparent' : 'var(--border)' }}; background:{{ $tabActivo === 'servicios' ? 'var(--accent)' : 'var(--surface)' }}; color:{{ $tabActivo === 'servicios' ? '#fff' : 'var(--text)' }};">
-                Catálogo de servicios
-            </a>
-            <a href="{{ $irOpciones }}"
-               style="padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.9rem; border:1px solid {{ $tabActivo === 'opciones' ? 'transparent' : 'var(--border)' }}; background:{{ $tabActivo === 'opciones' ? 'var(--accent)' : 'var(--surface)' }}; color:{{ $tabActivo === 'opciones' ? '#fff' : 'var(--text)' }};">
-                Opciones del sistema
-            </a>
+    @if($tabActivo === 'servicios')
+        <div class="metrics-grid" style="margin-bottom:18px;">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Servicios</span>
+                </div>
+                <div class="metric-value">{{ $serviciosStats['total'] }}</div>
+                <span class="metric-change text-muted">{{ $serviciosStats['activos'] }} visibles</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Empresa</span>
+                </div>
+                <div class="metric-value">{{ $serviciosStats['empresa'] }}</div>
+                <span class="metric-change text-muted">Solo empresas</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Candidato</span>
+                </div>
+                <div class="metric-value">{{ $serviciosStats['candidato'] }}</div>
+                <span class="metric-change text-muted">Solo candidatos</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Ambos</span>
+                </div>
+                <div class="metric-value">{{ $serviciosStats['ambos'] }}</div>
+                <span class="metric-change text-muted">Disponibles para ambos</span>
+            </div>
         </div>
 
-        <div style="padding:20px;">
-            @if($tabActivo === 'opciones')
-                <div class="card" style="margin-bottom:20px;">
-                    <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
-                        <input type="hidden" name="tab" value="opciones">
-                        <div class="form-group" style="margin:0; min-width:240px;">
-                            <label class="form-label" for="grupo">Grupo</label>
-                            <select id="grupo" name="grupo" class="form-input" onchange="this.form.submit()">
-                                <option value="">Todos</option>
-                                @foreach(\App\Models\CatalogoOpcion::gruposGestionables() as $key => $label)
-                                    <option value="{{ $key }}" {{ request('grupo') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0; min-width:220px;">
-                            <label class="form-label" for="estado">Estado</label>
-                            <select id="estado" name="estado" class="form-input" onchange="this.form.submit()">
-                                <option value="">Todos</option>
-                                <option value="activo" {{ request('estado') === 'activo' ? 'selected' : '' }}>Activos</option>
-                                <option value="inactivo" {{ request('estado') === 'inactivo' ? 'selected' : '' }}>Inactivos</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0; min-width:260px; flex:1;">
-                            <label class="form-label" for="buscar">Buscar</label>
-                            <input type="text" id="buscar" name="buscar" class="form-input" value="{{ request('buscar') }}" placeholder="Clave, valor o descripción">
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button type="submit" class="btn btn-primary">Filtrar</button>
-                            @if(request()->hasAny(['grupo', 'estado', 'buscar']))
-                                <a href="{{ route('admin.catalogos.index', ['tab' => 'opciones']) }}" class="btn btn-secondary">Limpiar</a>
-                            @endif
-                        </div>
-                    </form>
+        <div class="card" style="padding:20px;">
+            <p style="margin:0 0 16px; font-size:13px; color:#64748b;">
+                Aqui defines los servicios que tu empresa puede dar: capacitaciones, coaching, mantenimiento y otros.
+            </p>
+
+            <form method="GET" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+                <input type="hidden" name="tab" value="servicios">
+                <input type="text" name="buscar_servicio" class="form-input" value="{{ request('buscar_servicio') }}" placeholder="Buscar servicio..." style="flex:1; min-width:220px; padding:10px 14px;">
+                <button type="submit" class="btn btn-secondary">Buscar</button>
+                @if(request('buscar_servicio'))
+                    <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-ghost">Limpiar</a>
+                @endif
+            </form>
+
+            @if($servicios->isEmpty())
+                <div style="text-align:center; padding:60px 20px;">
+                    <p style="font-size:1rem; margin:0 0 6px;">Aun no hay servicios.</p>
+                    <p style="font-size:13px; color:#94a3b8; margin:0 0 16px;">Agrega el primero para que empresas y candidatos puedan solicitarlo.</p>
+                    <a href="{{ route('admin.catalogo.create') }}" class="btn btn-primary">+ Agregar el primero</a>
                 </div>
-
-                @forelse($catalogosPorGrupo as $grupo => $items)
-                    @php
-                        $grupoLabel = \App\Models\CatalogoOpcion::grupoLabel($grupo);
-                        $resumen = $items->take(5)->pluck('valor')->implode(' · ');
-                    @endphp
-                    <div class="card fade-in" style="margin-top:20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px;">
-                            <div>
-                                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border-radius:999px; background:rgba(59,130,246,.08); color:#60a5fa; font-size:12px; font-weight:600;">
-                                    {{ $items->count() }} opción(es)
-                                </div>
-                                <h2 style="margin:10px 0 4px; font-size:1.05rem; font-weight:700;">{{ $grupoLabel }}</h2>
-                                <p style="margin:0; color:#64748b; font-size:0.85rem;">
-                                    {{ $resumen ?: 'Sin opciones visibles en este grupo.' }}
-                                </p>
-                            </div>
-                            <a href="{{ route('admin.catalogos.create', ['grupo' => $grupo]) }}" class="btn btn-secondary">+ Nueva opción</a>
-                        </div>
-
-                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
-                            @foreach($items->take(6) as $item)
-                                <span class="badge {{ $item->es_sistema ? 'badge-blue' : ($item->activo ? 'badge-green' : 'badge-gray') }}">
-                                    {{ $item->valor }}
-                                </span>
-                            @endforeach
-                            @if($items->count() > 6)
-                                <span class="badge badge-gray">+{{ $items->count() - 6 }} más</span>
-                            @endif
-                        </div>
-
-                        <div class="table-wrapper">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Clave</th>
-                                        <th>Valor</th>
-                                        <th>Descripción</th>
-                                        <th>Tipo</th>
-                                        <th>Estado</th>
-                                        <th>Orden</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($items as $catalogo)
-                                        <tr>
-                                            <td style="font-size:0.85rem; color:#94a3b8;">{{ $catalogo->clave }}</td>
-                                            <td>
-                                                <div style="font-weight:600; color:var(--text);">{{ $catalogo->valor }}</div>
-                                            </td>
-                                            <td>
-                                                @if($catalogo->descripcion)
-                                                    <div style="font-size:0.82rem; color:#64748b;">{{ \Illuminate\Support\Str::limit($catalogo->descripcion, 90) }}</div>
-                                                @else
-                                                    <span style="color:#94a3b8;">—</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="badge {{ $catalogo->es_sistema ? 'badge-blue' : 'badge-gray' }}">
-                                                    {{ $catalogo->es_sistema ? 'Sistema' : 'Personalizado' }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if($catalogo->es_sistema)
-                                                    <span class="badge badge-green">Activo</span>
-                                                @else
-                                                    <form method="POST" action="{{ route('admin.catalogos.toggle', $catalogo) }}" style="display:inline;">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" class="badge {{ $catalogo->activo ? 'badge-green' : 'badge-gray' }}" style="border:none; cursor:pointer;">
-                                                            {{ $catalogo->activo ? 'Activo' : 'Inactivo' }}
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </td>
-                                            <td style="text-align:center; color:#64748b;">{{ $catalogo->orden }}</td>
-                                            <td style="white-space:nowrap;">
-                                                <div style="display:flex; gap:6px; justify-content:flex-end;">
-                                                    <a href="{{ route('admin.catalogos.edit', $catalogo) }}" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Editar</a>
-                                                    @if(! $catalogo->es_sistema)
-                                                        <form method="POST" action="{{ route('admin.catalogos.destroy', $catalogo) }}" onsubmit="return confirm('¿Eliminar esta opción?')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-danger" style="padding:4px 10px; font-size:0.8rem;">Eliminar</button>
-                                                        </form>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                @empty
-                    <div class="card" style="text-align:center; padding:40px;">
-                        <p style="margin:0 0 8px; color:#475569;">No hay opciones registradas.</p>
-                        <a href="{{ route('admin.catalogos.create', ['grupo' => request('grupo')]) }}" class="btn btn-primary">Agregar la primera opción</a>
-                    </div>
-                @endforelse
             @else
-                <div class="card" style="margin-bottom:20px;">
-                    <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
-                        <input type="hidden" name="tab" value="servicios">
-                        <div class="form-group" style="margin:0; min-width:220px;">
-                            <label class="form-label" for="tipo">Tipo</label>
-                            <select id="tipo" name="tipo" class="form-input" onchange="this.form.submit()">
-                                <option value="">Todos</option>
-                                @foreach(\App\Models\CatalogoServicio::tipos() as $key => $label)
-                                    <option value="{{ $key }}" {{ request('tipo') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0; min-width:220px;">
-                            <label class="form-label" for="nivel">Jerarquía</label>
-                            <select id="nivel" name="nivel" class="form-input" onchange="this.form.submit()">
-                                <option value="">Todas</option>
-                                @foreach(\App\Models\CatalogoServicio::nivelesJerarquicos() as $key => $label)
-                                    <option value="{{ $key }}" {{ request('nivel') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0; min-width:220px;">
-                            <label class="form-label" for="para_quien">Para quién</label>
-                            <select id="para_quien" name="para_quien" class="form-input" onchange="this.form.submit()">
-                                <option value="">Todos</option>
-                                <option value="empresa" {{ request('para_quien') === 'empresa' ? 'selected' : '' }}>Empresas</option>
-                                <option value="candidato" {{ request('para_quien') === 'candidato' ? 'selected' : '' }}>Candidatos</option>
-                                <option value="ambos" {{ request('para_quien') === 'ambos' ? 'selected' : '' }}>Ambos</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0; min-width:260px; flex:1;">
-                            <label class="form-label" for="buscar_servicio">Buscar</label>
-                            <input type="text" id="buscar_servicio" name="buscar_servicio" class="form-input" value="{{ request('buscar_servicio') }}" placeholder="Nombre o descripción">
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button type="submit" class="btn btn-primary">Filtrar</button>
-                            @if(request()->hasAny(['tipo', 'nivel', 'para_quien', 'buscar_servicio']))
-                                <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-secondary">Limpiar</a>
-                            @endif
-                        </div>
-                    </form>
-                </div>
-
-                <div class="table-wrapper">
-                    <table class="table">
+                <div class="desktop-only table-scroll">
+                    <table class="table" style="width:100%;">
                         <thead>
                             <tr>
-                                <th>Servicio</th>
-                                <th>Tipo</th>
-                                <th>Jerarquía</th>
-                                <th>Para quién</th>
-                                <th>Orden</th>
-                                <th>Estado</th>
-                                <th></th>
+                                <th>Nombre del servicio</th>
+                                <th style="width:120px;">Para quien</th>
+                                <th style="width:100px; text-align:center;">Visible</th>
+                                <th style="width:160px; text-align:right;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($servicios as $servicio)
+                            @foreach($servicios as $servicio)
+                                @php
+                                    $pq = ['empresa' => 'Empresas', 'candidato' => 'Candidatos', 'ambos' => 'Ambos'];
+                                @endphp
                                 <tr>
                                     <td>
-                                        <div style="font-weight:600; color:var(--text);">{{ $servicio->nombre }}</div>
+                                        <div style="font-weight:600; font-size:14px;">{{ $servicio->nombre }}</div>
                                         @if($servicio->descripcion)
-                                            <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">{{ \Illuminate\Support\Str::limit($servicio->descripcion, 80) }}</div>
+                                            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">{{ \Illuminate\Support\Str::limit($servicio->descripcion, 90) }}</div>
                                         @endif
                                     </td>
-                                    <td>
-                                        <span class="badge badge-blue" style="font-size:0.75rem;">
-                                            {{ \App\Models\CatalogoServicio::tipos()[$servicio->tipo] ?? $servicio->tipo }}
-                                        </span>
-                                    </td>
-                                    <td style="font-size:0.83rem; color:#94a3b8;">
-                                        {{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicio->nivel_jerarquico) }}
-                                    </td>
-                                    <td style="font-size:0.8rem; color:#94a3b8;">
-                                        @php $pq = ['empresa' => 'Empresa', 'candidato' => 'Candidato', 'ambos' => 'Ambos']; @endphp
-                                        {{ $pq[$servicio->para_quien] ?? $servicio->para_quien }}
-                                    </td>
-                                    <td style="text-align:center; font-size:0.85rem; color:#64748b;">{{ $servicio->orden ?? '—' }}</td>
-                                    <td>
+                                    <td><span style="font-size:12px;">{{ $pq[$servicio->para_quien] ?? 'Ambos' }}</span></td>
+                                    <td style="text-align:center;">
                                         <form method="POST" action="{{ route('admin.catalogo.toggle', $servicio) }}" style="display:inline;">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
-                                                    style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
+                                                    style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
                                                            background:{{ $servicio->activo ? 'var(--success-light)' : 'var(--surface-2)' }};
                                                            color:{{ $servicio->activo ? 'var(--success)' : 'var(--text-muted)' }};"
-                                                    title="{{ $servicio->activo ? 'Clic para desactivar' : 'Clic para activar' }}">
-                                                {{ $servicio->activo ? 'Activo' : 'Inactivo' }}
+                                                    title="{{ $servicio->activo ? 'Clic para ocultarlo' : 'Clic para mostrarlo' }}">
+                                                {{ $servicio->activo ? 'Si' : 'No' }}
                                             </button>
                                         </form>
                                     </td>
-                                    <td style="white-space:nowrap;">
-                                        <div style="display:flex; gap:6px;">
-                                            <a href="{{ route('admin.catalogo.edit', $servicio) }}" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Editar</a>
-                                            <form method="POST" action="{{ route('admin.catalogo.destroy', $servicio) }}" onsubmit="return confirm('¿Eliminar este servicio del catálogo?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger" style="padding:4px 10px; font-size:0.8rem;">Eliminar</button>
-                                            </form>
-                                        </div>
+                                    <td style="text-align:right; white-space:nowrap;">
+                                        <a href="{{ route('admin.catalogo.edit', $servicio) }}" class="btn btn-secondary" style="padding:5px 12px; font-size:12px;">Editar</a>
+                                        <button type="button" onclick="rhModal('{{ route('admin.catalogo.accion.modal', [$servicio, 'eliminar']) }}')" class="btn btn-danger" style="padding:5px 12px; font-size:12px;">Borrar</button>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" style="text-align:center; padding:48px; color:#475569;">
-                                        No hay servicios en el catálogo.
-                                        <a href="{{ route('admin.catalogo.create') }}" style="color:var(--accent);">Agregar el primero</a>
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
 
-                <div style="margin-top:20px;">
-                    {{ $servicios->links() }}
+                <div class="mobile-only">
+                    <div class="candidate-mobile-list">
+                        @foreach($servicios as $servicio)
+                            @php
+                                $pq = ['empresa' => 'Empresas', 'candidato' => 'Candidatos', 'ambos' => 'Ambos'];
+                            @endphp
+                            <article class="candidate-mobile-card">
+                                <div class="candidate-inline-meta">
+                                    <div>
+                                        <h3 class="candidate-mobile-card-title">{{ $servicio->nombre }}</h3>
+                                        <p class="candidate-mobile-card-subtitle">{{ $pq[$servicio->para_quien] ?? 'Ambos' }}</p>
+                                    </div>
+                                    <span class="badge {{ $servicio->activo ? 'badge-green' : 'badge-gray' }}">{{ $servicio->activo ? 'Visible' : 'Oculto' }}</span>
+                                </div>
+
+                                <div class="candidate-mobile-meta">
+                                    <div>
+                                        <p class="candidate-mobile-meta-label">Tipo</p>
+                                        <p class="candidate-mobile-meta-value">{{ \App\Models\CatalogoServicio::tipos()[$servicio->tipo] ?? $servicio->tipo }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="candidate-mobile-meta-label">Jerarquia</p>
+                                        <p class="candidate-mobile-meta-value">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicio->nivel_jerarquico) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="candidate-mobile-meta-label">Descripcion</p>
+                                        <p class="candidate-mobile-meta-value">{{ $servicio->descripcion ?: 'Sin descripcion' }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="candidate-actions" style="margin-top:14px;">
+                                    <form method="POST" action="{{ route('admin.catalogo.toggle', $servicio) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-secondary btn-sm">{{ $servicio->activo ? 'Ocultar' : 'Mostrar' }}</button>
+                                    </form>
+                                    <a href="{{ route('admin.catalogo.edit', $servicio) }}" class="btn btn-secondary btn-sm">Editar</a>
+                                    <button type="button" onclick="rhModal('{{ route('admin.catalogo.accion.modal', [$servicio, 'eliminar']) }}')" class="btn btn-danger btn-sm">Borrar</button>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
                 </div>
+
+                <div style="margin-top:16px;">{{ $servicios->links() }}</div>
             @endif
         </div>
-    </div>
+    @else
+        <div class="metrics-grid" style="margin-bottom:18px;">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Opciones</span>
+                </div>
+                <div class="metric-value">{{ $stats['opciones_total'] }}</div>
+                <span class="metric-change text-muted">Total del sistema</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Grupos</span>
+                </div>
+                <div class="metric-value">{{ $stats['grupos_activos'] }}</div>
+                <span class="metric-change text-muted">Listas configurables</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Sistema</span>
+                </div>
+                <div class="metric-value">{{ $stats['opciones_sistema'] }}</div>
+                <span class="metric-change text-muted">Bloqueadas</span>
+            </div>
+            <div class="metric-card">
+                <div class="metric-top">
+                    <span class="metric-label">Personalizadas</span>
+                </div>
+                <div class="metric-value">{{ $stats['opciones_personalizadas'] }}</div>
+                <span class="metric-change text-muted">Editables</span>
+            </div>
+        </div>
+
+        <div class="card" style="padding:20px;">
+            <p style="margin:0 0 16px; font-size:13px; color:#64748b;">{{ $hints[$tabActivo] ?? '' }}</p>
+
+            @php
+                $todosLosGrupos = \App\Models\CatalogoOpcion::gruposGestionables();
+                $gruposModulo = \App\Models\CatalogoOpcion::gruposDelModulo($tabActivo);
+            @endphp
+
+            <form method="GET" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+                <input type="hidden" name="tab" value="{{ $tabActivo }}">
+                <select name="grupo" class="form-input" onchange="this.form.submit()" style="min-width:280px; padding:10px 14px; font-size:14px;">
+                    <option value="">Ver todas las listas de {{ $tabs[$tabActivo]['label'] }}</option>
+                    @foreach($gruposModulo as $clave)
+                        @if(isset($todosLosGrupos[$clave]))
+                            <option value="{{ $clave }}" {{ request('grupo') === $clave ? 'selected' : '' }}>{{ $todosLosGrupos[$clave] }}</option>
+                        @endif
+                    @endforeach
+                </select>
+                <input type="text" name="buscar" class="form-input" value="{{ request('buscar') }}" placeholder="Buscar..." style="flex:1; min-width:200px; padding:10px 14px;">
+                <button type="submit" class="btn btn-secondary">Buscar</button>
+                @if(request()->hasAny(['grupo', 'buscar']))
+                    <a href="{{ route('admin.catalogos.index', ['tab' => $tabActivo]) }}" class="btn btn-ghost">Limpiar</a>
+                @endif
+            </form>
+
+            @forelse($catalogosPorGrupo as $grupo => $items)
+                @php $grupoLabel = \App\Models\CatalogoOpcion::grupoLabel($grupo); @endphp
+                <div style="margin-bottom:24px; padding:18px; border:1px solid var(--border); border-radius:10px; background:var(--surface);">
+                    <div class="candidate-inline-meta" style="margin-bottom:12px;">
+                        <div>
+                            <h3 style="margin:0; font-size:1rem; font-weight:700;">{{ $grupoLabel }}</h3>
+                            <p style="margin:2px 0 0; font-size:12px; color:#94a3b8;">{{ $items->count() }} opcion(es) en esta lista</p>
+                        </div>
+                        <a href="{{ route('admin.catalogos.create', ['grupo' => $grupo, 'tab' => $tabActivo]) }}" class="btn btn-secondary" style="font-size:12px;">+ Agregar opcion</a>
+                    </div>
+
+                    <div class="desktop-only table-scroll">
+                        <table class="table" style="width:100%; margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Lo que ve el usuario</th>
+                                    <th style="width:100px; text-align:center;">Visible</th>
+                                    <th style="width:160px; text-align:right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($items as $opcion)
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight:500;">{{ $opcion->valor }}</div>
+                                            @if($opcion->descripcion)
+                                                <div style="font-size:11px; color:#94a3b8;">{{ \Illuminate\Support\Str::limit($opcion->descripcion, 80) }}</div>
+                                            @endif
+                                        </td>
+                                        <td style="text-align:center;">
+                                            @if($opcion->es_sistema)
+                                                <span style="padding:5px 12px; border-radius:20px; font-size:11px; background:var(--surface-2); color:var(--text-muted);" title="Esta opcion la usa el sistema, no se puede ocultar">Fija</span>
+                                            @else
+                                                <form method="POST" action="{{ route('admin.catalogos.toggle', $opcion) }}" style="display:inline;">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit"
+                                                            style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
+                                                                   background:{{ $opcion->activo ? 'var(--success-light)' : 'var(--surface-2)' }};
+                                                                   color:{{ $opcion->activo ? 'var(--success)' : 'var(--text-muted)' }};">
+                                                        {{ $opcion->activo ? 'Si' : 'No' }}
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                        <td style="text-align:right; white-space:nowrap;">
+                                            <a href="{{ route('admin.catalogos.edit', $opcion) }}" class="btn btn-secondary" style="padding:5px 12px; font-size:12px;">Editar</a>
+                                            @if(! $opcion->es_sistema)
+                                                <button type="button" onclick="rhModal('{{ route('admin.catalogos.accion.modal', [$opcion, 'eliminar']) }}')" class="btn btn-danger" style="padding:5px 12px; font-size:12px;">Borrar</button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mobile-only">
+                        <div class="candidate-mobile-list">
+                            @foreach($items as $opcion)
+                                <article class="candidate-mobile-card">
+                                    <div class="candidate-inline-meta">
+                                        <div>
+                                            <h3 class="candidate-mobile-card-title">{{ $opcion->valor }}</h3>
+                                            <p class="candidate-mobile-card-subtitle">{{ $opcion->clave }}</p>
+                                        </div>
+                                        @if($opcion->es_sistema)
+                                            <span class="badge badge-gray">Fija</span>
+                                        @else
+                                            <span class="badge {{ $opcion->activo ? 'badge-green' : 'badge-gray' }}">{{ $opcion->activo ? 'Visible' : 'Oculta' }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="candidate-mobile-meta">
+                                        <div>
+                                            <p class="candidate-mobile-meta-label">Grupo</p>
+                                            <p class="candidate-mobile-meta-value">{{ $grupoLabel }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="candidate-mobile-meta-label">Descripcion</p>
+                                            <p class="candidate-mobile-meta-value">{{ $opcion->descripcion ?: 'Sin descripcion' }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="candidate-actions" style="margin-top:14px;">
+                                        @if(! $opcion->es_sistema)
+                                            <form method="POST" action="{{ route('admin.catalogos.toggle', $opcion) }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-secondary btn-sm">{{ $opcion->activo ? 'Ocultar' : 'Mostrar' }}</button>
+                                            </form>
+                                        @endif
+                                        <a href="{{ route('admin.catalogos.edit', $opcion) }}" class="btn btn-secondary btn-sm">Editar</a>
+                                        @if(! $opcion->es_sistema)
+                                            <button type="button" onclick="rhModal('{{ route('admin.catalogos.accion.modal', [$opcion, 'eliminar']) }}')" class="btn btn-danger btn-sm">Borrar</button>
+                                        @endif
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div style="text-align:center; padding:60px 20px;">
+                    <p style="font-size:1rem; margin:0 0 6px;">No hay opciones que mostrar.</p>
+                    <p style="font-size:13px; color:#94a3b8; margin:0 0 16px;">Elige una lista del menu o agrega una nueva opcion.</p>
+                </div>
+            @endforelse
+        </div>
+    @endif
 </x-app-layout>

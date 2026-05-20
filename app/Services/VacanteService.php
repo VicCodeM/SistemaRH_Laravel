@@ -19,7 +19,14 @@ class VacanteService
     {
         $datos = [];
 
-        $datos['tipo_servicio'] = $input['tipo_servicio'] ?? null;
+        // Vacante = solo reclutamiento. Default seguro para no romper NOT NULL.
+        $datos['tipo_servicio'] = $input['tipo_servicio'] ?? 'reclutamiento';
+
+        // Agregar tipo_contrato si viene
+        if (array_key_exists('tipo_contrato', $input)) {
+            $datos['tipo_contrato'] = $this->limpiarNulo($input['tipo_contrato'] ?? null);
+        }
+
         $datos['titulo'] = $input['titulo'] ?? null;
 
         $datos['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico(
@@ -48,6 +55,16 @@ class VacanteService
 
         $datos['ubicacion'] = $this->limpiarNulo($input['ubicacion'] ?? null);
 
+        // Cupos: cantidad de personas a contratar. Mínimo 1.
+        $datos['cupos'] = isset($input['cupos']) && (int) $input['cupos'] > 0
+            ? (int) $input['cupos']
+            : 1;
+
+        // Notas internas: solo si vienen (no las pisamos con null si no se envían)
+        if (array_key_exists('notas_internas', $input)) {
+            $datos['notas_internas'] = $this->limpiarNulo($input['notas_internas']);
+        }
+
         return $datos;
     }
 
@@ -67,9 +84,55 @@ class VacanteService
     /**
      * Actualiza una vacante existente con los datos normalizados.
      */
+    /**
+     * Cierra manualmente una vacante con motivo opcional.
+     * Útil para cerrar antes de cubrir todos los cupos (ej: cliente canceló).
+     */
+    public function cerrarManual(Vacante $vacante, ?string $motivo = null): void
+    {
+        if ($vacante->estado === 'cerrada') {
+            return;
+        }
+
+        $vacante->update([
+            'estado'        => 'cerrada',
+            'cierre_motivo' => trim((string) $motivo) ?: null,
+            'fecha_cierre'  => now(),
+        ]);
+    }
+
+    /**
+     * Reabre una vacante cerrada manualmente.
+     */
+    public function reabrir(Vacante $vacante): void
+    {
+        if ($vacante->estado !== 'cerrada') {
+            return;
+        }
+
+        if ($vacante->estaLlena()) {
+            throw new \DomainException('No puedes reabrir: la vacante ya cubrió todos sus cupos. Aumenta cupos o retira a alguien.');
+        }
+
+        $vacante->update([
+            'estado'        => 'activa',
+            'cierre_motivo' => null,
+            'fecha_cierre'  => null,
+        ]);
+    }
+
     public function actualizar(Vacante $vacante, array $input): Vacante
     {
         $datos = $this->prepararDatos($input);
+
+        // No permitir bajar cupos por debajo de los ya cubiertos
+        $cubiertos = $vacante->cuposCubiertos();
+        if (isset($datos['cupos']) && (int) $datos['cupos'] < $cubiertos) {
+            throw new \DomainException(
+                "No puedes bajar a {$datos['cupos']} cupo(s): ya tienes {$cubiertos} persona(s) seleccionada(s). Retira a alguien primero."
+            );
+        }
+
         $vacante->update($datos);
 
         return $vacante;

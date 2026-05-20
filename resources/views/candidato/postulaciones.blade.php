@@ -17,7 +17,7 @@
     @endif
 
     @if($postulaciones->count())
-        <div class="card fade-in" style="padding:0; overflow:hidden;">
+        <div class="card fade-in desktop-only" style="padding:0; overflow:hidden;">
             <div class="table-wrap" style="border:none; box-shadow:none;">
                 <table>
                     <thead>
@@ -36,7 +36,12 @@
                                     <span style="font-weight:500;">{{ $p->vacante?->titulo ?? '—' }}</span>
                                     <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">{{ $p->vacante?->requisitoResumen() ?? 'Sin requisitos' }}</div>
                                 </td>
-                                <td class="text-muted">{{ $p->vacante?->empresa?->nombre_empresa ?? '—' }}</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <x-avatar :src="$p->vacante?->empresa?->usuario?->avatar_url" :nombre="$p->vacante?->empresa?->nombre_empresa ?? '?'" :tamano="28" />
+                                        <span class="text-muted">{{ $p->vacante?->empresa?->nombre_empresa ?? '—' }}</span>
+                                    </div>
+                                </td>
                                 <td class="text-muted text-sm">{{ $p->fecha_postulacion?->format('d/m/Y H:i') ?? '—' }}</td>
                                 <td>
                                     <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($p->estado) }}">
@@ -56,14 +61,48 @@
                 </table>
             </div>
         </div>
-    @else
-        <div class="card fade-in" style="text-align:center; padding:60px 40px;">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:48px; height:48px; color:var(--text-muted); margin-bottom:16px;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
-            </svg>
-            <h3 style="font-weight:600; margin-bottom:8px;">Sin solicitudes</h3>
-            <p class="text-muted text-sm">Aún no has enviado ninguna solicitud.</p>
-            <a wire:navigate href="{{ route('candidato.vacantes') }}" class="btn btn-primary" style="margin-top:16px;">Ver solicitudes</a>
+
+        <div class="mobile-only">
+            <div class="candidate-mobile-list">
+                @foreach($postulaciones as $p)
+                    <div class="candidate-mobile-card fade-in">
+                        <h3 class="candidate-mobile-card-title">{{ $p->vacante?->titulo ?? '—' }}</h3>
+                        <p class="candidate-mobile-card-subtitle">{{ $p->vacante?->empresa?->nombre_empresa ?? '—' }}</p>
+
+                        <div class="candidate-mobile-meta">
+                            <div>
+                                <p class="candidate-mobile-meta-label">Resumen</p>
+                                <p class="candidate-mobile-meta-value">{{ $p->vacante?->requisitoResumen() ?? 'Sin requisitos' }}</p>
+                            </div>
+                            <div>
+                                <p class="candidate-mobile-meta-label">Fecha</p>
+                                <p class="candidate-mobile-meta-value">{{ $p->fecha_postulacion?->format('d/m/Y H:i') ?? '—' }}</p>
+                            </div>
+                            <div>
+                                <p class="candidate-mobile-meta-label">Estado</p>
+                                <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($p->estado) }}">
+                                    {{ \App\Models\Postulacion::estadoLabel($p->estado) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        @if($p->vacante)
+                            <div class="candidate-actions" style="margin-top:14px;">
+                                <button type="button" class="btn btn-secondary" onclick="rhModal('{{ route('candidato.vacantes.modal', $p->vacante) }}')">
+                                    Ver detalle
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
+    @else
+        <x-estado-vacio
+            icono="📋"
+            titulo="Aún no te has postulado a ninguna vacante"
+            mensaje="Explora las vacantes disponibles y postúlate a las que te interesen. Aquí verás el avance de cada postulación."
+            accion="Ver vacantes disponibles"
+            :href="route('candidato.vacantes')" />
     @endif
 </x-app-layout>

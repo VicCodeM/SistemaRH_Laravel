@@ -24,11 +24,6 @@ class Empresa extends Model
         return $this->hasMany(Vacante::class);
     }
 
-    public function tickets(): HasMany
-    {
-        return $this->hasMany(Ticket::class);
-    }
-
     public static function estados(): array
     {
         return CatalogoOpcion::opciones('empresa_estados', [

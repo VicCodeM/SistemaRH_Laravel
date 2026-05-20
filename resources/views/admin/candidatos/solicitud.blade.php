@@ -11,6 +11,7 @@
                 <p class="page-subtitle">Revisa la ficha completa y corrige lo necesario sin perder el avance.</p>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="{{ route('admin.candidatos.solicitud.pdf', $candidato) }}" target="_blank" class="btn btn-secondary" title="Descargar solicitud completa en PDF">📄 Descargar PDF</a>
                 <a href="{{ route('admin.candidatos') }}" class="btn btn-secondary">Volver</a>
                 <button onclick="rhModal('{{ route('admin.candidatos.modal', $candidato) }}')" class="btn btn-primary">Ver resumen</button>
             </div>

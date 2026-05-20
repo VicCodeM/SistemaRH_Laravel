@@ -163,6 +163,31 @@ class PersonalExternoController extends Controller
         return view('admin.personal-externo.modal', ['persona' => $personalExterno]);
     }
 
+    public function accionModal(PersonalExterno $personalExterno, string $accion)
+    {
+        $config = match ($accion) {
+            'eliminar' => [
+                'titulo' => 'Eliminar registro',
+                'descripcion' => 'Esta accion elimina el registro del personal externo y su CV asociado si existe.',
+                'mensaje' => 'Confirma la eliminacion definitiva. Esta accion no se puede deshacer.',
+                'ruta' => route('admin.personal-externo.destroy', $personalExterno),
+                'metodo' => 'DELETE',
+                'boton' => 'Eliminar registro',
+                'clase' => 'btn-danger',
+            ],
+            default => null,
+        };
+
+        abort_if($config === null, 404);
+
+        $registro = [
+            'titulo' => trim($personalExterno->nombre . ' ' . $personalExterno->apellidos),
+            'detalle' => $personalExterno->email . ' · ' . ($personalExterno->empresa_o_razon_social ?: 'Sin empresa'),
+        ];
+
+        return view('admin.partials.modal-accion', compact('config', 'registro'));
+    }
+
     public function destroy(PersonalExterno $personalExterno)
     {
         if ($personalExterno->cv_path) {

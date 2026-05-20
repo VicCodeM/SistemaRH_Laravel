@@ -16,11 +16,11 @@
             <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Teléfono fijo</label>
-                    <input type="text" class="form-input" wire:model.blur="telefono" placeholder="Número de teléfono (opcional)">
+                    <input type="text" class="form-input" wire:model="telefono" placeholder="Número de teléfono (opcional)">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Celular <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model.blur="celular" placeholder="Número de celular">
+                    <input type="text" class="form-input" wire:model="celular" placeholder="Número de celular">
                 </div>
             </div>
         </div>
@@ -33,26 +33,26 @@
             <div style="display:grid;gap:12px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Domicilio <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model.blur="domicilio" placeholder="Calle, número y referencias">
+                    <input type="text" class="form-input" wire:model="domicilio" placeholder="Calle, número y referencias">
                 </div>
                 <div class="solicitud-grid-2">
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Colonia <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model.blur="colonia" placeholder="Colonia">
+                        <input type="text" class="form-input" wire:model="colonia" placeholder="Colonia">
                     </div>
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Código postal <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model.blur="codigo_postal" placeholder="CP">
+                        <input type="text" class="form-input" wire:model="codigo_postal" placeholder="CP">
                     </div>
                 </div>
                 <div class="solicitud-grid-2">
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Municipio <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model.blur="municipio" placeholder="Municipio">
+                        <input type="text" class="form-input" wire:model="municipio" placeholder="Municipio">
                     </div>
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Ciudad <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model.blur="ciudad" placeholder="Ciudad">
+                        <input type="text" class="form-input" wire:model="ciudad" placeholder="Ciudad">
                     </div>
                 </div>
             </div>

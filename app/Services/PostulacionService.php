@@ -44,6 +44,9 @@ class PostulacionService
      */
     public function asignar(Vacante $vacante, int $candidatoId, bool $forzar, ?string $motivo): array
     {
+        // Asignar = agregar al pipeline. Sin límite, varios candidatos pueden
+        // competir por los cupos. El límite aplica solo al marcar como 'seleccionado'.
+
         $candidato = Candidato::where('id', $candidatoId)
             ->where('solicitud_estado', 'aprobada')
             ->firstOrFail();
@@ -101,7 +104,58 @@ class PostulacionService
             throw new \InvalidArgumentException("Estado de postulación no válido: {$nuevoEstado}");
         }
 
+        // Validar cupos SOLO al pasar a 'seleccionado' (no estaba antes seleccionado).
+        // En revisión / Ya entrevistado no tienen límite: pueden haber varios compitiendo.
+        if ($nuevoEstado === 'seleccionado' && $postulacion->estado !== 'seleccionado') {
+            $vacante = $postulacion->vacante()->first();
+            if ($vacante && $vacante->estaLlena()) {
+                throw new \DomainException(
+                    "No puedes seleccionar: la vacante ya tiene {$vacante->cuposCubiertos()} de {$vacante->cupos} cupo(s) cubierto(s). Retira a alguien para liberar un lugar."
+                );
+            }
+        }
+
+        $estadoAnterior = $postulacion->estado;
         $postulacion->update(['estado' => $nuevoEstado]);
+
+        $this->sincronizarEstadoVacante($postulacion);
+
+        // Notificar al candidato si su postulación cambió a un estado final relevante
+        if ($estadoAnterior !== $nuevoEstado && in_array($nuevoEstado, ['seleccionado', 'rechazado'], true)) {
+            $this->notificarCandidato($postulacion);
+        }
+    }
+
+    private function notificarCandidato(Postulacion $postulacion): void
+    {
+        $usuario = $postulacion->candidato?->usuario;
+        if (! $usuario) {
+            return;
+        }
+
+        try {
+            $usuario->notify(new \App\Notifications\PostulacionCambioEstado($postulacion));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("No se pudo notificar candidato: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Cierra automáticamente la vacante cuando se llena, o la reabre si se libera un cupo.
+     */
+    private function sincronizarEstadoVacante(Postulacion $postulacion): void
+    {
+        $vacante = $postulacion->vacante()->first();
+        if (! $vacante || in_array($vacante->estado, ['rechazada'], true)) {
+            return;
+        }
+
+        if ($vacante->estaLlena() && $vacante->estado !== 'cerrada') {
+            $vacante->update(['estado' => 'cerrada']);
+        } elseif (! $vacante->estaLlena() && $vacante->estado === 'cerrada') {
+            // Se liberó un cupo (retiro/rechazo de seleccionado) → reabrir
+            $vacante->update(['estado' => 'activa']);
+        }
     }
 
     /**

@@ -6,17 +6,23 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'google_sub', 'avatar_url', 'sexo', 'rol', 'estado'])]
+#[Fillable(['name', 'email', 'password', 'google_sub', 'avatar_url', 'sexo', 'rol', 'estado', 'carga_trabajo_horas', 'capacidad_maxima_horas', 'nivel_jerarquico', 'departamento', 'disponibilidad', 'disponible_desde'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public function serviciosCapacitados(): BelongsToMany
+    {
+        return $this->belongsToMany(CatalogoServicio::class, 'interno_servicio', 'user_id', 'servicio_id');
+    }
 
     protected function casts(): array
     {
@@ -108,5 +114,50 @@ class User extends Authenticatable
     public static function rolLabel(?string $rol): string
     {
         return CatalogoOpcion::label('roles', $rol);
+    }
+
+    public function ocupacionPorcentaje(): float
+    {
+        if ($this->capacidad_maxima_horas <= 0) {
+            return 0;
+        }
+
+        return min(100, round(($this->carga_trabajo_horas / $this->capacidad_maxima_horas) * 100, 2));
+    }
+
+    public function tieneCapacidad(int $horas = 0): bool
+    {
+        return ($this->carga_trabajo_horas + $horas) <= $this->capacidad_maxima_horas;
+    }
+
+    public function disponiblePara(ServicioAsignado $solicitud, int $horasRequeridas = 0): bool
+    {
+        if ($this->disponibilidad !== 'disponible' || ! $this->estaActivo()) {
+            return false;
+        }
+
+        if (! $this->tieneCapacidad($horasRequeridas)) {
+            return false;
+        }
+
+        if ($solicitud->servicio_id) {
+            return $this->tieneEspecialidadEn($solicitud->servicio_id);
+        }
+
+        return true;
+    }
+
+    public function tieneEspecialidadEn(int $servicioId): bool
+    {
+        return $this->serviciosCapacitados()
+            ->where('catalogo_servicios.id', $servicioId)
+            ->exists();
+    }
+
+    public function solicitudesActivas(): int
+    {
+        return $this->serviciosAsignados()
+            ->whereIn('estado', ['activo', 'en_proceso'])
+            ->count();
     }
 }

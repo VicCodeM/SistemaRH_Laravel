@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\ServicioAsignado;
-use App\Models\Ticket;
 use App\Models\Vacante;
 use Illuminate\Support\Collection;
 
@@ -31,12 +30,6 @@ class ReporteService
             'solicitudes_pendientes' => Vacante::where('estado', 'pendiente')->count(),
             'tareas_total' => ServicioAsignado::count(),
             'tareas_activas' => ServicioAsignado::whereIn('estado', ['activo', 'en_proceso'])->count(),
-            'tickets_total' => Ticket::count(),
-            'tickets_abiertos' => Ticket::where('estado', 'abierto')->count(),
-            'tickets_vencidos' => Ticket::whereNotNull('sla_due_at')
-                ->where('sla_due_at', '<', now())
-                ->whereNotIn('estado', ['resuelto', 'cerrado'])
-                ->count(),
         ];
     }
 
@@ -65,23 +58,93 @@ class ReporteService
     }
 
     /**
-     * Tickets más recientes.
-     */
-    public function ticketsRecientes(int $limite = 8): Collection
-    {
-        return Ticket::with(['empresa', 'asignado'])
-            ->latest()
-            ->limit($limite)
-            ->get();
-    }
-
-    /**
      * Tareas más recientes.
      */
     public function tareasRecientes(int $limite = 8): Collection
     {
         return ServicioAsignado::with(['servicio', 'asignadoA'])
             ->latest()
+            ->limit($limite)
+            ->get();
+    }
+
+    /**
+     * KPIs principales para la página de reportes.
+     * Acepta filtros de fecha desde/hasta.
+     */
+    public function kpis(?string $desde = null, ?string $hasta = null): array
+    {
+        $desdeCarbon = $desde ? \Carbon\Carbon::parse($desde)->startOfDay() : now()->startOfMonth();
+        $hastaCarbon = $hasta ? \Carbon\Carbon::parse($hasta)->endOfDay() : now()->endOfDay();
+
+        $vacantesCerradas = Vacante::where('estado', 'cerrada')
+            ->whereBetween('updated_at', [$desdeCarbon, $hastaCarbon])
+            ->count();
+
+        $serviciosCompletados = ServicioAsignado::where('estado', 'completado')
+            ->whereBetween('fecha_fin', [$desdeCarbon, $hastaCarbon])
+            ->count();
+
+        $vacantesNuevas = Vacante::whereBetween('created_at', [$desdeCarbon, $hastaCarbon])->count();
+        $serviciosNuevos = ServicioAsignado::whereBetween('created_at', [$desdeCarbon, $hastaCarbon])->count();
+        $candidatosNuevos = \App\Models\Candidato::whereBetween('created_at', [$desdeCarbon, $hastaCarbon])->count();
+        $empresasNuevas = Empresa::whereBetween('created_at', [$desdeCarbon, $hastaCarbon])->count();
+
+        // Tiempo promedio para cerrar vacante (en días)
+        $tiempoPromedio = Vacante::where('estado', 'cerrada')
+            ->whereBetween('updated_at', [$desdeCarbon, $hastaCarbon])
+            ->whereNotNull('fecha_publicacion')
+            ->get()
+            ->avg(fn ($v) => $v->fecha_publicacion->diffInDays($v->updated_at));
+
+        return [
+            'desde'                 => $desdeCarbon->format('d/m/Y'),
+            'hasta'                 => $hastaCarbon->format('d/m/Y'),
+            'vacantes_cerradas'     => $vacantesCerradas,
+            'vacantes_nuevas'       => $vacantesNuevas,
+            'servicios_completados' => $serviciosCompletados,
+            'servicios_nuevos'      => $serviciosNuevos,
+            'candidatos_nuevos'     => $candidatosNuevos,
+            'empresas_nuevas'       => $empresasNuevas,
+            'dias_promedio_cierre'  => $tiempoPromedio ? round($tiempoPromedio, 1) : null,
+        ];
+    }
+
+    /**
+     * Top internos por servicios completados en el rango.
+     */
+    public function topInternos(?string $desde = null, ?string $hasta = null, int $limite = 5): Collection
+    {
+        $desdeCarbon = $desde ? \Carbon\Carbon::parse($desde)->startOfDay() : now()->startOfMonth();
+        $hastaCarbon = $hasta ? \Carbon\Carbon::parse($hasta)->endOfDay() : now()->endOfDay();
+
+        return \App\Models\User::where('rol', 'interno')
+            ->withCount([
+                'serviciosAsignados as completados' => fn ($q) =>
+                    $q->where('estado', 'completado')->whereBetween('fecha_fin', [$desdeCarbon, $hastaCarbon]),
+                'serviciosAsignados as activos' => fn ($q) =>
+                    $q->whereIn('estado', ['activo', 'en_proceso']),
+            ])
+            ->having('completados', '>', 0)
+            ->orderByDesc('completados')
+            ->limit($limite)
+            ->get();
+    }
+
+    /**
+     * Top empresas por número de vacantes/servicios en el rango.
+     */
+    public function topEmpresas(?string $desde = null, ?string $hasta = null, int $limite = 5): Collection
+    {
+        $desdeCarbon = $desde ? \Carbon\Carbon::parse($desde)->startOfDay() : now()->startOfMonth();
+        $hastaCarbon = $hasta ? \Carbon\Carbon::parse($hasta)->endOfDay() : now()->endOfDay();
+
+        return Empresa::withCount([
+                'vacantes as vacantes_periodo' => fn ($q) =>
+                    $q->whereBetween('created_at', [$desdeCarbon, $hastaCarbon]),
+            ])
+            ->having('vacantes_periodo', '>', 0)
+            ->orderByDesc('vacantes_periodo')
             ->limit($limite)
             ->get();
     }

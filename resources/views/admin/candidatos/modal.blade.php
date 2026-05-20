@@ -4,9 +4,7 @@
     {{-- Header --}}
     <div class="modal-header">
         <div style="display:flex;align-items:center;gap:12px;">
-            <div class="modal-header-icon" style="background:rgba(16,185,129,.1);color:#10b981;font-size:18px;font-weight:700;">
-                {{ strtoupper(substr($candidato->nombre ?? 'C', 0, 1)) }}
-            </div>
+            <x-avatar :src="$candidato->usuario?->avatar_url" :nombre="$candidato->nombre . ' ' . ($candidato->apellido_paterno ?? '')" :tamano="48" />
             <div>
                 <h2 class="modal-title">{{ $candidato->nombre }} {{ $candidato->apellido_paterno }} {{ $candidato->apellido_materno }}</h2>
                 <span class="modal-subtitle">{{ $candidato->puesto_deseado ?: 'Sin puesto indicado' }}</span>
@@ -22,7 +20,7 @@
     </div>
 
     {{-- Tabs --}}
-    <div style="padding:16px 28px 0;border-bottom:1px solid var(--border);display:flex;gap:4px;" id="cand-tabs">
+    <div style="padding:16px 28px 0;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;" id="cand-tabs">
         <button onclick="showTab('tab-personal')" id="btn-personal" class="modal-tab active">Datos personales</button>
         <button onclick="showTab('tab-laboral')" id="btn-laboral" class="modal-tab">Perfil laboral</button>
         <button onclick="showTab('tab-proceso')" id="btn-proceso" class="modal-tab">En proceso</button>
@@ -35,12 +33,15 @@
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Avance de la solicitud</div>
                 <div style="font-size:13px;color:var(--text-primary);font-weight:600;">{{ $candidato->solicitudProgreso() }}% completado</div>
             </div>
-            <a href="{{ route('admin.candidatos.solicitud', $candidato) }}" class="btn btn-primary btn-sm">Editar solicitud</a>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <a href="{{ route('admin.candidatos.solicitud.pdf', $candidato) }}" target="_blank" class="btn btn-secondary btn-sm" title="Descargar la solicitud completa en PDF">📄 PDF</a>
+                <a href="{{ route('admin.candidatos.solicitud', $candidato) }}" class="btn btn-primary btn-sm">Editar solicitud</a>
+            </div>
         </div>
 
         {{-- Tab: Datos personales --}}
         <div id="tab-personal">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="modal-grid-2">
                 @php
                     $campos = [
                         'Correo' => $candidato->usuario?->email, 'Teléfono' => $candidato->celular ?: $candidato->telefono,
@@ -61,7 +62,7 @@
 
         {{-- Tab: Perfil laboral --}}
         <div id="tab-laboral" style="display:none;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-grid-2" style="margin-bottom:16px;">
                 <div><p class="modal-field-label">Puesto deseado</p><p class="modal-field-value">{{ $candidato->puesto_deseado ?: '—' }}</p></div>
                 <div><p class="modal-field-label">Experiencia</p><p class="modal-field-value">{{ $candidato->experiencia_anios ? $candidato->experiencia_anios.' año(s)' : '—' }}</p></div>
                 <div><p class="modal-field-label">Sueldo deseado</p><p class="modal-field-value">{{ $candidato->sueldo_deseado ? '$'.number_format($candidato->sueldo_deseado, 0).' MXN' : '—' }}</p></div>
@@ -96,7 +97,7 @@
     </div>
 
     {{-- Acciones --}}
-    <div class="modal-footer" style="border-top:1px solid var(--border);padding-top:20px;">
+    <div class="modal-footer modal-actions-wrap" style="border-top:1px solid var(--border);padding-top:20px;">
         @if ($candidato->solicitud_estado === 'enviada')
             <form method="POST" action="{{ route('admin.candidatos.aprobar', $candidato) }}" style="margin:0;">@csrf @method('PATCH')
                 <button type="submit" onclick="rhModalClose()" class="btn btn-success">✓ Aprobar solicitud</button>

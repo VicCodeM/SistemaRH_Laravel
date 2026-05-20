@@ -35,23 +35,16 @@
                 </div>
 
                 <div class="form-group" style="margin-top:22px;">
-                    <label class="form-label">Tipo de servicio <span style="color:var(--danger)">*</span></label>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:8px;">
-                        @foreach($tipos as $key => $label)
-                            <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid {{ old('tipo_servicio') === $key ? 'var(--accent)' : 'var(--border)' }}; border-radius:8px; cursor:pointer; background:{{ old('tipo_servicio') === $key ? 'rgba(59,130,246,0.07)' : 'var(--surface-2)' }};">
-                                <input type="radio" name="tipo_servicio" value="{{ $key }}" {{ old('tipo_servicio') === $key ? 'checked' : '' }} style="accent-color:var(--accent);">
-                                <span style="font-size:0.85rem; font-weight:500;">{{ $label }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('tipo_servicio')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="form-group" style="margin-top:22px;">
                     <label class="form-label" for="titulo">Título / Puesto <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror"
                            value="{{ old('titulo') }}" maxlength="200" placeholder="Ej: Gerente de ventas, capacitación en liderazgo...">
                     @error('titulo')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group" style="margin-top:18px;">
+                    <label class="form-label" for="cupos">¿Cuántas personas? *</label>
+                    <input type="number" id="cupos" name="cupos" value="{{ old('cupos', 1) }}" required min="1" max="100" class="form-input" style="max-width:160px;">
+                    <p style="font-size:11px; color:#94a3b8; margin-top:4px;">Cuántos candidatos se contratarán.</p>
                 </div>
 
                 <div class="form-group" style="margin-top:18px;">
@@ -83,8 +76,12 @@
 
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" for="area_requerida">Área o carrera requerida</label>
-                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror"
-                                   value="{{ old('area_requerida') }}" maxlength="150" placeholder="Ej: Sistemas, Medicina, RH">
+                            <select id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror">
+                                <option value="">Sin requisito</option>
+                                @foreach($areas as $key => $label)
+                                    <option value="{{ $label }}" {{ old('area_requerida') === $label ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                             @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
 
@@ -95,12 +92,30 @@
                             @error('experiencia_minima')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
                     </div>
+
+                    <div class="form-group" style="margin-top:14px;">
+                        <label class="form-label" for="tipo_contrato">Tipo de contrato</label>
+                        <select id="tipo_contrato" name="tipo_contrato" class="form-input">
+                            <option value="">Por definir</option>
+                            @foreach($contratos as $key => $label)
+                                <option value="{{ $label }}" {{ old('tipo_contrato') === $label ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="requerimientos">Descripción y requerimientos</label>
                     <textarea id="requerimientos" name="requerimientos" class="form-input @error('requerimientos') is-invalid @enderror" rows="5" maxlength="2000" placeholder="Perfil requerido, habilidades, número de posiciones, fecha objetivo...">{{ old('requerimientos') }}</textarea>
                     @error('requerimientos')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="form-group" style="margin-top:18px;">
+                    <label class="form-label" for="notas_internas" style="display:flex; align-items:center; gap:6px;">
+                        🔒 Notas internas
+                        <span style="font-size:11px; color:#94a3b8; font-weight:normal;">(solo tú las ves, no la empresa)</span>
+                    </label>
+                    <textarea id="notas_internas" name="notas_internas" class="form-input" rows="3" maxlength="2000" placeholder="Recordatorios, observaciones, contactos internos...">{{ old('notas_internas') }}</textarea>
                 </div>
 
                 <div style="margin-top:10px; padding:10px 14px; background:rgba(59,130,246,0.06); border-radius:8px; font-size:0.82rem; color:#94a3b8; border-left:3px solid var(--accent);">

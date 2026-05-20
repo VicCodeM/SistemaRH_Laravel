@@ -24,15 +24,32 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, \App\Services\AvatarService $avatares): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // Quitar avatar actual
+        if ($request->boolean('quitar_avatar')) {
+            $avatares->eliminar($user->avatar_url);
+            $user->avatar_url = null;
+        }
+
+        // Subir avatar nuevo (reemplaza el anterior automáticamente)
+        if ($request->hasFile('avatar')) {
+            $request->validate([
+                'avatar' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            ]);
+
+            $avatares->eliminar($user->avatar_url);
+            $user->avatar_url = $avatares->guardar($request->file('avatar'));
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

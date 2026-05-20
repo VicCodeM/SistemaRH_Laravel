@@ -108,5 +108,10 @@
                 </div>
             </div>
         </div>
+
+        {{-- Conversación del pedido --}}
+        <div style="grid-column:1/-1;">
+            @include('partials.pedido-comentarios', ['servicio' => $tarea])
+        </div>
     </div>
 </x-app-layout>

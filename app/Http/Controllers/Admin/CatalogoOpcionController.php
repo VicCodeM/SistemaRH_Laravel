@@ -15,9 +15,12 @@ class CatalogoOpcionController extends Controller
     {
         $tabActivo = $request->string('tab')->toString() ?: 'servicios';
 
-        $query = CatalogoOpcion::query();
+        // Grupos editables del módulo activo (cada catálogo en su módulo)
+        $gruposDelModulo = CatalogoOpcion::gruposDelModulo($tabActivo);
 
-        if ($request->filled('grupo')) {
+        $query = CatalogoOpcion::query()->whereIn('grupo', $gruposDelModulo);
+
+        if ($request->filled('grupo') && in_array($request->grupo, $gruposDelModulo, true)) {
             $query->where('grupo', $request->grupo);
         }
 
@@ -174,6 +177,30 @@ class CatalogoOpcionController extends Controller
         $catalogo->update(['activo' => ! $catalogo->activo]);
 
         return back()->with('success', $catalogo->activo ? 'Opción activada.' : 'Opción desactivada.');
+    }
+
+    public function accionModal(CatalogoOpcion $catalogo, string $accion)
+    {
+        abort_if($accion !== 'eliminar', 404);
+
+        $config = [
+            'titulo' => 'Eliminar opcion del catalogo',
+            'descripcion' => 'La opcion dejara de aparecer en los formularios.',
+            'mensaje' => 'Confirma si deseas eliminar esta opcion. Si ya existe en registros previos, esos valores historicos se conservaran.',
+            'ruta' => route('admin.catalogos.destroy', $catalogo),
+            'metodo' => 'DELETE',
+            'boton' => 'Eliminar opcion',
+            'clase' => 'btn-danger',
+            'permitido' => ! $catalogo->es_sistema,
+            'aviso' => $catalogo->es_sistema ? 'Las opciones del sistema no se pueden eliminar.' : null,
+        ];
+
+        $registro = [
+            'titulo' => $catalogo->valor,
+            'detalle' => CatalogoOpcion::grupoLabel($catalogo->grupo),
+        ];
+
+        return view('admin.partials.modal-accion', compact('config', 'registro'));
     }
 
     public function destroy(CatalogoOpcion $catalogo)

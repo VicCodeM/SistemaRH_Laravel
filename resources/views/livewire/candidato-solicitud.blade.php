@@ -17,6 +17,18 @@
     tab: localStorage.getItem('solicitud_tab_{{ $candidatoId ?? Auth::id() ?? 0 }}') || 'personales',
     order: ['personales','contacto','estudios','laboral','extras'],
     secciones: JSON.parse($el.dataset.secciones || '{}'),
+    init() {
+        // Observar cambios en data-secciones cuando Livewire re-renderiza
+        const observer = new MutationObserver(() => {
+            this.secciones = JSON.parse(this.$el.dataset.secciones || '{}');
+        });
+        observer.observe(this.$el, { attributes: true, attributeFilter: ['data-secciones'] });
+
+        // Escuchar evento de Livewire para cambiar de pestaña
+        Livewire.on('cambiarPestana', (data) => {
+            this.goTo(data[0]?.pestana || data.pestana);
+        });
+    },
     goTo(t) {
         const idx = this.order.indexOf(t);
         if (idx > 0 && !this.secciones[this.order[idx-1]]) {
@@ -38,8 +50,22 @@
     isLocked(k) {
         const idx = this.order.indexOf(k);
         return idx > 0 && !this.secciones[this.order[idx-1]];
+    },
+    async guardar() {
+        await $wire.guardarBorrador();
     }
-}" data-secciones='@json($secciones)'>
+}" data-secciones='@json($secciones)' x-on:cambiar-pestana.window="goTo($event.detail.pestana)"
+    x-on:change="
+        const el = $event.target;
+        const modelo = el.getAttribute('wire:model');
+        if (modelo && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+            const isLive = el.hasAttribute('wire:model.live') || el.getAttribute('wire:model')?.includes('.live');
+            const isRadio = el.type === 'radio' || el.type === 'checkbox';
+            if (!isLive && !isRadio) {
+                $wire.set(modelo, el.value).then(() => $wire.$refresh());
+            }
+        }
+    ">
 
     {{-- ═══ CABECERA ═══ --}}
     <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:10px;box-shadow:var(--shadow-sm);">
@@ -68,29 +94,31 @@
 
     {{-- ═══ STEPPER / PESTAÑAS ═══ --}}
     <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 16px;margin-bottom:10px;box-shadow:var(--shadow-sm);">
-        <div class="stepper">
-            @foreach($tabs as $key => $tabData)
-                @php
-                    $done = $secciones[$key];
-                    $locked = !$this->pestanaDesbloqueada($key);
-                @endphp
-                <div class="stepper-step">
-                    <button type="button"
-                        @click="goTo('{{ $key }}')"
-                        :class="tab === '{{ $key }}' ? 'step-circle-active' : ''"
-                        class="step-circle {{ $done ? 'step-circle-done' : '' }} {{ $locked ? 'step-circle-locked' : '' }}">
-                        @if($done)
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        @else
-                            <span style="font-size:.8rem;font-weight:700;">{{ $tabData['numero'] }}</span>
-                        @endif
-                    </button>
-                    <span class="step-label" :class="tab === '{{ $key }}' ? 'step-label-active' : ''">{{ $tabData['titulo'] }}</span>
-                </div>
-                @if(!$loop->last)
-                    <div class="step-line {{ $done ? 'step-line-done' : '' }}"></div>
-                @endif
-            @endforeach
+        <div class="wizard-stepper-wrap">
+            <div class="stepper">
+                @foreach($tabs as $key => $tabData)
+                    @php
+                        $done = $secciones[$key];
+                        $locked = !$this->pestanaDesbloqueada($key);
+                    @endphp
+                    <div class="stepper-step">
+                        <button type="button"
+                            @click="goTo('{{ $key }}')"
+                            :class="tab === '{{ $key }}' ? 'step-circle-active' : ''"
+                            class="step-circle {{ $done ? 'step-circle-done' : '' }} {{ $locked ? 'step-circle-locked' : '' }}">
+                            @if($done)
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                            @else
+                                <span style="font-size:.8rem;font-weight:700;">{{ $tabData['numero'] }}</span>
+                            @endif
+                        </button>
+                        <span class="step-label" :class="tab === '{{ $key }}' ? 'step-label-active' : ''">{{ $tabData['titulo'] }}</span>
+                    </div>
+                    @if(!$loop->last)
+                        <div class="step-line {{ $done ? 'step-line-done' : '' }}"></div>
+                    @endif
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -98,6 +126,22 @@
     @if(session('exito'))<div class="alert alert-success" style="margin-bottom:10px;">{{ session('exito') }}</div>@endif
     @if(session('error'))<div class="alert alert-danger" style="margin-bottom:10px;">{{ session('error') }}</div>@endif
     @error('solicitud')<div class="alert alert-danger" style="margin-bottom:10px;">{{ $message }}</div>@enderror
+
+    {{-- Toast de notificación --}}
+    <div x-data="{ show: false, mensaje: '', tipo: 'success' }"
+         x-on:notificacion.window="mensaje = $event.detail.mensaje; tipo = $event.detail.tipo; show = true; setTimeout(() => show = false, 4000);"
+         x-show="show" x-transition
+         class="wizard-toast"
+         x-cloak>
+        <div style="padding:14px 18px;border-radius:12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);"
+             :style="tipo === 'success' ? 'background:#ecfdf5;color:#065f46;border:1px solid #10b981;' : 'background:#fef2f2;color:#991b1b;border:1px solid #ef4444;'">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path x-show="tipo === 'success'" stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path x-show="tipo !== 'success'" stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            <span x-text="mensaje"></span>
+        </div>
+    </div>
     @if($yaEnviada && !$modoAdmin)
         <div class="alert alert-info" style="margin-bottom:10px;">Tu solicitud fue enviada. Puedes seguir corrigiendo datos antes de que sea revisada.</div>
     @endif
@@ -114,13 +158,27 @@
     {{-- ═══ PANELES POR PASO ═══ --}}
     <div x-show="tab === 'personales'" x-cloak>
         @include('livewire.solicitud-sections.personales')
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        @php $faltantesPersonales = $this->camposFaltantesPorSeccion('personales'); @endphp
+        @if(!empty($faltantesPersonales))
+            <div style="margin-top:12px;padding:12px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">Faltan campos obligatorios:</span>
+                </div>
+                <ul style="margin:0;padding-left:24px;list-style:disc;">
+                    @foreach($faltantesPersonales as $campo)
+                        <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        <div class="wizard-actions">
             @if($secciones['personales'])
                 <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled class="btn-locked">
+                <button type="button" class="btn-locked" wire:click="verificarYAvanzar('contacto')" wire:loading.attr="disabled">
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
-                    Completa esta sección
+                    Verificar y continuar
                 </button>
             @endif
         </div>
@@ -128,14 +186,28 @@
 
     <div x-show="tab === 'contacto'" x-cloak>
         @include('livewire.solicitud-sections.contacto')
-        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+        @php $faltantesContacto = $this->camposFaltantesPorSeccion('contacto'); @endphp
+        @if(!empty($faltantesContacto))
+            <div style="margin-top:12px;padding:12px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">Faltan campos obligatorios:</span>
+                </div>
+                <ul style="margin:0;padding-left:24px;list-style:disc;">
+                    @foreach($faltantesContacto as $campo)
+                        <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        <div class="wizard-actions-between">
             <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['contacto'])
                 <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled class="btn-locked">
+                <button type="button" class="btn-locked" wire:click="verificarYAvanzar('estudios')" wire:loading.attr="disabled">
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
-                    Completa esta sección
+                    Verificar y continuar
                 </button>
             @endif
         </div>
@@ -143,14 +215,28 @@
 
     <div x-show="tab === 'estudios'" x-cloak>
         @include('livewire.solicitud-sections.estudios')
-        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+        @php $faltantesEstudios = $this->camposFaltantesPorSeccion('estudios'); @endphp
+        @if(!empty($faltantesEstudios))
+            <div style="margin-top:12px;padding:12px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">Faltan campos obligatorios:</span>
+                </div>
+                <ul style="margin:0;padding-left:24px;list-style:disc;">
+                    @foreach($faltantesEstudios as $campo)
+                        <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        <div class="wizard-actions-between">
             <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['estudios'])
                 <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled class="btn-locked">
+                <button type="button" class="btn-locked" wire:click="verificarYAvanzar('laboral')" wire:loading.attr="disabled">
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
-                    Completa esta sección
+                    Verificar y continuar
                 </button>
             @endif
         </div>
@@ -158,14 +244,28 @@
 
     <div x-show="tab === 'laboral'" x-cloak>
         @include('livewire.solicitud-sections.laboral')
-        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+        @php $faltantesLaboral = $this->camposFaltantesPorSeccion('laboral'); @endphp
+        @if(!empty($faltantesLaboral))
+            <div style="margin-top:12px;padding:12px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">Faltan campos obligatorios:</span>
+                </div>
+                <ul style="margin:0;padding-left:24px;list-style:disc;">
+                    @foreach($faltantesLaboral as $campo)
+                        <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        <div class="wizard-actions-between">
             <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
             @if($secciones['laboral'])
                 <button type="button" class="btn btn-primary" @click="next()">Continuar →</button>
             @else
-                <button type="button" disabled class="btn-locked">
+                <button type="button" class="btn-locked" wire:click="verificarYAvanzar('extras')" wire:loading.attr="disabled">
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/></svg>
-                    Completa esta sección
+                    Verificar y continuar
                 </button>
             @endif
         </div>
@@ -173,6 +273,20 @@
 
     <div x-show="tab === 'extras'" x-cloak>
         @include('livewire.solicitud-sections.extras')
+        @php $faltantesExtras = $this->camposFaltantesPorSeccion('extras'); @endphp
+        @if(!empty($faltantesExtras))
+            <div style="margin-top:12px;padding:12px 16px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span style="font-size:.82rem;font-weight:700;color:#92400e;">Faltan campos obligatorios:</span>
+                </div>
+                <ul style="margin:0;padding-left:24px;list-style:disc;">
+                    @foreach($faltantesExtras as $campo)
+                        <li style="font-size:.78rem;color:#92400e;">{{ $campo }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         {{-- ═══ RESUMEN DE VALIDACIÓN ═══ --}}
         @if(!$modoAdmin && !$puedeEnviar)
@@ -206,10 +320,10 @@
         @endif
 
         {{-- ═══ BOTONES FINALES ═══ --}}
-        <div style="display:flex;justify-content:space-between;gap:10px;margin-top:16px;">
+        <div class="wizard-actions-between">
             <button type="button" class="btn btn-ghost" @click="prev()">← Atrás</button>
-            <div style="display:flex;gap:10px;">
-                <button type="button" class="btn btn-secondary" wire:click="guardarBorrador" wire:loading.attr="disabled">
+            <div class="wizard-actions-end">
+                <button type="button" class="btn btn-secondary" x-on:click="guardar()" :class="!$wire.tieneCambios ? 'btn-disabled' : ''" :disabled="!$wire.tieneCambios">
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0z"/></svg>
                     Guardar avance
                 </button>
@@ -229,7 +343,7 @@
                         </button>
                     @endif
                 @else
-                    <button type="button" class="btn btn-primary" wire:click="guardarBorrador" wire:loading.attr="disabled">
+                    <button type="button" class="btn btn-primary" x-on:click="guardar()" :class="!$wire.tieneCambios ? 'btn-disabled' : ''" :disabled="!$wire.tieneCambios">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
                         Guardar cambios
                     </button>
@@ -247,6 +361,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 4px;
+        min-width: max-content;
     }
     .stepper-step {
         display: flex;
@@ -325,6 +440,10 @@
         color: #94a3b8;
         cursor: not-allowed;
         border: 1.5px solid #e2e8f0;
+    }
+    .btn-disabled {
+        opacity: .55;
+        cursor: not-allowed;
         font-family: var(--font);
     }
     @media (max-width: 640px) {

@@ -51,7 +51,7 @@ class CandidatoController extends Controller
             ->with('error', 'Primero completa y envía tu solicitud para ver las vacantes.');
     }
 
-    public function dashboard(): View
+    public function dashboard(\App\Services\ResumenRapidoService $resumen): View
     {
         $candidato = $this->candidatoActual();
 
@@ -85,10 +85,13 @@ class CandidatoController extends Controller
                 ->get()
             : collect();
 
+        $acciones = $resumen->paraCandidato($candidato);
+
         return view('candidato.dashboard', [
             'candidato' => $candidato,
             'postulacionesRecientes' => $postulacionesRecientes,
             'vacantesRecientes' => $vacantesRecientes,
+            'acciones' => $acciones,
         ]);
     }
 

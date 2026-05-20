@@ -73,61 +73,67 @@
     {{-- Input --}}
     <div class="chat-input-area">
         <form wire:submit="enviar" class="chat-input-form">
-            <textarea wire:model="mensaje" rows="1" placeholder="Escribe un mensaje..."
-                class="chat-input-textarea"
-                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$wire.enviar();}"></textarea>
-            <button type="submit" class="chat-input-btn">
-                Enviar
-            </button>
+            <textarea id="chat-textarea" wire:model="mensaje" rows="1" autocomplete="off"
+                placeholder="Escribe un mensaje..." class="chat-input-textarea"></textarea>
+            <button type="submit" class="chat-input-btn">Enviar</button>
         </form>
         @error('mensaje') <p style="color:var(--danger); font-size:12px; margin-top:4px;">{{ $message }}</p> @enderror
     </div>
-</div>
 
-<script>
-(function() {
-    const contenedor = document.getElementById('chat-mensajes');
-    let ultimoMensajeId = null;
+    @script
+    <script>
+        const cont = document.getElementById('chat-mensajes');
+        const ta = document.getElementById('chat-textarea');
+        let cerca = true;   // ¿el usuario está viendo el final?
+        let listo = false;  // evita sonar al cargar la conversación
 
-    function estaAlFinal() {
-        if (!contenedor) return true;
-        return (contenedor.scrollHeight - contenedor.scrollTop - contenedor.clientHeight) < 60;
-    }
+        function abajo() { if (cont) cont.scrollTop = cont.scrollHeight; }
 
-    function scrollAlFinal() {
-        if (contenedor) contenedor.scrollTop = contenedor.scrollHeight;
-    }
-
-    function reproducirSonido() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 750;
-            gain.gain.value = 0.04;
-            osc.start();
-            osc.stop(ctx.currentTime + 0.06);
-        } catch(e) {}
-    }
-
-    document.addEventListener('DOMContentLoaded', scrollAlFinal);
-
-    document.addEventListener('livewire:updated', () => {
-        const mensajes = contenedor?.querySelectorAll('.chat-bubble-wrap');
-        const ultimo = mensajes?.[mensajes.length - 1];
-        const nuevoId = ultimo?.querySelector('.chat-bubble')?.dataset?.id;
-
-        if (ultimo) {
-            const esMio = ultimo.classList.contains('mine');
-            if (!esMio && ultimoMensajeId !== null) {
-                reproducirSonido();
-            }
+        function sonar() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator(), g = ctx.createGain();
+                osc.connect(g); g.connect(ctx.destination);
+                osc.frequency.value = 750; g.gain.value = 0.04;
+                osc.start(); osc.stop(ctx.currentTime + 0.06);
+            } catch (e) {}
         }
 
-        if (estaAlFinal()) scrollAlFinal();
-        ultimoMensajeId = nuevoId;
-    });
-})();
-</script>
+        if (cont) {
+            cont.addEventListener('scroll', () => {
+                cerca = (cont.scrollHeight - cont.scrollTop - cont.clientHeight) < 80;
+            });
+
+            requestAnimationFrame(abajo);
+            setTimeout(() => { listo = true; }, 600);
+
+            // Detecta mensajes nuevos (por envío o por el sondeo) sin parpadeos
+            new MutationObserver((muts) => {
+                let mio = false, ajeno = false;
+                muts.forEach(m => m.addedNodes.forEach(n => {
+                    if (n.nodeType === 1 && n.classList && n.classList.contains('chat-bubble-wrap')) {
+                        if (n.classList.contains('mine')) mio = true;
+                        else ajeno = true;
+                    }
+                }));
+
+                if (!mio && !ajeno) return;
+                if (ajeno && listo) sonar();
+                if (mio || cerca) abajo();      // siempre baja con lo que yo escribo
+                if (mio && ta) ta.focus();      // re-enfoca para seguir escribiendo
+            }).observe(cont, { childList: true });
+        }
+
+        // Enter envía · Shift+Enter hace salto de línea
+        if (ta) {
+            ta.focus();
+            ta.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (ta.value.trim() !== '') $wire.enviar();
+                }
+            });
+        }
+    </script>
+    @endscript
+</div>

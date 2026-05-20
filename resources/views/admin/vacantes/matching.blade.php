@@ -11,18 +11,38 @@
             <span class="breadcrumb-sep">&rsaquo;</span>
             <span>Candidatos</span>
         </nav>
+        @php
+            $cuposCubiertos = $vacante->cuposCubiertos();
+            $cuposTotales   = $vacante->cupos ?? 1;
+            $vacanteLlena   = $vacante->estaLlena();
+        @endphp
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
             <div>
                 <h1 class="page-title">{{ $vacante->titulo }}</h1>
                 <p class="page-subtitle">
                     {{ $vacante->empresa?->nombre_empresa }}
                     &middot; {{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}
-                    @if($vacante->tipo_servicio)
-                        &middot; <span style="color:#60a5fa;">{{ \App\Models\Vacante::tiposServicio()[$vacante->tipo_servicio] ?? $vacante->tipo_servicio }}</span>
-                    @endif
+                    &middot;
+                    <span class="badge {{ $vacanteLlena ? 'badge-green' : 'badge-blue' }}" style="font-size:0.78rem;">
+                        {{ $cuposCubiertos }} de {{ $cuposTotales }} cupo(s)
+                    </span>
                 </p>
             </div>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                @if($vacante->estado === 'cerrada')
+                    <form method="POST" action="{{ route('admin.vacantes.reabrir', $vacante) }}" style="display:inline;" onsubmit="return confirm('¿Reabrir esta vacante?')">
+                        @csrf @method('PATCH')
+                        <button type="submit" class="btn btn-success">↻ Reabrir</button>
+                    </form>
+                @elseif(in_array($vacante->estado, ['pendiente', 'activa']))
+                    <form method="POST" action="{{ route('admin.vacantes.cerrar-manual', $vacante) }}" style="display:inline;" onsubmit="return confirm('¿Cerrar esta vacante ahora? Ya no recibirá más postulaciones.')">
+                        @csrf
+                        <input type="hidden" name="motivo" value="">
+                        <button type="submit" class="btn btn-danger" title="Cerrar la vacante manualmente (aunque no esté llena)">Cerrar vacante</button>
+                    </form>
+                @endif
+                <a href="{{ route('admin.vacantes.candidatos.csv', $vacante) }}" class="btn btn-secondary" style="font-size:13px;" title="Descargar lista de candidatos en Excel">⬇ Excel</a>
+                <a href="{{ route('admin.vacantes.candidatos.pdf', $vacante) }}" target="_blank" class="btn btn-secondary" style="font-size:13px;" title="Imprimir o guardar como PDF">📄 PDF</a>
                 <a href="{{ route('admin.vacantes.editar', $vacante) }}" class="btn btn-secondary">Editar solicitud</a>
                 <a href="{{ route('admin.vacantes') }}" class="btn btn-secondary">&larr; Volver</a>
             </div>
@@ -36,6 +56,15 @@
         <div class="alert alert-danger mb-4">{{ session('error') }}</div>
     @endif
 
+    @if($vacanteLlena)
+        <div style="margin-bottom:18px; padding:14px 18px; background:#f0fdf4; border-left:4px solid #16a34a; border-radius:8px;">
+            <strong style="color:#16a34a;">✓ Vacante cubierta.</strong>
+            <span style="color:#475569; font-size:0.9rem;">
+                Se cubrieron los {{ $cuposTotales }} cupo(s). Si necesitas más, edita la vacante y aumenta el número de personas, o retira a alguien para liberar un cupo.
+            </span>
+        </div>
+    @endif
+
     @php
         $activos = $asignados->whereIn('estado', \App\Models\Postulacion::estadosActivos());
         $inactivos = $asignados->whereIn('estado', \App\Models\Postulacion::estadosInactivos());
@@ -45,6 +74,15 @@
             'no_aptos' => ['titulo' => 'No aptos', 'texto' => 'No cumplen mínimos. Solo con excepción.', 'clase' => 'badge-red'],
         ];
     @endphp
+
+    @if($vacante->notas_internas)
+        <div class="card" style="margin-bottom:14px; padding:14px 18px; background:#fffbeb; border-left:4px solid #f59e0b;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">
+                🔒 Tus notas internas (la empresa no las ve)
+            </div>
+            <p style="margin:0; font-size:0.88rem; color:#78350f; white-space:pre-wrap;">{{ $vacante->notas_internas }}</p>
+        </div>
+    @endif
 
     <div class="card" style="margin-bottom:20px;">
         <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start;">
@@ -123,9 +161,14 @@
                         @forelse($estadoCandidatos as $postulacion)
                             @php $c = $postulacion->candidato; @endphp
                             <div style="background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:11px; margin-bottom:8px;">
-                                <div style="font-weight:600; font-size:0.88rem;">{{ $c?->nombre }} {{ $c?->apellido_paterno }}</div>
-                                <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">{{ $c?->usuario?->email }}</div>
-                                <div style="font-size:0.74rem; color:#94a3b8; margin-top:2px;">Aspiración: {{ $c?->puesto_deseado ?: 'Sin puesto indicado' }}</div>
+                                <div style="display:flex; gap:8px; align-items:start;">
+                                    <x-avatar :src="$c?->usuario?->avatar_url" :nombre="($c?->nombre ?? '') . ' ' . ($c?->apellido_paterno ?? '')" :tamano="32" />
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="font-weight:600; font-size:0.88rem;">{{ $c?->nombre }} {{ $c?->apellido_paterno }}</div>
+                                        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">{{ $c?->usuario?->email }}</div>
+                                        <div style="font-size:0.74rem; color:#94a3b8; margin-top:2px;">Aspiración: {{ $c?->puesto_deseado ?: 'Sin puesto indicado' }}</div>
+                                    </div>
+                                </div>
 
                                 <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
                                     @if($estado === 'postulado')
@@ -219,10 +262,13 @@
                         @endphp
                         <div style="border:1px solid var(--border); border-radius:12px; padding:14px; background:var(--surface);">
                             <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-                                <div>
-                                    <div style="font-weight:700; font-size:0.92rem;">{{ $candidato->nombre }} {{ $candidato->apellido_paterno }}</div>
-                                    <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">{{ $candidato->usuario?->email }}</div>
-                                    <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Aspiración: {{ $candidato->puesto_deseado ?: 'Sin puesto indicado' }}</div>
+                                <div style="display:flex; gap:10px; align-items:start; flex:1; min-width:0;">
+                                    <x-avatar :src="$candidato->usuario?->avatar_url" :nombre="$candidato->nombre . ' ' . ($candidato->apellido_paterno ?? '')" :tamano="40" />
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="font-weight:700; font-size:0.92rem;">{{ $candidato->nombre }} {{ $candidato->apellido_paterno }}</div>
+                                        <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">{{ $candidato->usuario?->email }}</div>
+                                        <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Aspiración: {{ $candidato->puesto_deseado ?: 'Sin puesto indicado' }}</div>
+                                    </div>
                                 </div>
                                 <span class="badge {{ $config['clase'] }}">{{ $compatibilidad['puntaje'] }}/100</span>
                             </div>
@@ -242,20 +288,26 @@
                                 <div style="margin-top:8px; color:#475569;">{{ $compatibilidad['resumen'] }}</div>
                             </div>
 
-                            <form method="POST" action="{{ route('admin.vacantes.asignar', $vacante) }}" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
-                                @csrf
-                                <input type="hidden" name="candidato_id" value="{{ $candidato->id }}">
-                                @if($clave === 'no_aptos')
-                                    <input type="hidden" name="forzar" value="1">
-                                    <div style="flex:1; min-width:200px;">
-                                        <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Motivo de excepción</label>
-                                        <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidió">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Asignar con excepción</button>
-                                @else
-                                    <button type="submit" class="btn btn-primary">+ Agregar</button>
-                                @endif
-                            </form>
+                            @if($vacanteLlena)
+                                <div style="margin-top:14px; padding:8px 12px; background:var(--surface-2); border:1px dashed var(--border); border-radius:8px; font-size:0.8rem; color:#94a3b8; text-align:center;">
+                                    🔒 Cupos cubiertos. Retira a alguien antes de asignar otro.
+                                </div>
+                            @else
+                                <form method="POST" action="{{ route('admin.vacantes.asignar', $vacante) }}" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+                                    @csrf
+                                    <input type="hidden" name="candidato_id" value="{{ $candidato->id }}">
+                                    @if($clave === 'no_aptos')
+                                        <input type="hidden" name="forzar" value="1">
+                                        <div style="flex:1; min-width:200px;">
+                                            <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Motivo de excepción</label>
+                                            <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidió">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Asignar con excepción</button>
+                                    @else
+                                        <button type="submit" class="btn btn-primary">+ Agregar</button>
+                                    @endif
+                                </form>
+                            @endif
                         </div>
                     @endforeach
                 </div>

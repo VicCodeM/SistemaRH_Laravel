@@ -57,23 +57,35 @@ class ChatConversacion extends Component
 
     private function marcarLeido(): void
     {
-        $ultimoMensaje = $this->room->mensajes()->latest()->first();
-        if ($ultimoMensaje) {
-            $this->room->miembros()->updateExistingPivot(auth()->id(), [
-                'last_read_message_id' => $ultimoMensaje->id,
-            ]);
+        $ultimoId = $this->room->mensajes()->max('id');
+        if (! $ultimoId) {
+            return;
         }
+
+        // Solo escribir si realmente cambió (evita writes en cada sondeo)
+        $miembro = $this->room->miembros()->where('user_id', auth()->id())->first();
+        if ($miembro && (int) ($miembro->pivot->last_read_message_id ?? 0) === (int) $ultimoId) {
+            return;
+        }
+
+        $this->room->miembros()->updateExistingPivot(auth()->id(), [
+            'last_read_message_id' => $ultimoId,
+        ]);
     }
 
     private function autorizarAcceso(): void
     {
         $user = auth()->user();
-        $esMiembro = $this->room->miembros()->where('user_id', $user->id)->exists();
 
         // Admin puede ver cualquier sala
         if ($user->esAdmin()) return;
 
-        abort_unless($esMiembro, 403);
+        // No-admin: debe ser miembro Y el chat debe incluir a un administrador
+        $esMiembro = $this->room->miembros()->where('user_id', $user->id)->exists();
+        abort_unless($esMiembro, 403, 'Esta conversación no es tuya.');
+
+        $hayAdmin = $this->room->miembros()->where('rol', 'admin')->exists();
+        abort_unless($hayAdmin, 403, 'Solo puedes conversar con el administrador.');
     }
 
     public function render()

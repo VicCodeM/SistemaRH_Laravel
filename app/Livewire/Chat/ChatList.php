@@ -21,25 +21,49 @@ class ChatList extends Component
         abort_unless($user->esAdmin(), 403);
 
         $destinatario = User::findOrFail($userId);
+        $this->abrirOcrearChat($user, $destinatario);
+    }
 
-        // Buscar si ya existe un chat directo entre estos dos usuarios
+    /**
+     * Un usuario NO-admin abre (o crea) su chat con el administrador.
+     * Soporte centralizado: los demás solo hablan con el admin.
+     */
+    public function iniciarChatConAdmin(): void
+    {
+        $user = auth()->user();
+        abort_if($user->esAdmin(), 403, 'El administrador inicia los chats desde la lista.');
+
+        $admin = User::where('rol', 'admin')->where('estado', 'activo')->orderBy('id')->first();
+        abort_unless($admin, 404, 'No hay un administrador disponible por ahora.');
+
+        $this->abrirOcrearChat($user, $admin);
+    }
+
+    /**
+     * Busca el chat directo entre dos usuarios o lo crea. Redirige a él.
+     */
+    private function abrirOcrearChat(User $a, User $b): void
+    {
         $room = ChatRoom::where('tipo', 'directo')
-            ->where(function ($q) use ($user, $destinatario) {
-                $q->where('direct_user_a_id', $user->id)->where('direct_user_b_id', $destinatario->id);
-            })->orWhere(function ($q) use ($user, $destinatario) {
+            ->where(function ($q) use ($a, $b) {
+                $q->where('direct_user_a_id', $a->id)->where('direct_user_b_id', $b->id);
+            })->orWhere(function ($q) use ($a, $b) {
                 $q->where('tipo', 'directo')
-                  ->where('direct_user_a_id', $destinatario->id)->where('direct_user_b_id', $user->id);
+                  ->where('direct_user_a_id', $b->id)->where('direct_user_b_id', $a->id);
             })->first();
 
-        if (!$room) {
+        if (! $room) {
             $room = ChatRoom::create([
                 'tipo'              => 'directo',
-                'nombre'            => $destinatario->name,
-                'creado_por'        => $user->id,
-                'direct_user_a_id'  => $user->id,
-                'direct_user_b_id'  => $destinatario->id,
+                'nombre'            => $b->name,
+                'creado_por'        => $a->id,
+                'direct_user_a_id'  => $a->id,
+                'direct_user_b_id'  => $b->id,
             ]);
-            $room->miembros()->attach([$user->id, $destinatario->id], ['joined_at' => now()]);
+            $room->miembros()->attach([$a->id, $b->id], ['joined_at' => now()]);
+        } else {
+            // Si la había ocultado, reaparece al volver a abrirla
+            $room->miembros()->updateExistingPivot($a->id, ['hidden_at' => null]);
         }
 
         $this->redirect(route('chat.show', $room));
@@ -50,20 +74,27 @@ class ChatList extends Component
         $user = auth()->user();
         $room = ChatRoom::findOrFail($roomId);
 
-        // Marcar como oculta para este usuario (soft delete personal)
-        $room->miembros()->updateExistingPivot($user->id, [
-            'hidden_at' => now(),
-        ]);
+        // Solo un miembro (o el admin) puede borrarla
+        abort_unless(
+            $user->esAdmin() || $room->miembros()->where('user_id', $user->id)->exists(),
+            403,
+            'No puedes eliminar esta conversación.'
+        );
+
+        // Borrado real: mensajes y miembros se eliminan en cascada
+        $room->delete();
+
+        // Si estabas viendo esta conversación, vuelve a la bandeja
+        if ($this->roomSeleccionadaId === $roomId) {
+            $this->redirect(route('chat.index'));
+        }
     }
 
     public function render()
     {
         $user = auth()->user();
 
-        $rooms = ChatRoom::whereHas('miembros', function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-              ->whereNull('chat_room_members.hidden_at');
-        })
+        $rooms = ChatRoom::whereHas('miembros', fn ($q) => $q->where('user_id', $user->id))
             ->with(['mensajes' => fn ($q) => $q->latest()->limit(1), 'creador'])
             ->latest('updated_at')
             ->get();
@@ -80,7 +111,7 @@ class ChatList extends Component
 
             $usuariosSinChat = User::whereNotIn('id', $idsConChat)
                 ->where('id', '!=', $user->id)
-                ->whereIn('rol', ['empresa', 'candidato'])
+                ->whereIn('rol', ['empresa', 'candidato', 'interno'])
                 ->orderBy('name')
                 ->get();
         }

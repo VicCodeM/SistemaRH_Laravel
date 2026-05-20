@@ -13,14 +13,14 @@
         <button onclick="rhModalClose()" class="modal-close">&times;</button>
     </div>
 
-    <div class="modal-body" style="display:grid; gap:16px;">
+    <div class="modal-body modal-stack">
         {{-- Resumen --}}
         @if($vacante->requisitoResumen())
             <p style="margin:0;color:var(--text-secondary);font-size:13px;line-height:1.5;">{{ $vacante->requisitoResumen() }}</p>
         @endif
 
         {{-- Indicadores --}}
-        <div style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px;">
+        <div class="modal-grid-3">
             @foreach ([
                 'Jerarquía' => \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico),
                 'Estudios mínimos' => \App\Models\Vacante::nivelEstudiosLabel($vacante->nivel_estudios_minimo) ?: 'Sin definir',
@@ -40,7 +40,7 @@
         </div>
 
         {{-- Ubicación y contrato --}}
-        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px;">
+        <div class="modal-grid-2">
             @foreach (['Ubicación' => $vacante->ubicacion ?: 'Sin definir', 'Contrato' => $vacante->tipo_contrato ?: 'Sin definir'] as $label => $valor)
                 <div style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--bg-muted);">
                     <div class="modal-field-label">{{ $label }}</div>
@@ -63,7 +63,7 @@
         @endif
     </div>
 
-    <div class="modal-footer" style="justify-content:space-between;border-top:1px solid var(--border);padding-top:20px;">
+    <div class="modal-footer modal-actions-wrap" style="justify-content:space-between;border-top:1px solid var(--border);padding-top:20px;">
         <button onclick="rhModalClose()" class="btn btn-ghost">Cerrar</button>
         @if($puedePostular)
             <form method="POST" action="{{ route('candidato.postular', $vacante) }}" style="margin:0;">@csrf

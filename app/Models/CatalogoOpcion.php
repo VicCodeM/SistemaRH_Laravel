@@ -42,24 +42,54 @@ class CatalogoOpcion extends Model
         return static::$tablaDisponible;
     }
 
+    /**
+     * Grupos que el admin puede editar desde el panel.
+     * Solo datos de negocio. Los estados/roles del sistema y otros
+     * obsoletos (como tipos_servicio) están en gruposInternos().
+     */
     public static function gruposGestionables(): array
     {
         return [
-            'roles' => 'Roles del sistema',
-            'empresa_estados' => 'Estados de empresa',
-            'candidato_estados' => 'Estados de candidato',
-            'vacante_estados' => 'Estados de solicitud',
-            'postulacion_estados' => 'Estados de postulación',
-            'servicio_asignado_estados' => 'Estados de tarea',
-            'tipos_servicio' => 'Tipos de servicio',
-            'niveles_jerarquicos' => 'Jerarquías de servicio',
-            'niveles_estudios' => 'Niveles de estudio',
-            'ticket_categorias' => 'Categorías de ticket',
-            'ticket_prioridades' => 'Prioridades de ticket',
-            'ticket_estados' => 'Estados de ticket',
-            'chat_room_tipos' => 'Tipos de chat',
-            'disponibilidad_externa' => 'Disponibilidad de personal externo',
+            'niveles_jerarquicos' => 'Niveles jerárquicos (vacantes y servicios)',
+            'niveles_estudios'    => 'Niveles de estudio',
+            'areas_carreras'      => 'Áreas y carreras',
+            'tipos_contrato'      => 'Tipos de contrato',
+            'sectores_empresa'    => 'Sectores de empresa',
         ];
+    }
+
+    /**
+     * Grupos técnicos / obsoletos que NO se muestran en el panel admin.
+     * Existen en BD pero son invariantes del código (estados, roles) o
+     * legacy (tipos_servicio se reemplazó por CatalogoServicio + Vacante hardcoded).
+     */
+    public static function gruposInternos(): array
+    {
+        return [
+            'roles', 'empresa_estados', 'candidato_estados',
+            'vacante_estados', 'postulacion_estados',
+            'servicio_asignado_estados',
+            'chat_room_tipos', 'disponibilidad_externa',
+            'tipos_servicio', // legacy: sustituido por CatalogoServicio
+        ];
+    }
+
+    /**
+     * Mapeo de grupos por módulo (para tabs en el panel admin).
+     * Cada catálogo aparece en su módulo principal.
+     */
+    public static function gruposPorModulo(): array
+    {
+        return [
+            'servicios' => [], // El catálogo principal de servicios (CatalogoServicio) se muestra aparte
+            'vacantes'  => ['niveles_jerarquicos', 'niveles_estudios', 'areas_carreras', 'tipos_contrato'],
+            'empresas'  => ['sectores_empresa'],
+        ];
+    }
+
+    public static function gruposDelModulo(string $modulo): array
+    {
+        return self::gruposPorModulo()[$modulo] ?? [];
     }
 
     public static function grupoLabel(?string $grupo): string
@@ -105,7 +135,7 @@ class CatalogoOpcion extends Model
 
     public static function defaults(): array
     {
-        return [
+        $base = [
             ['grupo' => 'roles', 'clave' => 'admin', 'valor' => 'Administrador', 'descripcion' => 'Usuario con control total del sistema', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
             ['grupo' => 'roles', 'clave' => 'empresa', 'valor' => 'Empresa', 'descripcion' => 'Cuenta de empresa cliente', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
             ['grupo' => 'roles', 'clave' => 'candidato', 'valor' => 'Candidato', 'descripcion' => 'Cuenta de candidato', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
@@ -163,30 +193,81 @@ class CatalogoOpcion extends Model
             ['grupo' => 'niveles_jerarquicos', 'clave' => 'gerencia', 'valor' => 'Gerencia', 'descripcion' => 'Nivel gerencial', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
             ['grupo' => 'niveles_jerarquicos', 'clave' => 'direccion', 'valor' => 'Dirección', 'descripcion' => 'Nivel directivo', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
 
-            ['grupo' => 'ticket_categorias', 'clave' => 'soporte_tecnico', 'valor' => 'Soporte técnico', 'descripcion' => 'Incidencias técnicas', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
-            ['grupo' => 'ticket_categorias', 'clave' => 'vacante', 'valor' => 'Vacante', 'descripcion' => 'Seguimiento de vacantes', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
-            ['grupo' => 'ticket_categorias', 'clave' => 'capacitacion', 'valor' => 'Capacitación', 'descripcion' => 'Solicitudes de capacitación', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
-            ['grupo' => 'ticket_categorias', 'clave' => 'seguimiento', 'valor' => 'Seguimiento', 'descripcion' => 'Seguimiento general', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
-            ['grupo' => 'ticket_categorias', 'clave' => 'reclutamiento', 'valor' => 'Reclutamiento', 'descripcion' => 'Apoyo de reclutamiento', 'activo' => true, 'orden' => 50, 'es_sistema' => true],
-            ['grupo' => 'ticket_categorias', 'clave' => 'otro', 'valor' => 'Otro', 'descripcion' => 'Otra categoría', 'activo' => true, 'orden' => 60, 'es_sistema' => true],
-
-            ['grupo' => 'ticket_prioridades', 'clave' => 'baja', 'valor' => 'Baja', 'descripcion' => 'Prioridad baja', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
-            ['grupo' => 'ticket_prioridades', 'clave' => 'media', 'valor' => 'Media', 'descripcion' => 'Prioridad media', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
-            ['grupo' => 'ticket_prioridades', 'clave' => 'alta', 'valor' => 'Alta', 'descripcion' => 'Prioridad alta', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
-            ['grupo' => 'ticket_prioridades', 'clave' => 'urgente', 'valor' => 'Urgente', 'descripcion' => 'Prioridad urgente', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
-
-            ['grupo' => 'ticket_estados', 'clave' => 'abierto', 'valor' => 'Abierto', 'descripcion' => 'Ticket abierto', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
-            ['grupo' => 'ticket_estados', 'clave' => 'en_proceso', 'valor' => 'En proceso', 'descripcion' => 'Ticket en atención', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
-            ['grupo' => 'ticket_estados', 'clave' => 'resuelto', 'valor' => 'Resuelto', 'descripcion' => 'Ticket resuelto', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
-            ['grupo' => 'ticket_estados', 'clave' => 'cerrado', 'valor' => 'Cerrado', 'descripcion' => 'Ticket cerrado', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
-
             ['grupo' => 'chat_room_tipos', 'clave' => 'directo', 'valor' => 'Chat directo', 'descripcion' => 'Conversación directa', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
             ['grupo' => 'chat_room_tipos', 'clave' => 'grupal', 'valor' => 'Grupo', 'descripcion' => 'Conversación grupal', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
 
             ['grupo' => 'disponibilidad_externa', 'clave' => 'disponible', 'valor' => 'Disponible', 'descripcion' => 'Disponible para trabajar', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
             ['grupo' => 'disponibilidad_externa', 'clave' => 'ocupado', 'valor' => 'Ocupado', 'descripcion' => 'Tiene agenda ocupada', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
             ['grupo' => 'disponibilidad_externa', 'clave' => 'inactivo', 'valor' => 'Inactivo', 'descripcion' => 'No disponible', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
+
         ];
+
+        return array_merge($base, self::defaultsNegocio());
+    }
+
+    /**
+     * Opciones de negocio editables por el admin.
+     * Separado para mantener orden y consistencia de columnas (descripcion siempre presente).
+     */
+    private static function defaultsNegocio(): array
+    {
+        $filas = [];
+        $cargar = function (string $grupo, array $items) use (&$filas) {
+            foreach ($items as $orden => [$clave, $valor]) {
+                $filas[] = [
+                    'grupo'       => $grupo,
+                    'clave'       => $clave,
+                    'valor'       => $valor,
+                    'descripcion' => null,
+                    'activo'      => true,
+                    'orden'       => ($orden + 1) * 10,
+                    'es_sistema'  => false,
+                ];
+            }
+        };
+
+        $cargar('areas_carreras', [
+            ['administracion', 'Administración'],
+            ['contabilidad', 'Contabilidad'],
+            ['finanzas', 'Finanzas'],
+            ['recursos_humanos', 'Recursos Humanos'],
+            ['sistemas', 'Sistemas / TI'],
+            ['marketing', 'Marketing'],
+            ['ventas', 'Ventas'],
+            ['ingenieria_carrera', 'Ingeniería'],
+            ['produccion', 'Producción / Operaciones'],
+            ['logistica_carrera', 'Logística'],
+            ['legal', 'Legal'],
+            ['salud_carrera', 'Salud / Medicina'],
+            ['educacion_carrera', 'Educación'],
+            ['otra', 'Otra'],
+        ]);
+
+        $cargar('tipos_contrato', [
+            ['indefinido', 'Indefinido (planta)'],
+            ['temporal', 'Temporal'],
+            ['por_proyecto', 'Por proyecto'],
+            ['por_horas', 'Por horas'],
+            ['practicante', 'Prácticas / Becario'],
+            ['freelance', 'Freelance'],
+        ]);
+
+        $cargar('sectores_empresa', [
+            ['manufactura', 'Manufactura'],
+            ['tecnologia', 'Tecnología'],
+            ['servicios', 'Servicios profesionales'],
+            ['comercio', 'Comercio / Retail'],
+            ['salud_sector', 'Salud'],
+            ['educacion_sector', 'Educación'],
+            ['finanzas_sector', 'Banca y finanzas'],
+            ['construccion', 'Construcción'],
+            ['logistica_sector', 'Logística / Transporte'],
+            ['agricultura', 'Agroindustria'],
+            ['gobierno', 'Gobierno'],
+            ['otro_sector', 'Otro'],
+        ]);
+
+        return $filas;
     }
 
     public static function seedDefaults(): void
