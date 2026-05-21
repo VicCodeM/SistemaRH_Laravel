@@ -30,6 +30,23 @@
             </main>
         </div>
         @livewireScripts
+        <script>
+        // Evitar que Livewire muestre el overlay feo de error.
+        // Recarga la página silenciosamente si la sesión expiró o el componente cambió.
+        document.addEventListener('livewire:init', () => {
+            let reloading = false;
+            Livewire.hook('request', ({ fail }) => {
+                fail(({ status, preventDefault }) => {
+                    preventDefault();
+                    // 419 = sesión expirada, 404 = componente/endpoint desactualizado
+                    if (!reloading && (status === 419 || status === 404)) {
+                        reloading = true;
+                        window.location.reload();
+                    }
+                });
+            });
+        });
+        </script>
 
         {{-- Modal global --}}
         <div id="rh-modal-overlay"
@@ -48,6 +65,13 @@
 
         {{-- Contenedor de toasts --}}
         <div id="rh-toasts"></div>
+
+        {{-- Chat flotante (visible en todas las páginas excepto la página de chat) --}}
+        @auth
+            @unless(request()->routeIs('chat.*'))
+                <livewire:chat.chat-widget />
+            @endunless
+        @endauth
 
         <script>
         // ── Progress bar ──────────────────────────────────────────────
@@ -197,6 +221,57 @@
             }
         });
         window.addEventListener('resize', () => rhSidebarToggle(false));
+
+        // ── Sonidos del chat ──────────────────────────────────────────
+        window.rhSonido = (function() {
+            let ctx = null;
+            function ac() {
+                if (!ctx || ctx.state === 'closed') ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                return ctx;
+            }
+            function nodo(c, freq, start, dur, vol, type) {
+                const o = c.createOscillator(), g = c.createGain();
+                o.type = type || 'sine';
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0, start);
+                g.gain.linearRampToValueAtTime(vol, start + 0.008);
+                g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+                o.connect(g); g.connect(c.destination);
+                o.start(start); o.stop(start + dur);
+            }
+            return {
+                enviado: function() {
+                    try {
+                        const c = ac(), t = c.currentTime;
+                        nodo(c, 520,  t,        0.06, 0.18, 'sine');
+                        nodo(c, 780,  t + 0.04, 0.07, 0.14, 'sine');
+                        nodo(c, 1180, t + 0.07, 0.09, 0.10, 'sine');
+                    } catch(e){}
+                },
+                recibido: function() {
+                    try {
+                        const c = ac(), t = c.currentTime;
+                        nodo(c, 830,  t,        0.12, 0.28, 'sine');
+                        nodo(c, 1250, t + 0.09, 0.15, 0.22, 'sine');
+                    } catch(e){}
+                },
+                notificacion: function() {
+                    try {
+                        const c = ac(), t = c.currentTime;
+                        nodo(c, 660,  t,        0.10, 0.25, 'sine');
+                        nodo(c, 880,  t + 0.08, 0.10, 0.22, 'sine');
+                        nodo(c, 1100, t + 0.16, 0.14, 0.18, 'sine');
+                    } catch(e){}
+                },
+                escribiendo: function() {
+                    try {
+                        const c = ac(), t = c.currentTime;
+                        nodo(c, 440, t, 0.06, 0.10, 'sine');
+                    } catch(e){}
+                }
+            };
+        })();
         </script>
 
         {{-- Flash toasts (se ejecutan después de que rhToast esté definido) --}}

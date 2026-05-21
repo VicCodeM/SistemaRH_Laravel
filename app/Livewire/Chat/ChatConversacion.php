@@ -4,47 +4,70 @@ namespace App\Livewire\Chat;
 
 use App\Models\ChatMessage;
 use App\Models\ChatRoom;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class ChatConversacion extends Component
 {
-    public ChatRoom $room;
+    public int $roomId = 0;
     public string $mensaje = '';
 
     public function mount(ChatRoom $room): void
     {
-        $this->room = $room;
-        $this->autorizarAcceso();
-        $this->marcarLeido();
+        if (! $this->puedeAcceder($room)) {
+            $this->redirect(route('chat.index'));
+            $this->skipRender();
+
+            return;
+        }
+
+        $this->roomId = $room->id;
+        auth()->user()?->tocarPresencia();
+        $this->marcarLeido($room);
     }
 
     public function enviar(): void
     {
+        $room = $this->sala();
+        if (! $room) { $this->irABandeja(); return; }
+
         $this->validate(['mensaje' => 'required|string|max:2000']);
 
         $user = auth()->user();
 
         ChatMessage::create([
-            'chat_room_id'   => $this->room->id,
+            'chat_room_id'   => $room->id,
             'sender_user_id' => $user->id,
             'sender_role'    => $user->rol,
             'tipo'           => 'texto',
             'contenido'      => $this->mensaje,
         ]);
 
-        $this->room->touch();
-        $this->marcarLeido();
+        $room->touch();
+        $this->marcarLeido($room);
+        Cache::forget($this->typingKey($user->id)); // dejar de "escribir"
         $this->mensaje = '';
+    }
+
+    /**
+     * Marca que este usuario está escribiendo (se borra solo a los 4s).
+     */
+    public function escribiendo(): void
+    {
+        Cache::put($this->typingKey(auth()->id()), true, now()->addSeconds(4));
     }
 
     public function eliminarMensaje(int $mensajeId): void
     {
         $user = auth()->user();
-        $mensaje = ChatMessage::findOrFail($mensajeId);
+        $mensaje = ChatMessage::find($mensajeId);
+        if (! $mensaje) {
+            return;
+        }
 
-        // Solo el emisor o un admin puede eliminar
         if ($mensaje->sender_user_id !== $user->id && ! $user->esAdmin()) {
-            abort(403, 'No puedes eliminar este mensaje.');
+            return; // sin permiso, ignorar silenciosamente
         }
 
         $mensaje->delete();
@@ -52,59 +75,109 @@ class ChatConversacion extends Component
 
     public function actualizarMensajes(): void
     {
-        $this->marcarLeido();
+        $room = $this->sala();
+        if (! $room) { $this->irABandeja(); return; }
+
+        auth()->user()?->tocarPresencia();
+        $this->marcarLeido($room);
     }
 
-    private function marcarLeido(): void
+    /**
+     * Carga la sala por id (null si ya fue eliminada).
+     */
+    private function sala(): ?ChatRoom
     {
-        $ultimoId = $this->room->mensajes()->max('id');
+        return $this->roomId ? ChatRoom::find($this->roomId) : null;
+    }
+
+    /**
+     * La sala ya no existe: regresar a la bandeja sin reventar.
+     */
+    private function irABandeja(): void
+    {
+        $this->redirect(route('chat.index'));
+        $this->skipRender();
+    }
+
+    private function typingKey(int $userId): string
+    {
+        return "chat_typing_{$this->roomId}_{$userId}";
+    }
+
+    private function marcarLeido(ChatRoom $room): void
+    {
+        $ultimoId = $room->mensajes()->max('id');
         if (! $ultimoId) {
             return;
         }
 
         // Solo escribir si realmente cambió (evita writes en cada sondeo)
-        $miembro = $this->room->miembros()->where('user_id', auth()->id())->first();
+        $miembro = $room->miembros()->where('user_id', auth()->id())->first();
         if ($miembro && (int) ($miembro->pivot->last_read_message_id ?? 0) === (int) $ultimoId) {
             return;
         }
 
-        $this->room->miembros()->updateExistingPivot(auth()->id(), [
+        $room->miembros()->updateExistingPivot(auth()->id(), [
             'last_read_message_id' => $ultimoId,
         ]);
     }
 
-    private function autorizarAcceso(): void
+    /**
+     * Verifica acceso SIN abort (evita overlay de Livewire).
+     */
+    private function puedeAcceder(ChatRoom $room): bool
     {
         $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+        if ($user->esAdmin()) {
+            return true;
+        }
 
-        // Admin puede ver cualquier sala
-        if ($user->esAdmin()) return;
-
-        // No-admin: debe ser miembro Y el chat debe incluir a un administrador
-        $esMiembro = $this->room->miembros()->where('user_id', $user->id)->exists();
-        abort_unless($esMiembro, 403, 'Esta conversación no es tuya.');
-
-        $hayAdmin = $this->room->miembros()->where('rol', 'admin')->exists();
-        abort_unless($hayAdmin, 403, 'Solo puedes conversar con el administrador.');
+        return $room->miembros()->where('user_id', $user->id)->exists()
+            && $room->miembros()->where('rol', 'admin')->exists();
     }
 
     public function render()
     {
-        $mensajes = $this->room->mensajes()
+        $room = $this->sala();
+        if (! $room) {
+            // La sala fue eliminada mientras la veías: regresa a la bandeja
+            $this->redirect(route('chat.index'));
+
+            return '<div></div>';
+        }
+
+        $mensajes = $room->mensajes()
             ->with('sender')
             ->orderBy('created_at')
             ->get();
 
         $otroUsuario = null;
-        $puedeEliminar = [];
-        if ($this->room->tipo === 'directo') {
+        $otroLeyoHasta = 0;       // hasta qué mensaje leyó el otro (palomitas)
+        $otroEscribiendo = false; // ¿el otro está escribiendo?
+        $otroEnLinea = false;     // ¿el otro está conectado ahora?
+        $otroUltimaVez = null;    // "hace 5 minutos"
+
+        if ($room->tipo === 'directo') {
             $user = auth()->user();
-            $otroId = $this->room->direct_user_a_id === $user->id
-                ? $this->room->direct_user_b_id
-                : $this->room->direct_user_a_id;
-            $otroUsuario = \App\Models\User::find($otroId);
+            $otroId = $room->direct_user_a_id === $user->id
+                ? $room->direct_user_b_id
+                : $room->direct_user_a_id;
+            $otroUsuario = User::find($otroId);
+
+            if ($otroUsuario) {
+                $pivotOtro = $room->miembros()->where('user_id', $otroUsuario->id)->first();
+                $otroLeyoHasta = (int) ($pivotOtro?->pivot->last_read_message_id ?? 0);
+                $otroEscribiendo = (bool) Cache::get($this->typingKey($otroUsuario->id));
+                $otroEnLinea = $otroUsuario->estaEnLinea();
+                $otroUltimaVez = $otroUsuario->ultimaVezTexto();
+            }
         }
 
-        return view('livewire.chat.chat-conversacion', compact('mensajes', 'otroUsuario'));
+        return view('livewire.chat.chat-conversacion', compact(
+            'room', 'mensajes', 'otroUsuario', 'otroLeyoHasta', 'otroEscribiendo', 'otroEnLinea', 'otroUltimaVez'
+        ));
     }
 }

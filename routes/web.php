@@ -192,7 +192,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', fn () => view('chat.index'))->name('index');
-        Route::get('/{room}', fn (\App\Models\ChatRoom $room) => view('chat.show', compact('room')))->name('show');
+        Route::get('/{room}', fn (\App\Models\ChatRoom $room) => view('chat.show', compact('room')))
+            ->name('show')
+            ->missing(fn () => redirect()->route('chat.index')->with('warning', 'Esa conversación ya no existe.'));
     });
 
     Route::middleware(['role:interno'])->prefix('interno')->name('interno.')->group(function () {

@@ -4,7 +4,7 @@
         <p class="page-subtitle">{{ $room->nombre ?? 'Conversación activa' }}</p>
     </x-slot>
 
-    <div class="chat-layout card fade-in">
+    <div class="chat-layout card fade-in has-conversacion">
         <aside class="chat-sidebar">
             <div class="chat-sidebar-header">
                 <h3 class="chat-sidebar-title">Conversaciones</h3>

@@ -29,7 +29,34 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_seen_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Registra actividad del usuario (máx. 1 escritura cada 15s).
+     */
+    public function tocarPresencia(): void
+    {
+        if (! $this->last_seen_at || $this->last_seen_at->lt(now()->subSeconds(15))) {
+            $this->forceFill(['last_seen_at' => now()])->saveQuietly();
+        }
+    }
+
+    /**
+     * En línea si dio señales de vida en los últimos 35 segundos.
+     */
+    public function estaEnLinea(): bool
+    {
+        return $this->last_seen_at && $this->last_seen_at->gt(now()->subSeconds(35));
+    }
+
+    /**
+     * Texto amigable de la última conexión ("hace 5 minutos").
+     */
+    public function ultimaVezTexto(): ?string
+    {
+        return $this->last_seen_at?->locale('es')->diffForHumans();
     }
 
     public function candidato(): HasOne

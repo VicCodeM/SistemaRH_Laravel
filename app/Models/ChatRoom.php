@@ -45,10 +45,14 @@ class ChatRoom extends Model
 
     /**
      * Cuenta mensajes no leídos por un usuario en esta sala.
+     * Usa la relación eager-loaded si ya está cargada.
      */
     public function noLeidosPara(User $user): int
     {
-        $member = $this->miembros()->where('user_id', $user->id)->first();
+        $member = $this->relationLoaded('miembros')
+            ? $this->miembros->firstWhere('id', $user->id)
+            : $this->miembros()->where('user_id', $user->id)->first();
+
         if (! $member) {
             return 0;
         }
@@ -59,5 +63,22 @@ class ChatRoom extends Model
             ->where('id', '>', $lastRead)
             ->where('sender_user_id', '!=', $user->id)
             ->count();
+    }
+
+    /**
+     * Total de no leídos de TODAS las salas del usuario en UNA sola query.
+     */
+    public static function totalNoLeidosPara(int $userId): int
+    {
+        return (int) \Illuminate\Support\Facades\DB::selectOne("
+            SELECT COALESCE(SUM(cnt), 0) AS total FROM (
+                SELECT COUNT(*) AS cnt
+                FROM chat_messages cm
+                JOIN chat_room_members crm
+                    ON crm.chat_room_id = cm.chat_room_id AND crm.user_id = ?
+                WHERE cm.id > crm.last_read_message_id
+                  AND cm.sender_user_id != ?
+            ) t
+        ", [$userId, $userId])->total;
     }
 }

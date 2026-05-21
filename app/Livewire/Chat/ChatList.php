@@ -9,6 +9,8 @@ use Livewire\Component;
 class ChatList extends Component
 {
     public ?int $roomSeleccionadaId = null;
+    public bool $mostrarNuevos = false;
+    public string $buscarUsuario = '';
 
     public function mount(?int $roomId = null): void
     {
@@ -18,23 +20,32 @@ class ChatList extends Component
     public function iniciarChatConUsuario(int $userId): void
     {
         $user = auth()->user();
-        abort_unless($user->esAdmin(), 403);
+        if (! $user?->esAdmin()) {
+            return;
+        }
 
-        $destinatario = User::findOrFail($userId);
+        $destinatario = User::find($userId);
+        if (! $destinatario) {
+            return;
+        }
+
         $this->abrirOcrearChat($user, $destinatario);
     }
 
     /**
      * Un usuario NO-admin abre (o crea) su chat con el administrador.
-     * Soporte centralizado: los demás solo hablan con el admin.
      */
     public function iniciarChatConAdmin(): void
     {
         $user = auth()->user();
-        abort_if($user->esAdmin(), 403, 'El administrador inicia los chats desde la lista.');
+        if (! $user || $user->esAdmin()) {
+            return;
+        }
 
         $admin = User::where('rol', 'admin')->where('estado', 'activo')->orderBy('id')->first();
-        abort_unless($admin, 404, 'No hay un administrador disponible por ahora.');
+        if (! $admin) {
+            return;
+        }
 
         $this->abrirOcrearChat($user, $admin);
     }
@@ -72,14 +83,14 @@ class ChatList extends Component
     public function eliminarConversacion(int $roomId): void
     {
         $user = auth()->user();
-        $room = ChatRoom::findOrFail($roomId);
+        if (! $user?->esAdmin()) {
+            return;
+        }
 
-        // Solo un miembro (o el admin) puede borrarla
-        abort_unless(
-            $user->esAdmin() || $room->miembros()->where('user_id', $user->id)->exists(),
-            403,
-            'No puedes eliminar esta conversación.'
-        );
+        $room = ChatRoom::find($roomId);
+        if (! $room) {
+            return;
+        }
 
         // Borrado real: mensajes y miembros se eliminan en cascada
         $room->delete();
@@ -95,7 +106,7 @@ class ChatList extends Component
         $user = auth()->user();
 
         $rooms = ChatRoom::whereHas('miembros', fn ($q) => $q->where('user_id', $user->id))
-            ->with(['mensajes' => fn ($q) => $q->latest()->limit(1), 'creador'])
+            ->with(['mensajes' => fn ($q) => $q->latest()->limit(1), 'miembros'])
             ->latest('updated_at')
             ->get();
 
@@ -112,7 +123,9 @@ class ChatList extends Component
             $usuariosSinChat = User::whereNotIn('id', $idsConChat)
                 ->where('id', '!=', $user->id)
                 ->whereIn('rol', ['empresa', 'candidato', 'interno'])
+                ->when($this->buscarUsuario !== '', fn ($q) => $q->where('name', 'like', '%'.$this->buscarUsuario.'%'))
                 ->orderBy('name')
+                ->limit(30)
                 ->get();
         }
 
