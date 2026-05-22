@@ -181,6 +181,22 @@
                             </button>
                         </div>
                     </div>
+
+                    @if($progreso >= 3)
+                        <label style="display:flex; align-items:flex-start; gap:8px; margin-top:16px; font-size:0.84rem; color:#475569; line-height:1.5; cursor:pointer;">
+                            <input type="checkbox" name="acepta_terminos" value="1" {{ old('acepta_terminos') ? 'checked' : '' }} required style="margin-top:3px; width:16px; height:16px; flex-shrink:0;">
+                            <span>
+                                Acepto los
+                                <a href="{{ route('paginas.terminos') }}" target="_blank" style="color:var(--accent);">Términos del servicio</a>
+                                y la
+                                <a href="{{ route('paginas.privacidad') }}" target="_blank" style="color:var(--accent);">Política de privacidad</a>
+                                en nombre de la empresa.
+                            </span>
+                        </label>
+                        @error('acepta_terminos')
+                            <p style="margin:6px 0 0; font-size:0.8rem; color:#dc2626;">{{ $message }}</p>
+                        @enderror
+                    @endif
                 </form>
             </div>
 

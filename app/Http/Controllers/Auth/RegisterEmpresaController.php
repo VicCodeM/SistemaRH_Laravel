@@ -112,13 +112,18 @@ class RegisterEmpresaController extends Controller
                 'ciudad' => ['required', 'string', 'max:100'],
                 'municipio' => ['nullable', 'string', 'max:150'],
                 'codigo_postal' => ['nullable', 'string', 'max:10'],
+                'acepta_terminos' => ['accepted'],
             ],
             [
                 'telefono.required' => 'Escribe un teléfono de contacto.',
                 'direccion.required' => 'Escribe la dirección completa de la empresa.',
                 'ciudad.required' => 'Escribe la ciudad de la empresa.',
+                'acepta_terminos.accepted' => 'Debes aceptar los Términos del servicio y la Política de privacidad.',
             ]
         );
+
+        // No persistimos la aceptación en sesión (solo se valida en este paso).
+        unset($validated['acepta_terminos']);
 
         $wizardData = array_merge($wizardData, $validated);
         $email = strtolower(trim((string) ($wizardData['email'] ?? '')));

@@ -31,6 +31,7 @@ class RegisteredUserController extends Controller
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')],
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
+                'acepta_terminos' => ['accepted'],
             ],
             [
                 'name.required' => 'Escribe tu nombre completo.',
@@ -38,6 +39,7 @@ class RegisteredUserController extends Controller
                 'email.unique' => 'Ya existe una cuenta con ese correo. Usa recuperación de acceso.',
                 'password.required' => 'Define una contraseña.',
                 'password.confirmed' => 'Las contraseñas no coinciden.',
+                'acepta_terminos.accepted' => 'Debes aceptar los Términos del servicio y la Política de privacidad.',
             ]
         );
 
