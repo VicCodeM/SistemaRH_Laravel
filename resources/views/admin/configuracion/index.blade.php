@@ -411,6 +411,12 @@
                             <div>
                                 <label class="form-label">Nombre del sitio</label>
                                 <input type="text" name="sitio_nombre" class="form-input" value="{{ old('sitio_nombre', $sitio['sitio_nombre']) }}" maxlength="120" required>
+                                <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">La segunda parte se muestra en azul (ej. "Sistema<strong>RH</strong>" o pon un espacio: "Mi Empresa RH").</p>
+                            </div>
+                            <div>
+                                <label class="form-label">Subtitulo / eslogan</label>
+                                <input type="text" name="sitio_subtitulo" class="form-input" value="{{ old('sitio_subtitulo', $sitio['sitio_subtitulo']) }}" maxlength="120" placeholder="Ej. Gestion de talento">
+                                <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">Aparece bajo el nombre en login y registro.</p>
                             </div>
                             <div>
                                 <label class="form-label">Descripcion (SEO)</label>

@@ -1,13 +1,15 @@
 @extends('layouts.landing')
 
 @section('title', $titulo . ' — ' . ($sitio['sitio_nombre'] ?? 'SistemaRH'))
+@section('meta_description', $titulo . ' de ' . ($sitio['sitio_nombre'] ?? 'SistemaRH') . '. Conoce cómo tratamos tu información y las condiciones de uso de la plataforma.')
 
 @section('content')
 <div class="lp-wrap">
 
     {{-- NAV --}}
     <header class="lp-nav">
-        <a href="/" class="lp-logo">{{ $sitio['sitio_nombre'] ?? 'SistemaRH' }}</a>
+        @php $marca = \App\Services\SitioService::partirMarca($sitio['sitio_nombre'] ?? 'SistemaRH'); @endphp
+        <a href="/" class="lp-logo">{{ $marca['base'] }}<span>{{ $marca['acento'] }}</span></a>
         <div class="lp-nav-actions">
             <a href="/" class="btn btn-ghost lp-btn-ghost">← Volver al inicio</a>
         </div>

@@ -16,6 +16,7 @@ class GuardarSitioRequest extends FormRequest
         return [
             // Identidad / SEO
             'sitio_nombre'      => ['required', 'string', 'max:120'],
+            'sitio_subtitulo'   => ['nullable', 'string', 'max:120'],
             'sitio_descripcion' => ['nullable', 'string', 'max:300'],
             'favicon'           => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg,ico', 'max:1024'],
             'quitar_favicon'    => ['nullable', 'boolean'],

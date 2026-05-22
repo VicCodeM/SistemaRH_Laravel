@@ -26,6 +26,7 @@ class SitioService
     private const DEFAULTS = [
         // Identidad / SEO
         'sitio_nombre'        => 'SistemaRH',
+        'sitio_subtitulo'     => 'Gestión de talento',
         'sitio_descripcion'   => 'Plataforma de gestión de talento - Reclutamiento, seguimiento de candidatos y automatización de procesos.',
         'sitio_favicon'       => null,
 
@@ -148,5 +149,39 @@ class SitioService
         $ruta = ConfiguracionSistema::texto('sitio_favicon');
 
         return $ruta ? asset('storage/' . $ruta) : null;
+    }
+
+    /**
+     * Parte el nombre de la marca en dos: base (color normal) y acento (color azul).
+     *
+     * Reglas:
+     *  - Si hay espacio, la última palabra es el acento ("Mi Empresa RH" → base "Mi Empresa ", acento "RH").
+     *  - Si no, corta en la última transición minúscula→Mayúscula ("SistemaRH" → "Sistema" + "RH").
+     *  - Si no aplica nada, todo es base y el acento queda vacío.
+     *
+     * @return array{base: string, acento: string}
+     */
+    public static function partirMarca(string $nombre): array
+    {
+        $nombre = trim($nombre);
+
+        if ($nombre === '') {
+            return ['base' => 'SistemaRH', 'acento' => ''];
+        }
+
+        if (str_contains($nombre, ' ')) {
+            $pos = mb_strrpos($nombre, ' ');
+
+            return [
+                'base'   => mb_substr($nombre, 0, $pos + 1),
+                'acento' => mb_substr($nombre, $pos + 1),
+            ];
+        }
+
+        if (preg_match('/^(.*[a-záéíóúñ])([A-ZÁÉÍÓÚÑ].*)$/u', $nombre, $m)) {
+            return ['base' => $m[1], 'acento' => $m[2]];
+        }
+
+        return ['base' => $nombre, 'acento' => ''];
     }
 }

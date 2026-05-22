@@ -37,9 +37,10 @@
 @endphp
 
 <nav class="sidebar">
+    @php $marca = \App\Services\SitioService::partirMarca($sitio['sitio_nombre'] ?? 'SistemaRH'); @endphp
     <div class="sidebar-brand">
         <a href="{{ route('dashboard') }}">
-            <h2>{{ $sitio['sitio_nombre'] ?? 'SistemaRH' }}</h2>
+            <h2>{{ $marca['base'] }}<span>{{ $marca['acento'] }}</span></h2>
             <span class="sidebar-subtitle">Panel {{ ucfirst($rol ?? '') }}</span>
         </a>
     </div>
