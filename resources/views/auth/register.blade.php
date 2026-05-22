@@ -111,8 +111,8 @@
         <div class="divider"></div>
 
         <div class="text-center" style="font-size:0.88rem; color:#64748b;">
-            ¿Buscas empleo?
-            <a href="{{ route('register.candidato') }}" style="color:var(--accent); font-weight:600; text-decoration:none;">Regístrate aquí</a>
+            ¿Eres una empresa?
+            <a href="{{ route('register.empresa') }}" style="color:var(--accent); font-weight:600; text-decoration:none;">Regístrate como empresa</a>
             &nbsp;·&nbsp;
             ¿Ya tienes cuenta?
             <a href="{{ route('login') }}" style="color:var(--accent); font-weight:600; text-decoration:none;">Inicia sesión</a>
