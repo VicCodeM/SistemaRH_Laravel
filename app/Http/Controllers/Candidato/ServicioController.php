@@ -76,16 +76,19 @@ class ServicioController extends Controller
         ]);
     }
 
-    public function cancelar(ServicioAsignado $servicio, ServicioAsignadoService $service)
+    public function destroy(ServicioAsignado $servicio)
     {
         $candidato = $this->candidatoActual();
         $this->autorizar($servicio, $candidato->id);
 
-        abort_unless(in_array($servicio->estado, ['pendiente', 'activo'], true), 422, 'Solo se pueden cancelar solicitudes pendientes o activas.');
+        abort_unless($servicio->estado === 'pendiente', 422, 'Solo puedes eliminar solicitudes que aún no han sido aprobadas.');
 
-        $service->cancelar($servicio, 'Cancelada por el candidato.');
+        $servicio->comentarios()->delete();
+        $servicio->delete();
 
-        return back()->with('success', 'Solicitud cancelada.');
+        return redirect()
+            ->route('candidato.servicios.index')
+            ->with('success', 'Solicitud eliminada.');
     }
 
     private function candidatoActual(): \App\Models\Candidato

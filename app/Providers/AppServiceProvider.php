@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Services\CandidatoService;
 use App\Services\PostulacionService;
+use App\Services\SitioService;
 use App\Services\SlaInteligenteService;
 use App\Services\WorkflowService;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // Compartir la identidad del sitio (SEO, favicon, textos del landing)
+        // solo con las vistas que la usan. Una sola consulta cuando se renderizan.
+        View::composer(
+            ['layouts.app', 'layouts.guest', 'layouts.landing', 'welcome', 'paginas.legal'],
+            fn ($view) => $view->with('sitio', app(SitioService::class)->valores())
+        );
     }
 }

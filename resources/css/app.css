@@ -678,6 +678,14 @@ tr:hover td { background: var(--bg-muted); }
 .table-wrapper { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: #fff; box-shadow: var(--shadow-sm); }
 .table { width: 100%; border-collapse: collapse; }
 
+/* ===== SUPRIMIR OVERLAY DE LIVEWIRE ===== */
+/* Livewire 3 inyecta un div fijo con z-index:99999 cuando detecta errores.
+   Lo ocultamos para evitar pantalla oscura congelada. */
+body > div[style*="z-index: 99999"],
+body > div[style*="z-index:99999"] {
+  display: none !important;
+}
+
 /* ===== MODAL TRANSITIONS ===== */
 #rh-modal-overlay {
   transition: opacity .22s ease;
@@ -719,13 +727,14 @@ tr:hover td { background: var(--bg-muted); }
 /* ===== AJAX PROGRESS BAR ===== */
 #rh-prog {
   position: fixed; top: 0; left: 0; z-index: 9999;
-  height: 3px; width: 0; opacity: 0; pointer-events: none;
-  background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb);
+  height: 2px; width: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, #3b82f6, #818cf8, #3b82f6);
   background-size: 200% 100%;
   animation: none;
+  border-radius: 0 1px 1px 0;
 }
 #rh-prog.running {
-  animation: progShimmer 1.4s linear infinite;
+  animation: progShimmer 1.6s ease-in-out infinite;
 }
 @keyframes progShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 

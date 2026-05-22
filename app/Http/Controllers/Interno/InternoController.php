@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Interno;
 
 use App\Http\Controllers\Controller;
-use App\Models\Candidato;
-use App\Models\Empresa;
 use App\Models\ServicioAsignado;
 use App\Models\Vacante;
 
@@ -12,51 +10,38 @@ class InternoController extends Controller
 {
     public function dashboard(\App\Services\ResumenRapidoService $resumen)
     {
+        $userId = auth()->id();
+
+        // Métricas propias del interno
         $stats = [
-            'empresas_pendientes'   => Empresa::where('estado', 'pendiente')->count(),
-            'candidatos_pendientes' => Candidato::where('solicitud_estado', 'enviada')->count(),
-            'solicitudes_pendientes'=> Vacante::where('estado', 'pendiente')->count(),
-            'solicitudes_activas'   => Vacante::where('estado', 'activa')->count(),
-            'tareas_activas'        => ServicioAsignado::where('asignado_a', auth()->id())
+            'tareas_por_tomar'  => ServicioAsignado::where('asignado_a', $userId)
+                ->where('estado', 'activo')
+                ->whereNull('fecha_inicio')
+                ->count(),
+            'tareas_en_proceso' => ServicioAsignado::where('asignado_a', $userId)
+                ->where('estado', 'en_proceso')
+                ->count(),
+            'tareas_activas'    => ServicioAsignado::where('asignado_a', $userId)
                 ->whereIn('estado', ['activo', 'en_proceso'])
                 ->count(),
-            'tareas_completadas'    => ServicioAsignado::where('asignado_a', auth()->id())
+            'tareas_completadas'=> ServicioAsignado::where('asignado_a', $userId)
                 ->where('estado', 'completado')
                 ->count(),
+            // Info general del sistema (solo lectura)
+            'solicitudes_activas_sistema' => Vacante::where('estado', 'activa')->count(),
         ];
 
-        $empresas_pendientes = Empresa::with('usuario')
-            ->where('estado', 'pendiente')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $candidatos_pendientes = Candidato::with('usuario')
-            ->where('solicitud_estado', 'enviada')
-            ->latest('solicitud_enviada_at')
-            ->take(5)
-            ->get();
-
-        $solicitudes_recientes = Vacante::with('empresa')
-            ->whereIn('estado', ['pendiente', 'activa'])
-            ->latest()
-            ->take(5)
-            ->get();
-
         $tareas_recientes = ServicioAsignado::with(['servicio', 'asignable', 'asignadoPor'])
-            ->where('asignado_a', auth()->id())
+            ->where('asignado_a', $userId)
             ->orderByRaw("CASE estado WHEN 'activo' THEN 1 WHEN 'en_proceso' THEN 2 WHEN 'completado' THEN 3 ELSE 4 END")
             ->latest()
-            ->take(5)
+            ->take(8)
             ->get();
 
         $acciones = $resumen->paraInterno(auth()->user());
 
         return view('interno.dashboard', compact(
             'stats',
-            'empresas_pendientes',
-            'candidatos_pendientes',
-            'solicitudes_recientes',
             'tareas_recientes',
             'acciones'
         ));

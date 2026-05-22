@@ -14,6 +14,7 @@ use App\Http\Controllers\Empresa\ServicioController as EmpresaServicioController
 use App\Http\Controllers\Interno\InternoController;
 use App\Http\Controllers\Interno\TareaController;
 use App\Http\Controllers\Empresa\EmpresaController;
+use App\Http\Controllers\PaginaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Páginas públicas estáticas (contenido editable desde Configuración)
+Route::get('/privacidad', [PaginaController::class, 'privacidad'])->name('paginas.privacidad');
+Route::get('/terminos', [PaginaController::class, 'terminos'])->name('paginas.terminos');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
@@ -99,6 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/buscar-json', [AdminController::class, 'buscarJson'])->name('buscar.json');
         Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
         Route::post('/configuracion/parametros', [ConfiguracionController::class, 'guardarParametros'])->name('configuracion.parametros.guardar');
+        Route::post('/configuracion/sitio', [ConfiguracionController::class, 'guardarSitio'])->name('configuracion.sitio.guardar');
         Route::get('/configuracion/usuarios/nuevo', [ConfiguracionController::class, 'nuevoUsuarioModal'])->name('configuracion.usuarios.nuevo');
         Route::post('/configuracion/usuarios', [ConfiguracionController::class, 'guardarUsuario'])->name('configuracion.usuarios.guardar');
         Route::get('/configuracion/usuarios/{usuario}/modal', [ConfiguracionController::class, 'usuarioModal'])->name('configuracion.usuarios.modal');
@@ -152,6 +158,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/solicitudes/{vacante}/editar', [EmpresaController::class, 'editarSolicitud'])->name('solicitudes.editar');
         Route::put('/solicitudes/{vacante}', [EmpresaController::class, 'actualizarSolicitud'])->name('solicitudes.actualizar');
 
+        Route::delete('/solicitudes/{vacante}', [EmpresaController::class, 'eliminarSolicitud'])->name('solicitudes.eliminar');
+
         Route::patch('/postulaciones/{postulacion}/mover', [EmpresaController::class, 'moverPostulacion'])->name('postulaciones.mover');
 
         // Solicitudes de servicio de la empresa (capacitación, coaching, etc.)
@@ -159,7 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/servicios/nuevo', [EmpresaServicioController::class, 'create'])->name('servicios.crear');
         Route::post('/servicios', [EmpresaServicioController::class, 'store'])->name('servicios.guardar');
         Route::get('/servicios/{servicio}', [EmpresaServicioController::class, 'show'])->name('servicios.ver');
-        Route::delete('/servicios/{servicio}', [EmpresaServicioController::class, 'cancelar'])->name('servicios.cancelar');
+        Route::delete('/servicios/{servicio}', [EmpresaServicioController::class, 'destroy'])->name('servicios.eliminar');
 
         Route::get('/vacantes', [EmpresaController::class, 'solicitudes'])->name('vacantes');
         Route::get('/vacantes/crear', [EmpresaController::class, 'crearSolicitud'])->name('vacantes.crear');
@@ -176,13 +184,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vacantes/{vacante}/modal', [CandidatoController::class, 'vacanteModal'])->name('vacantes.modal');
         Route::get('/postulaciones', [CandidatoController::class, 'postulaciones'])->name('postulaciones');
         Route::post('/vacantes/{vacante}/postular', [CandidatoController::class, 'postular'])->name('postular');
+        Route::delete('/postulaciones/{postulacion}', [CandidatoController::class, 'eliminarPostulacion'])->name('postulaciones.eliminar');
 
         // Servicios solicitados por el candidato (cursos, coaching, etc.)
         Route::get('/servicios', [CandidatoServicioController::class, 'index'])->name('servicios.index');
         Route::get('/servicios/nuevo', [CandidatoServicioController::class, 'create'])->name('servicios.crear');
         Route::post('/servicios', [CandidatoServicioController::class, 'store'])->name('servicios.guardar');
         Route::get('/servicios/{servicio}', [CandidatoServicioController::class, 'show'])->name('servicios.ver');
-        Route::delete('/servicios/{servicio}', [CandidatoServicioController::class, 'cancelar'])->name('servicios.cancelar');
+        Route::delete('/servicios/{servicio}', [CandidatoServicioController::class, 'destroy'])->name('servicios.eliminar');
     });
 
     // Comentarios en pedidos de servicio (accesible por admin/interno/empresa/candidato dueño)

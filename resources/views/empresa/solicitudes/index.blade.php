@@ -68,6 +68,10 @@
                                     <a href="{{ route('empresa.solicitudes.ver', $sol) }}" class="btn btn-secondary btn-sm">Ver detalle</a>
                                     @if($sol->estado === 'pendiente')
                                         <a href="{{ route('empresa.solicitudes.editar', $sol) }}" class="btn btn-secondary btn-sm">Editar</a>
+                                        <form method="POST" action="{{ route('empresa.solicitudes.eliminar', $sol) }}" style="display:inline;" onsubmit="return confirm('&iquest;Eliminar esta solicitud? Se borrará permanentemente.')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
+                                        </form>
                                     @endif
                                 </div>
                             </td>
@@ -106,6 +110,10 @@
                             <a href="{{ route('empresa.solicitudes.ver', $sol) }}" class="btn btn-secondary btn-sm">Ver detalle</a>
                             @if($sol->estado === 'pendiente')
                                 <a href="{{ route('empresa.solicitudes.editar', $sol) }}" class="btn btn-secondary btn-sm">Editar</a>
+                                <form method="POST" action="{{ route('empresa.solicitudes.eliminar', $sol) }}" onsubmit="return confirm('&iquest;Eliminar esta solicitud? Se borrará permanentemente.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
+                                </form>
                             @endif
                         </div>
                     </article>

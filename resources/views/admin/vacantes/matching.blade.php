@@ -49,13 +49,6 @@
         </div>
     </x-slot>
 
-    @if(session('success'))
-        <div class="alert alert-success mb-4">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger mb-4">{{ session('error') }}</div>
-    @endif
-
     @if($vacanteLlena)
         <div style="margin-bottom:18px; padding:14px 18px; background:#f0fdf4; border-left:4px solid #16a34a; border-radius:8px;">
             <strong style="color:#16a34a;">✓ Vacante cubierta.</strong>

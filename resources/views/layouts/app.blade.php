@@ -4,7 +4,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>@yield('title', config('app.name', 'SistemaRH'))</title>
+        <title>@yield('title', $sitio['sitio_nombre'] ?? config('app.name', 'SistemaRH'))</title>
+        @if(!empty($sitio['sitio_favicon']))
+            <link rel="icon" href="{{ asset('storage/' . $sitio['sitio_favicon']) }}">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
@@ -32,19 +35,47 @@
         @livewireScripts
         <script>
         // Evitar que Livewire muestre el overlay feo de error.
-        // Recarga la página silenciosamente si la sesión expiró o el componente cambió.
+        // Recarga silenciosamente ante cualquier error de componente o sesión.
         document.addEventListener('livewire:init', () => {
             let reloading = false;
+            function recargar() {
+                if (reloading) return;
+                reloading = true;
+                window.location.reload();
+            }
+
+            // Errores de componentes Livewire (poll, acciones, etc.)
             Livewire.hook('request', ({ fail }) => {
                 fail(({ status, preventDefault }) => {
                     preventDefault();
-                    // 419 = sesión expirada, 404 = componente/endpoint desactualizado
-                    if (!reloading && (status === 419 || status === 404)) {
-                        reloading = true;
-                        window.location.reload();
+                    // Solo 419 (sesión expirada) recarga para renovar la sesión.
+                    // Otros errores transitorios (poll, red) NO recargan → no cierran el chat.
+                    if (status === 419) {
+                        recargar();
+                        return;
                     }
+                    // Limpiar cualquier estado visual pegado, sin recargar
+                    document.body.style.overflow = '';
+                    document.body.style.pointerEvents = '';
+                    document.body.style.opacity = '';
                 });
             });
+
+            // Listener global: cualquier componente Livewire puede disparar toast
+            Livewire.on('notificacion', (data) => {
+                const params = Array.isArray(data) ? data[0] : data;
+                if (params && params.mensaje) {
+                    rhToast(params.mensaje, params.tipo || 'info');
+                }
+            });
+        });
+
+        // Limpiar cualquier estado visual pegado al cargar la página
+        window.addEventListener('pageshow', () => {
+            document.body.style.overflow = '';
+            document.body.style.pointerEvents = '';
+            document.body.style.opacity = '';
+            document.querySelectorAll('[data-livewire-navigate-loading]').forEach(el => el.remove());
         });
         </script>
 
@@ -102,6 +133,50 @@
             if (btn && !btn.hasAttribute('data-no-load')) btn.classList.add('btn-loading');
         }, true);
 
+        // ── SPA para formularios POST de acción: enviar sin recargar ───
+        // Conserva el scroll y deja que el toast del flash se muestre solo.
+        let _spaScrollY = null;
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement)) return;
+
+            // Exclusiones de seguridad
+            if (form.hasAttribute('data-no-spa')) return;
+            if (form.hasAttribute('wire:submit')) return;            // forms Livewire
+            if ((form.enctype || '').includes('multipart')) return;  // subida de archivos
+
+            const metodo = (form.getAttribute('method') || 'get').toUpperCase();
+            if (metodo !== 'POST') return;                            // las GET (filtros) quedan igual
+
+            let accion;
+            try {
+                accion = new URL(form.action || window.location.href, window.location.origin);
+                if (accion.origin !== window.location.origin) return; // solo mismo origen
+            } catch { return; }
+
+            // No tocar autenticación/sesión
+            if (/\/(login|logout|register|password|confirm-password|email)/.test(accion.pathname)) return;
+
+            e.preventDefault();
+            _spaScrollY = window.scrollY;
+            RHP.start();
+
+            fetch(accion.href, {
+                method: 'POST',
+                body: new FormData(form),
+                redirect: 'manual',                 // no seguir el redirect → el flash sobrevive en sesión
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            })
+            .then(() => {
+                // Refrescar la página actual sin recargar el navegador (corre scripts del flash)
+                window.Livewire ? Livewire.navigate(window.location.href) : window.location.reload();
+            })
+            .catch(() => {
+                _spaScrollY = null;
+                form.submit();                       // si falla la red, envío normal
+            });
+        });
+
         // Completar al cargar la página (post-redirect)
         window.addEventListener('pageshow', () => RHP.done());
 
@@ -125,12 +200,29 @@
             document.body.classList.toggle('sidebar-open', open);
         }
 
-        // Hook Livewire navigate
+        // Hook Livewire navigate (con safety net si la navegación falla)
+        let _navTimeout = null;
         document.addEventListener('livewire:navigate', () => {
             RHP.start();
             rhSidebarToggle(false);
+            clearTimeout(_navTimeout);
+            // Si en 8s no llega 'navigated', limpiar estado visual
+            _navTimeout = setTimeout(() => {
+                RHP.done();
+                document.body.style.overflow = '';
+                document.body.style.pointerEvents = '';
+            }, 8000);
         });
-        document.addEventListener('livewire:navigated', () => { setTimeout(() => RHP.done(), 80); });
+        document.addEventListener('livewire:navigated', () => {
+            clearTimeout(_navTimeout);
+            setTimeout(() => RHP.done(), 80);
+            // Conservar el scroll tras una acción POST (no saltar arriba)
+            if (_spaScrollY !== null) {
+                const y = _spaScrollY;
+                _spaScrollY = null;
+                requestAnimationFrame(() => window.scrollTo(0, y));
+            }
+        });
 
         // ── Toast system ──────────────────────────────────────────────
         function rhToast(msg, type) {
@@ -204,6 +296,37 @@
             }, 250);
         }
 
+        // ── SPA global: todos los links internos sin recarga ─────────
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+
+            // Ya tiene wire:navigate → Livewire lo maneja
+            if (link.hasAttribute('wire:navigate')) return;
+
+            // Links especiales: ignorar
+            if (link.target === '_blank' || link.hasAttribute('download')) return;
+            if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+            if (link.hasAttribute('data-no-spa')) return;
+
+            // Solo links del mismo origen
+            try {
+                const url = new URL(link.href, window.location.origin);
+                if (url.origin !== window.location.origin) return;
+                // Hash puro en la misma página
+                if (url.pathname === window.location.pathname && url.hash) return;
+            } catch { return; }
+
+            // Links dentro de forms, links con onclick que abren modal, links javascript:
+            if (link.closest('form')) return;
+            if (link.href.startsWith('javascript:')) return;
+            if (link.getAttribute('onclick')?.includes('rhModal')) return;
+
+            // Usar Livewire.navigate() → SPA silencioso
+            e.preventDefault();
+            Livewire.navigate(link.href);
+        }, true);
+
         // ── Keyboard & sidebar ────────────────────────────────────────
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
@@ -230,6 +353,15 @@
                 if (ctx.state === 'suspended') ctx.resume();
                 return ctx;
             }
+            // El navegador bloquea el audio hasta la primera interacción.
+            // Lo desbloqueamos con el primer clic o tecla del usuario.
+            function desbloquear() {
+                try { ac(); } catch (e) {}
+                window.removeEventListener('pointerdown', desbloquear);
+                window.removeEventListener('keydown', desbloquear);
+            }
+            window.addEventListener('pointerdown', desbloquear);
+            window.addEventListener('keydown', desbloquear);
             function nodo(c, freq, start, dur, vol, type) {
                 const o = c.createOscillator(), g = c.createGain();
                 o.type = type || 'sine';

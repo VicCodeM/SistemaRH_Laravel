@@ -96,10 +96,10 @@
                                 <td style="text-align:right; white-space:nowrap;">
                                     <div class="toolbar-wrap" style="justify-content:flex-end;">
                                         <a href="{{ route('candidato.servicios.ver', $s) }}" class="btn btn-secondary btn-sm">Ver avance</a>
-                                        @if(in_array($s->estado, ['pendiente', 'activo']) && $s->solicitado_por === auth()->id())
-                                            <form method="POST" action="{{ route('candidato.servicios.cancelar', $s) }}" style="display:inline;" onsubmit="return confirm('&iquest;Cancelar esta solicitud?')">
+                                        @if($s->estado === 'pendiente' && $s->solicitado_por === auth()->id())
+                                            <form method="POST" action="{{ route('candidato.servicios.eliminar', $s) }}" style="display:inline;" onsubmit="return confirm('&iquest;Eliminar esta solicitud? Se borrará permanentemente.')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Cancelar</button>
+                                                <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
                                             </form>
                                         @endif
                                     </div>
@@ -163,10 +163,10 @@
 
                             <div class="candidate-actions" style="margin-top:14px;">
                                 <a href="{{ route('candidato.servicios.ver', $s) }}" class="btn btn-secondary btn-sm">Ver avance</a>
-                                @if(in_array($s->estado, ['pendiente', 'activo']) && $s->solicitado_por === auth()->id())
-                                    <form method="POST" action="{{ route('candidato.servicios.cancelar', $s) }}" onsubmit="return confirm('&iquest;Cancelar esta solicitud?')">
+                                @if($s->estado === 'pendiente' && $s->solicitado_por === auth()->id())
+                                    <form method="POST" action="{{ route('candidato.servicios.eliminar', $s) }}" onsubmit="return confirm('&iquest;Eliminar esta solicitud? Se borrará permanentemente.')">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Cancelar</button>
+                                        <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
                                     </form>
                                 @endif
                             </div>

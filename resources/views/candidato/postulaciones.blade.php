@@ -48,12 +48,20 @@
                                         {{ \App\Models\Postulacion::estadoLabel($p->estado) }}
                                     </span>
                                 </td>
-                                <td style="text-align:right;">
-                                    @if($p->vacante)
-                                        <button type="button" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="rhModal('{{ route('candidato.vacantes.modal', $p->vacante) }}')">
-                                            Ver detalle
-                                        </button>
-                                    @endif
+                                <td style="text-align:right; white-space:nowrap;">
+                                    <div class="toolbar-wrap" style="justify-content:flex-end;">
+                                        @if($p->vacante)
+                                            <button type="button" class="btn btn-secondary btn-sm" onclick="rhModal('{{ route('candidato.vacantes.modal', $p->vacante) }}')">
+                                                Ver detalle
+                                            </button>
+                                        @endif
+                                        @if($p->estado === 'postulado')
+                                            <form method="POST" action="{{ route('candidato.postulaciones.eliminar', $p) }}" style="display:inline;" onsubmit="return confirm('&iquest;Eliminar esta postulación? Se borrará permanentemente.')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -86,13 +94,19 @@
                             </div>
                         </div>
 
-                        @if($p->vacante)
-                            <div class="candidate-actions" style="margin-top:14px;">
-                                <button type="button" class="btn btn-secondary" onclick="rhModal('{{ route('candidato.vacantes.modal', $p->vacante) }}')">
+                        <div class="candidate-actions" style="margin-top:14px;">
+                            @if($p->vacante)
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="rhModal('{{ route('candidato.vacantes.modal', $p->vacante) }}')">
                                     Ver detalle
                                 </button>
-                            </div>
-                        @endif
+                            @endif
+                            @if($p->estado === 'postulado')
+                                <form method="POST" action="{{ route('candidato.postulaciones.eliminar', $p) }}" onsubmit="return confirm('&iquest;Eliminar esta postulación? Se borrará permanentemente.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 @endforeach
             </div>

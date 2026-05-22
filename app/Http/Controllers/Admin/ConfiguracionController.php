@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GuardarSitioRequest;
 use App\Models\Bitacora;
 use App\Models\ConfiguracionSistema;
 use App\Models\User;
 use App\Services\BitacoraService;
+use App\Services\SitioService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +18,7 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class ConfiguracionController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, SitioService $sitioService)
     {
         $tabActivo = $request->string('tab')->toString() ?: 'usuarios';
 
@@ -62,7 +64,30 @@ class ConfiguracionController extends Controller
             'candidatos' => User::where('rol', 'candidato')->count(),
         ];
 
-        return view('admin.configuracion.index', compact('tabActivo', 'usuarios', 'bitacoras', 'stats', 'parametros'));
+        $sitio = $sitioService->valores();
+
+        return view('admin.configuracion.index', compact('tabActivo', 'usuarios', 'bitacoras', 'stats', 'parametros', 'sitio'));
+    }
+
+    public function guardarSitio(GuardarSitioRequest $request, SitioService $sitio, BitacoraService $bitacora): RedirectResponse
+    {
+        $sitio->guardarTextos($request->validated());
+
+        if ($request->boolean('quitar_favicon')) {
+            $sitio->eliminarFavicon();
+        } elseif ($request->hasFile('favicon')) {
+            $sitio->guardarFavicon($request->file('favicon'));
+        }
+
+        $bitacora->registrar(
+            'configuracion',
+            'actualizar',
+            'Se actualizó la configuración del sitio (SEO, landing y páginas legales).'
+        );
+
+        return redirect()
+            ->route('admin.configuracion', ['tab' => 'sitio'])
+            ->with('success', 'Configuración del sitio actualizada.');
     }
 
     public function guardarParametros(Request $request, BitacoraService $bitacora): RedirectResponse

@@ -166,6 +166,24 @@ class CandidatoController extends Controller
         return view('candidato.postulaciones', compact('postulaciones'));
     }
 
+    public function eliminarPostulacion(Postulacion $postulacion): RedirectResponse
+    {
+        if ($redirect = $this->requiereSolicitudAprobada()) {
+            return $redirect;
+        }
+
+        $candidato = $this->candidatoActual();
+
+        abort_if($postulacion->candidato_id !== $candidato->id, 403, 'Esta postulación no te pertenece.');
+        abort_if($postulacion->estado !== 'postulado', 422, 'Solo puedes eliminar postulaciones que aún no han sido revisadas.');
+
+        $postulacion->delete();
+
+        return redirect()
+            ->route('candidato.postulaciones')
+            ->with('success', 'Postulación eliminada.');
+    }
+
     public function postular(Vacante $vacante): RedirectResponse
     {
         if ($redirect = $this->requiereSolicitudAprobada()) {

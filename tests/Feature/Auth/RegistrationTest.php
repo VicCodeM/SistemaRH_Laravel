@@ -26,6 +26,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // El registro público crea un candidato y lo lleva a completar su solicitud.
+        $response->assertRedirect(route('candidato.solicitud', absolute: false));
     }
 }

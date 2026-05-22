@@ -3,10 +3,10 @@
         <nav class="breadcrumbs">
             <a href="{{ route('dashboard') }}">Inicio</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <span>Panel interno</span>
+            <span>Mi panel</span>
         </nav>
-        <h1 class="page-title">Panel de operaciones</h1>
-        <p class="page-subtitle">Resumen diario para atender solicitudes y seguimiento operativo.</p>
+        <h1 class="page-title">Mi panel de trabajo</h1>
+        <p class="page-subtitle">{{ now()->isoFormat('dddd D [de] MMMM, YYYY') }} &mdash; Tus tareas y carga de trabajo.</p>
     </x-slot>
 
     @if(session('success'))
@@ -20,97 +20,80 @@
         <x-acciones-pendientes titulo="Que sigue?" :acciones="$acciones" />
     @endisset
 
+    {{-- Tarjetas de MIS tareas --}}
     <div class="metrics-grid fade-in">
-        <div class="metric-card" style="{{ $stats['empresas_pendientes'] > 0 ? 'border-color: rgba(245,158,11,.4);' : '' }}">
+        <div class="metric-card" style="{{ $stats['tareas_por_tomar'] > 0 ? 'border-color: rgba(245,158,11,.4);' : '' }}">
             <div class="metric-top">
-                <span class="metric-label">Empresas por revisar</span>
+                <span class="metric-label">Por tomar</span>
                 <div class="metric-icon" style="background:rgba(245,158,11,.12);color:#f59e0b;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                 </div>
             </div>
-            <div class="metric-value">{{ $stats['empresas_pendientes'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">Pendientes de aprobacion</div>
+            <div class="metric-value">{{ $stats['tareas_por_tomar'] }}</div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">Asignadas, esperando que las tomes</div>
         </div>
 
-        <div class="metric-card" style="{{ $stats['candidatos_pendientes'] > 0 ? 'border-color: rgba(96,165,250,.4);' : '' }}">
+        <div class="metric-card" style="{{ $stats['tareas_en_proceso'] > 0 ? 'border-color: rgba(14,165,233,.35);' : '' }}">
             <div class="metric-top">
-                <span class="metric-label">Candidatos por revisar</span>
-                <div class="metric-icon" style="background:rgba(96,165,250,.12);color:#60a5fa;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                </div>
-            </div>
-            <div class="metric-value">{{ $stats['candidatos_pendientes'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">Solicitudes enviadas</div>
-        </div>
-
-        <div class="metric-card" style="{{ $stats['solicitudes_pendientes'] > 0 ? 'border-color: rgba(167,139,250,.4);' : '' }}">
-            <div class="metric-top">
-                <span class="metric-label">Solicitudes por activar</span>
-                <div class="metric-icon" style="background:rgba(167,139,250,.12);color:#a78bfa;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
-                </div>
-            </div>
-            <div class="metric-value">{{ $stats['solicitudes_pendientes'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">En revision interna</div>
-        </div>
-
-        <div class="metric-card" style="{{ $stats['tareas_activas'] > 0 ? 'border-color: rgba(14,165,233,.35);' : '' }}">
-            <div class="metric-top">
-                <span class="metric-label">Mis tareas</span>
+                <span class="metric-label">En proceso</span>
                 <div class="metric-icon" style="background:rgba(14,165,233,.12);color:#0ea5e9;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9"/></svg>
                 </div>
             </div>
-            <div class="metric-value">{{ $stats['tareas_activas'] }}</div>
-            <div class="metric-change" style="color:#64748b;font-size:12px;">
-                {{ $stats['tareas_completadas'] }} completadas
+            <div class="metric-value">{{ $stats['tareas_en_proceso'] }}</div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">Trabajando activamente</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Completadas</span>
+                <div class="metric-icon" style="background:rgba(34,197,94,.12);color:#22c55e;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                </div>
             </div>
+            <div class="metric-value">{{ $stats['tareas_completadas'] }}</div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">Total historico</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">En el sistema</span>
+                <div class="metric-icon" style="background:rgba(167,139,250,.12);color:#a78bfa;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5"/></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ $stats['solicitudes_activas_sistema'] }}</div>
+            <div class="metric-change" style="color:#64748b;font-size:12px;">Solicitudes activas en general</div>
         </div>
     </div>
 
-    <div class="candidate-actions">
-        <a href="{{ route('interno.tareas.index') }}" class="btn btn-secondary">Mis tareas</a>
+    {{-- Barra de carga de trabajo --}}
+    @php
+        $totalActivas = $stats['tareas_por_tomar'] + $stats['tareas_en_proceso'];
+        $capacidad = 10; // referencia visual
+        $porcentaje = $capacidad > 0 ? min(100, round(($totalActivas / $capacidad) * 100)) : 0;
+        $colorBarra = $porcentaje >= 80 ? '#ef4444' : ($porcentaje >= 50 ? '#f59e0b' : '#22c55e');
+    @endphp
+    <div class="card fade-in" style="margin-top:16px; padding:16px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:600; font-size:14px;">Carga de trabajo</span>
+            <span style="font-size:13px; color:#64748b;">{{ $totalActivas }} tarea{{ $totalActivas !== 1 ? 's' : '' }} activa{{ $totalActivas !== 1 ? 's' : '' }}</span>
+        </div>
+        <div style="background:var(--border); border-radius:8px; height:10px; overflow:hidden;">
+            <div style="background:{{ $colorBarra }}; height:100%; border-radius:8px; width:{{ $porcentaje }}%; transition:width .5s ease;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:#94a3b8;">
+            <span>{{ $porcentaje >= 80 ? 'Carga alta' : ($porcentaje >= 50 ? 'Carga media' : 'Disponible') }}</span>
+            <span>{{ $porcentaje }}%</span>
+        </div>
+    </div>
+
+    <div class="candidate-actions" style="margin-top:16px;">
+        <a href="{{ route('interno.tareas.index') }}" class="btn btn-primary">Mis tareas</a>
         <a href="{{ route('chat.index') }}" class="btn btn-secondary">Abrir chat</a>
     </div>
 
-    <div class="content-split" style="margin-top:24px;">
-        <div class="card fade-in">
-            <div class="candidate-inline-meta" style="margin-bottom:16px;">
-                <h3 style="font-weight:700; margin:0; font-size:1rem;">Solicitudes recientes</h3>
-                <span style="font-size:12px; color:#64748b;">{{ $stats['solicitudes_activas'] }} activas</span>
-            </div>
-
-            @if($solicitudes_recientes->isEmpty())
-                <div style="text-align:center; padding:36px 0; color:#64748b;">
-                    No hay solicitudes recientes.
-                </div>
-            @else
-                <div class="candidate-compact-list">
-                    @foreach($solicitudes_recientes as $solicitud)
-                        <div class="candidate-compact-item">
-                            <div class="candidate-inline-meta">
-                                <div style="min-width:0;">
-                                    <div class="candidate-compact-item-title">{{ $solicitud->titulo }}</div>
-                                    <div class="candidate-compact-item-subtitle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        {{ $solicitud->empresa?->nombre_empresa ?? 'Empresa' }}
-                                    </div>
-                                </div>
-                                <div class="candidate-compact-item-trailing" style="flex-shrink:0;">
-                                    <div>{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($solicitud->nivel_jerarquico) }}</div>
-                                    <div style="margin-top:4px;">
-                                        <span style="padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; background:{{ $solicitud->estado === 'activa' ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)' }}; color:{{ $solicitud->estado === 'activa' ? '#22c55e' : '#f59e0b' }};">
-                                            {{ $solicitud->estado === 'activa' ? 'Activa' : 'En revision' }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    </div>
-
+    {{-- Tabla de tareas recientes --}}
     <div class="card fade-in" style="margin-top:24px;">
         <div class="candidate-inline-meta" style="margin-bottom:16px;">
             <h3 style="font-weight:700; margin:0; font-size:1rem;">Mis tareas asignadas</h3>

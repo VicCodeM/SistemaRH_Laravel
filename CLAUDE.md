@@ -391,3 +391,8 @@ User::with(['serviciosCapacitados'])  // para internos
 · Antes de duplicar lógica: extraer a método reutilizable
 · Si el flujo confunde al usuario: pausar y rediseñar, NO parchar
 ```
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

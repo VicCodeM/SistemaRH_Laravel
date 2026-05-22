@@ -1,7 +1,7 @@
 <div class="chat-fab-wrap" data-noleidos="{{ $noLeidosTotal }}"
     @if($abierto && $conv) wire:poll.1500ms
-    @elseif($abierto) wire:poll.4s
-    @else wire:poll.12s
+    @elseif($abierto) wire:poll.3s
+    @else wire:poll.5s
     @endif>
     {{-- Botón flotante --}}
     <button type="button" class="chat-fab {{ $abierto ? 'abierto' : '' }} {{ (!$abierto && $noLeidosTotal > 0) ? 'tiene-nuevos' : '' }}" wire:click="toggle" title="Mensajes">

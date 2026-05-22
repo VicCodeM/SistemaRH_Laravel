@@ -38,7 +38,8 @@ class KanbanBoard extends Component
             return;
         }
 
-        $postulacion = Postulacion::findOrFail($postulacionId);
+        $postulacion = Postulacion::find($postulacionId);
+        if (! $postulacion) return;
         $this->postulacionService->mover($postulacion, $nuevoEstado);
     }
 }

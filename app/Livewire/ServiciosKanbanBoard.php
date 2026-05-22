@@ -150,7 +150,8 @@ class ServiciosKanbanBoard extends Component
     public function iniciar(int $solicitudId): void
     {
         if (! $this->puedeOperar()) return;
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
 
         if (! $solicitud->asignado_a) {
             $this->notificar('Asigna un responsable antes de iniciar.', 'error');
@@ -163,7 +164,8 @@ class ServiciosKanbanBoard extends Component
     public function activar(int $solicitudId): void
     {
         if (! $this->puedeOperar()) return;
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
 
         if (! $solicitud->asignado_a) {
             $this->notificar('Asigna un responsable antes de activar.', 'error');
@@ -176,21 +178,24 @@ class ServiciosKanbanBoard extends Component
     public function completar(int $solicitudId): void
     {
         if (! $this->puedeOperar()) return;
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
         app(ServicioAsignadoService::class)->cambiarEstado($solicitud, 'completado');
     }
 
     public function cancelar(int $solicitudId): void
     {
         if (! $this->puedeOperar()) return;
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
         app(ServicioAsignadoService::class)->cambiarEstado($solicitud, 'cancelado');
     }
 
     public function reabrir(int $solicitudId): void
     {
         if (! $this->puedeOperar()) return;
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
         app(ServicioAsignadoService::class)->cambiarEstado($solicitud, 'pendiente');
     }
 
@@ -198,8 +203,9 @@ class ServiciosKanbanBoard extends Component
     {
         if (! $this->puedeOperar()) return;
 
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
-        $interno = User::findOrFail($internoId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        $interno = User::find($internoId);
+        if (! $solicitud || ! $interno) return;
 
         try {
             app(ServicioAsignadoService::class)->asignarInterno($solicitud, $interno);
@@ -213,7 +219,9 @@ class ServiciosKanbanBoard extends Component
     {
         if (! $this->puedeOperar()) return;
 
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
+
         $mejor = app(AsignacionInternoService::class)->sugerirMejor($solicitud);
 
         if (! $mejor) {
@@ -229,7 +237,9 @@ class ServiciosKanbanBoard extends Component
     {
         if (! $this->puedeOperar()) return;
 
-        $solicitud = ServicioAsignado::findOrFail($solicitudId);
+        $solicitud = ServicioAsignado::find($solicitudId);
+        if (! $solicitud) return;
+
         $tipoClase = $this->resolverTipoClase($tipo);
 
         if (! $tipoClase) {

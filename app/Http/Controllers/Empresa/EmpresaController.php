@@ -181,6 +181,23 @@ class EmpresaController extends Controller
         return redirect()->route('empresa.solicitudes')->with('success', 'Vacante actualizada correctamente.');
     }
 
+    public function eliminarSolicitud(Vacante $vacante): RedirectResponse
+    {
+        if ($redirigir = $this->redirigirSiPendiente()) {
+            return $redirigir;
+        }
+
+        $this->autorizarVacante($vacante);
+        abort_if($vacante->estado !== 'pendiente', 422, 'Solo puedes eliminar solicitudes que aún no han sido aprobadas.');
+
+        $vacante->postulaciones()->delete();
+        $vacante->delete();
+
+        return redirect()
+            ->route('empresa.solicitudes')
+            ->with('success', 'Solicitud eliminada.');
+    }
+
     public function moverPostulacion(Request $request, Postulacion $postulacion, PostulacionService $postulacionService)
     {
         if ($redirigir = $this->redirigirSiPendiente()) {

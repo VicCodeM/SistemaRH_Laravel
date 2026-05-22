@@ -1,13 +1,13 @@
 @extends('layouts.landing')
 
-@section('title', 'SistemaRH — Gestión de Talento')
+@section('title', ($sitio['sitio_nombre'] ?? 'SistemaRH') . ' — Gestión de Talento')
 
 @section('content')
 <div class="lp-wrap">
 
     {{-- NAV --}}
     <header class="lp-nav">
-        <a href="/" class="lp-logo">Sistema<span>RH</span></a>
+        <a href="/" class="lp-logo">{{ $sitio['sitio_nombre'] ?? 'SistemaRH' }}</a>
         <div class="lp-nav-actions">
             <a href="{{ route('login') }}" class="btn btn-ghost lp-btn-ghost">Iniciar sesión</a>
         </div>
@@ -15,14 +15,17 @@
 
     {{-- HERO --}}
     <section class="lp-hero">
-        <div class="lp-hero-badge">Plataforma de Gestión de Talento</div>
+        @if(!empty($sitio['landing_hero_badge']))
+            <div class="lp-hero-badge">{{ $sitio['landing_hero_badge'] }}</div>
+        @endif
         <h1 class="lp-hero-title">
-            Recluta, gestiona<br>y desarrolla talento<br>
-            <span class="lp-hero-accent">de forma inteligente</span>
+            {!! nl2br(e($sitio['landing_hero_titulo'] ?? '')) !!}
+            @if(!empty($sitio['landing_hero_acento']))
+                <br><span class="lp-hero-accent">{{ $sitio['landing_hero_acento'] }}</span>
+            @endif
         </h1>
         <p class="lp-hero-sub">
-            Conecta empresas con candidatos, automatiza procesos de RH<br class="hide-mobile">
-            y gestiona todo tu equipo desde un solo lugar.
+            {!! nl2br(e($sitio['landing_hero_subtitulo'] ?? '')) !!}
         </p>
 
         @auth
@@ -75,61 +78,49 @@
     @endguest
 
     {{-- FEATURES --}}
+    @php
+        $lpFeatures = [
+            ['icono' => 'lp-fi-blue',   'svg' => 'M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0'],
+            ['icono' => 'lp-fi-green',  'svg' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0Zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'],
+            ['icono' => 'lp-fi-purple', 'svg' => 'M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z'],
+            ['icono' => 'lp-fi-teal',   'svg' => 'M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155'],
+            ['icono' => 'lp-fi-rose',   'svg' => 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z'],
+        ];
+    @endphp
     <section class="lp-features">
-        <p class="lp-features-label">¿Qué incluye la plataforma?</p>
+        @if(!empty($sitio['landing_feat_label']))
+            <p class="lp-features-label">{{ $sitio['landing_feat_label'] }}</p>
+        @endif
         <div class="lp-features-grid">
-            <div class="lp-feature">
-                <div class="lp-feature-icon lp-fi-blue">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"/>
-                    </svg>
-                </div>
-                <h4>Catálogo de servicios RH</h4>
-                <p>Reclutamiento, capacitación, coaching y más, organizados por nivel jerárquico.</p>
-            </div>
-            <div class="lp-feature">
-                <div class="lp-feature-icon lp-fi-green">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0Zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-                    </svg>
-                </div>
-                <h4>Matching inteligente</h4>
-                <p>Sugiere candidatos compatibles según jerarquía, perfil y habilidades requeridas.</p>
-            </div>
-            <div class="lp-feature">
-                <div class="lp-feature-icon lp-fi-purple">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
-                    </svg>
-                </div>
-                <h4>SLA inteligente</h4>
-                <p>Tiempos de respuesta automáticos calculados por prioridad e impacto del ticket.</p>
-            </div>
-
-            <div class="lp-feature">
-                <div class="lp-feature-icon lp-fi-teal">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
-                    </svg>
-                </div>
-                <h4>Chat integrado</h4>
-                <p>Comunicación directa entre candidatos, empresas e internos sin salir de la plataforma.</p>
-            </div>
-            <div class="lp-feature">
-                <div class="lp-feature-icon lp-fi-rose">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
-                    </svg>
-                </div>
-                <h4>Aprobaciones controladas</h4>
-                <p>Flujo de aprobación de empresas y candidatos con control total del administrador.</p>
-            </div>
+            @foreach($lpFeatures as $i => $feat)
+                @php
+                    $n = $i + 1;
+                    $featTitulo = $sitio['landing_feat_' . $n . '_titulo'] ?? '';
+                    $featTexto  = $sitio['landing_feat_' . $n . '_texto'] ?? '';
+                @endphp
+                @if($featTitulo !== '' || $featTexto !== '')
+                    <div class="lp-feature">
+                        <div class="lp-feature-icon {{ $feat['icono'] }}">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $feat['svg'] }}"/>
+                            </svg>
+                        </div>
+                        <h4>{{ $featTitulo }}</h4>
+                        <p>{{ $featTexto }}</p>
+                    </div>
+                @endif
+            @endforeach
         </div>
     </section>
 
     {{-- FOOTER --}}
     <footer class="lp-footer">
-        <p>&copy; {{ date('Y') }} SistemaRH. Todos los derechos reservados.</p>
+        <p>&copy; {{ date('Y') }} {{ $sitio['landing_footer'] ?? 'SistemaRH. Todos los derechos reservados.' }}</p>
+        <p class="lp-footer-links">
+            <a href="{{ route('paginas.privacidad') }}">Políticas de privacidad</a>
+            <span>·</span>
+            <a href="{{ route('paginas.terminos') }}">Términos del servicio</a>
+        </p>
     </footer>
 
 </div>
@@ -207,6 +198,9 @@ body.landing-page { background: var(--lp-bg); color: var(--lp-text); margin: 0; 
 /* Footer */
 .lp-footer { border-top: 1px solid var(--lp-border); padding: 24px 0; text-align: center; margin-top: auto; }
 .lp-footer p { color: #475569; font-size: .75rem; margin: 0; }
+.lp-footer-links { margin-top: 8px !important; display: flex; gap: 10px; justify-content: center; align-items: center; }
+.lp-footer-links a { color: var(--lp-muted); text-decoration: none; transition: color .18s; }
+.lp-footer-links a:hover { color: #fff; }
 
 /* Responsive */
 @media (max-width: 640px) {

@@ -13,7 +13,13 @@
                 <p class="page-subtitle">Detalle de tu solicitud.</p>
             </div>
             @if($vacante->estado === 'pendiente')
-                <a href="{{ route('empresa.solicitudes.editar', $vacante) }}" class="btn btn-secondary">Editar solicitud</a>
+                <div class="toolbar-wrap">
+                    <a href="{{ route('empresa.solicitudes.editar', $vacante) }}" class="btn btn-secondary">Editar solicitud</a>
+                    <form method="POST" action="{{ route('empresa.solicitudes.eliminar', $vacante) }}" onsubmit="return confirm('&iquest;Eliminar esta solicitud? Se borrará permanentemente.')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-ghost" style="color:#dc2626;">Eliminar</button>
+                    </form>
+                </div>
             @endif
         </div>
     </x-slot>
