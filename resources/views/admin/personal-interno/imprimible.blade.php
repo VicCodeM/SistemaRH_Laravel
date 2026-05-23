@@ -1,6 +1,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => 'Personal interno',
     'subtitulo' => 'Total: ' . $internos->count() . ' colaborador(es)',
+    'tipo'      => 'Reporte',
 ])
     <table>
         <thead>

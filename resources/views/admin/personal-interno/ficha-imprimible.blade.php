@@ -9,6 +9,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => $interno->name,
     'subtitulo' => 'Ficha de personal interno · ' . $interno->email,
+    'tipo'      => 'Ficha',
 ])
 
     <div style="margin-bottom:16px; padding:12px 14px; background:#f8fafc; border-radius:8px; font-size:11px;">

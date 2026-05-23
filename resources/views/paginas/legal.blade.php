@@ -34,6 +34,8 @@
             <a href="{{ route('paginas.privacidad') }}">Políticas de privacidad</a>
             <span>·</span>
             <a href="{{ route('paginas.terminos') }}">Términos del servicio</a>
+            <span>·</span>
+            <span>v{{ config('app.version') }}</span>
         </p>
     </footer>
 

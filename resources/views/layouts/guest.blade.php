@@ -26,7 +26,7 @@
                 {{ $slot }}
             </div>
 
-            <p class="guest-footer fade-in">&copy; {{ date('Y') }} {{ $sitio['landing_footer'] ?? ($sitio['sitio_nombre'] ?? 'SistemaRH') . '. Todos los derechos reservados.' }}</p>
+            <p class="guest-footer fade-in">&copy; {{ date('Y') }} {{ $sitio['landing_footer'] ?? ($sitio['sitio_nombre'] ?? 'SistemaRH') . '. Todos los derechos reservados.' }} · v{{ config('app.version') }}</p>
         </div>
     </body>
 </html>

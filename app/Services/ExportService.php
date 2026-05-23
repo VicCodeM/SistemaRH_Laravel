@@ -27,17 +27,17 @@ class ExportService
             $output = fopen('php://output', 'w');
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            fputcsv($output, ['Reporte del Sistema RH - ' . now()->format('d/m/Y')]);
-            fputcsv($output, []);
-            fputcsv($output, ['Resumen']);
-            fputcsv($output, ['Empresas totales', Empresa::count()]);
-            fputcsv($output, ['Empresas activas', Empresa::where('estado', 'activa')->count()]);
-            fputcsv($output, ['Empresas pendientes', Empresa::where('estado', 'pendiente')->count()]);
-            fputcsv($output, ['Candidatos totales', Candidato::count()]);
-            fputcsv($output, ['Candidatos aprobados', Candidato::where('solicitud_estado', 'aprobada')->count()]);
-            fputcsv($output, ['Solicitudes de servicio', Vacante::count()]);
-            fputcsv($output, ['Solicitudes activas', Vacante::where('estado', 'activa')->count()]);
-            fputcsv($output, ['Tareas totales', ServicioAsignado::count()]);
+            fputcsv($output, ['Reporte del Sistema RH - ' . now()->format('d/m/Y')], ';');
+            fputcsv($output, [], ';');
+            fputcsv($output, ['Indicador', 'Valor'], ';');
+            fputcsv($output, ['Empresas totales', Empresa::count()], ';');
+            fputcsv($output, ['Empresas activas', Empresa::where('estado', 'activa')->count()], ';');
+            fputcsv($output, ['Empresas pendientes', Empresa::where('estado', 'pendiente')->count()], ';');
+            fputcsv($output, ['Candidatos totales', Candidato::count()], ';');
+            fputcsv($output, ['Candidatos aprobados', Candidato::where('solicitud_estado', 'aprobada')->count()], ';');
+            fputcsv($output, ['Solicitudes de servicio', Vacante::count()], ';');
+            fputcsv($output, ['Solicitudes activas', Vacante::where('estado', 'activa')->count()], ';');
+            fputcsv($output, ['Tareas totales', ServicioAsignado::count()], ';');
 
             fclose($output);
         };

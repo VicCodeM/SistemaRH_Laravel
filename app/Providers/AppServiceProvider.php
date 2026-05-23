@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
         // Compartir la identidad del sitio (SEO, favicon, textos del landing)
         // solo con las vistas que la usan. Una sola consulta cuando se renderizan.
         View::composer(
-            ['layouts.app', 'layouts.guest', 'layouts.landing', 'welcome', 'paginas.legal'],
+            ['layouts.app', 'layouts.guest', 'layouts.landing', 'welcome', 'paginas.legal', 'partials.layout-imprimible'],
             fn ($view) => $view->with('sitio', app(SitioService::class)->valores())
         );
     }

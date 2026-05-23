@@ -7,6 +7,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => 'Solicitud de candidato',
     'subtitulo' => $candidato->nombreCompleto() . ' · ' . ($candidato->usuario?->email ?? '—'),
+    'tipo'      => 'Ficha',
 ])
 
     @php

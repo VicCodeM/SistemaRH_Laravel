@@ -12,6 +12,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => $empresa->nombre_empresa,
     'subtitulo' => 'Ficha de empresa cliente',
+    'tipo'      => 'Ficha',
 ])
 
     <div style="margin-bottom:16px; padding:12px 14px; background:#f8fafc; border-radius:8px; font-size:11px;">

@@ -11,6 +11,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => 'Candidatos: ' . $vacante->titulo,
     'subtitulo' => 'Empresa: ' . ($vacante->empresa?->nombre_empresa ?? '—') . ' · ' . $vacante->postulaciones->count() . ' candidato(s)',
+    'tipo'      => 'Reporte',
 ])
     @if($vacante->postulaciones->isEmpty())
         <p style="text-align:center; padding:40px; color:#64748b;">Esta vacante aún no tiene candidatos.</p>

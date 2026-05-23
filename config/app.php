@@ -17,6 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Versión del sistema
+    |--------------------------------------------------------------------------
+    | Fuente única de la versión. Se muestra en los pies de página (footer)
+    | del sistema y en los reportes. Actualizar aquí en cada release.
+    */
+
+    'version' => env('APP_VERSION', '1.0.0'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

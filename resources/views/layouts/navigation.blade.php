@@ -215,6 +215,10 @@
                 Cerrar sesión
             </button>
         </form>
+
+        <p style="margin-top:10px; text-align:center; font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:.04em;">
+            {{ $sitio['sitio_nombre'] ?? 'SistemaRH' }} · v{{ config('app.version') }}
+        </p>
     </div>
 </nav>
 

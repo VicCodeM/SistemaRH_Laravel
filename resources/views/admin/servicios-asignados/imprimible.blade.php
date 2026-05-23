@@ -11,6 +11,7 @@
 @component('partials.layout-imprimible', [
     'titulo'    => 'Pedidos de servicio',
     'subtitulo' => 'Total: ' . $tareas->count() . ' pedido(s)',
+    'tipo'      => 'Reporte',
 ])
     @if($tareas->isEmpty())
         <p style="text-align:center; padding:40px; color:#64748b;">No hay pedidos que mostrar con estos filtros.</p>
