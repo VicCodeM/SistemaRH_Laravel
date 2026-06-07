@@ -20,7 +20,7 @@
         @if(! $esNuevo) @method('PATCH') @endif
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div><label class="form-label">Nombre</label><input type="text" name="name" class="form-input" value="{{ old('name', $usuario->name) }}" required></div>
+            <div><label class="form-label">Nombre</label><input type="text" name="name" class="form-input" value="{{ old('name', $usuario->name) }}" required spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX"></div>
             <div><label class="form-label">Correo</label><input type="email" name="email" class="form-input" value="{{ old('email', $usuario->email) }}" required></div>
             <div><label class="form-label">Rol</label>
                 <select name="rol" class="form-input" required>

@@ -24,7 +24,7 @@
         <form method="GET" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:end;">
             <div style="min-width:0;">
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Buscar</label>
-                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Nombre o CURP..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);">
+                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Nombre o CURP..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             </div>
             <div style="min-width:0;">
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Estado</label>
@@ -50,7 +50,7 @@
             </div>
             <div style="min-width:0;">
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Aspiracion</label>
-                <input type="text" name="aspiracion" value="{{ request('aspiracion') }}" placeholder="Puesto deseado..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);">
+                <input type="text" name="aspiracion" value="{{ request('aspiracion') }}" placeholder="Puesto deseado..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             </div>
             <div class="toolbar-wrap">
                 <button type="submit" class="btn btn-primary">Filtrar</button>

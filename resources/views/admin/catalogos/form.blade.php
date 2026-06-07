@@ -4,6 +4,7 @@
         ? route('admin.catalogos.update', $catalogo)
         : route('admin.catalogos.store');
     $grupoSeleccionado = old('grupo', $catalogo->grupo ?: ($grupoInicial ?? null));
+    $tabRegreso = \App\Models\CatalogoOpcion::moduloDelGrupo($grupoSeleccionado) ?? 'vacantes';
 @endphp
 
 <x-app-layout>
@@ -11,7 +12,7 @@
         <nav class="breadcrumbs">
             <a href="{{ route('admin.dashboard') }}">Administración</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <a href="{{ route('admin.catalogos.index', ['tab' => 'opciones']) }}">Catálogos del sistema</a>
+            <a href="{{ route('admin.catalogos.index', ['tab' => $tabRegreso]) }}">Catálogos del sistema</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
             <span>{{ $editando ? 'Editar opción' : 'Nueva opción' }}</span>
         </nav>
@@ -40,11 +41,12 @@
                 <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="clave">Clave <span style="color:var(--danger)">*</span></label>
                     @if($editando)
-                        <input type="text" id="clave" class="form-input" value="{{ $catalogo->clave }}" readonly>
+                        <input type="text" id="clave" class="form-input" value="{{ $catalogo->clave }}" readonly data-no-spellcheck="true" spellcheck="false" autocorrect="off">
                         <input type="hidden" name="clave" value="{{ $catalogo->clave }}">
                     @else
                         <input type="text" id="clave" name="clave" class="form-input @error('clave') is-invalid @enderror"
-                               value="{{ old('clave', $catalogo->clave) }}" placeholder="ej: soporte_tecnico, gerencia">
+                               value="{{ old('clave', $catalogo->clave) }}" placeholder="ej: soporte_tecnico, gerencia"
+                               spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                     @endif
                     <div style="font-size:0.75rem; color:#64748b; margin-top:3px;">La clave no cambia después de crear la opción.</div>
                     @error('clave')<div class="form-error">{{ $message }}</div>@enderror
@@ -54,14 +56,14 @@
                     <label class="form-label" for="valor">Valor visible <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="valor" name="valor" class="form-input @error('valor') is-invalid @enderror"
                            value="{{ old('valor', $catalogo->valor) }}" maxlength="150"
-                           placeholder="Texto que verá el usuario">
+                           placeholder="Texto que verá el usuario" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                     @error('valor')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="form-group" style="margin-top:18px;">
                     <label class="form-label" for="descripcion">Descripción</label>
                     <textarea id="descripcion" name="descripcion" class="form-input @error('descripcion') is-invalid @enderror"
-                              rows="3" placeholder="Nota breve de uso">{{ old('descripcion', $catalogo->descripcion) }}</textarea>
+                              rows="3" placeholder="Nota breve de uso" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('descripcion', $catalogo->descripcion) }}</textarea>
                     @error('descripcion')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
@@ -93,7 +95,7 @@
                     <button type="submit" class="btn btn-primary">
                         {{ $editando ? 'Guardar cambios' : 'Agregar opción' }}
                     </button>
-                    <a href="{{ route('admin.catalogos.index', ['tab' => 'opciones']) }}" class="btn btn-secondary">Cancelar</a>
+                    <a href="{{ route('admin.catalogos.index', ['tab' => $tabRegreso]) }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>
         </div>

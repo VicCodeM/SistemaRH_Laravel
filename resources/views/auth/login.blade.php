@@ -39,11 +39,18 @@
 
         <div class="divider"></div>
 
-        <div class="text-center">
-            <p class="text-muted" style="font-size: 0.85rem;">
-                ¿No tienes cuenta?
-                <a href="{{ route('register') }}" style="color: var(--accent); font-weight: 600; text-decoration: none;">Regístrate aquí</a>
-            </p>
+        <div style="text-align:center;">
+            <p class="text-muted" style="font-size: 0.85rem; margin-bottom:12px;">¿No tienes cuenta? Regístrate como:</p>
+            <div style="display:flex; gap:10px;">
+                <a href="{{ route('register.candidato') }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 14px; border:1.5px solid var(--accent); border-radius:8px; color:var(--accent); font-weight:600; font-size:0.85rem; text-decoration:none; transition:all .15s;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                    Busco empleo
+                </a>
+                <a href="{{ route('register.empresa') }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 14px; border:1.5px solid var(--accent); border-radius:8px; color:var(--accent); font-weight:600; font-size:0.85rem; text-decoration:none; transition:all .15s;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                    Soy empresa
+                </a>
+            </div>
         </div>
     </form>
 </x-guest-layout>

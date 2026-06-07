@@ -37,11 +37,11 @@
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Puesto deseado <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model="puesto_deseado" placeholder="Ej. Desarrollador web, Auxiliar administrativo…">
+                    <input type="text" class="form-input" wire:model="puesto_deseado" placeholder="Ej. Desarrollador web, Auxiliar administrativo…" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Habilidades principales <span style="color:var(--danger);">*</span></label>
-                    <textarea class="form-input" wire:model="habilidades" rows="2" placeholder="Habilidades separadas por coma: Excel, atención al cliente, comunicación…"></textarea>
+                    <textarea class="form-input" wire:model="habilidades" rows="2" spellcheck="true" autocapitalize="sentences" placeholder="Habilidades separadas por coma: Excel, atención al cliente, comunicación…"></textarea>
                 </div>
             </div>
         </div>
@@ -74,15 +74,15 @@
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Institución / carrera</label>
-                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.nombre" placeholder="Institución o carrera">
+                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.nombre" placeholder="Institución o carrera" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Duración</label>
-                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.anios" placeholder="Años">
+                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.anios" placeholder="Años" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Título / especialidad</label>
-                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.titulo" placeholder="Título o especialidad">
+                                    <input type="text" class="form-input" wire:model="escolaridad_detallada.{{ $index }}.titulo" placeholder="Título o especialidad" spellcheck="true" autocapitalize="sentences">
                                 </div>
                             </div>
                             <div style="text-align:right;margin-top:10px;">

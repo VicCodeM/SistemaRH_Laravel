@@ -96,6 +96,7 @@
                     <label style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Notas</label>
                     <textarea name="notas" rows="4" maxlength="5000"
                         placeholder="Describe lo que se debe hacer, alcance, observaciones o criterios de cierre..."
+                        spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es"
                         style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface); resize:vertical;">{{ old('notas', $esEdicion ? $tarea->notas : '') }}</textarea>
                     @error('notas') <p style="color:var(--danger); font-size:12px; margin-top:4px;">{{ $message }}</p> @enderror
                 </div>
@@ -122,6 +123,7 @@
                         <label style="display:block; font-size:13px; font-weight:500; margin-bottom:6px;">Resumen de cierre</label>
                         <textarea name="cierre_resumen" rows="3" maxlength="5000"
                             placeholder="Notas del cierre o resultado de la tarea..."
+                            spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es"
                             style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface); resize:vertical;">{{ old('cierre_resumen', $tarea->cierre_resumen ?? '') }}</textarea>
                         @error('cierre_resumen') <p style="color:var(--danger); font-size:12px; margin-top:4px;">{{ $message }}</p> @enderror
                     </div>

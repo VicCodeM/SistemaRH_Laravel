@@ -17,7 +17,7 @@
         <form method="POST" action="{{ route('pedidos.comentarios.store', $servicio) }}" style="margin-bottom:18px;">
             @csrf
             <textarea name="mensaje" rows="2" maxlength="2000" required class="form-input"
-                      placeholder="Escribe una actualización, pregunta o nota..."></textarea>
+                      placeholder="Escribe una actualización, pregunta o nota..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX"></textarea>
             <div style="display:flex; justify-content:flex-end; margin-top:8px;">
                 <button type="submit" class="btn btn-primary" style="font-size:13px;">Enviar comentario</button>
             </div>

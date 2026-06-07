@@ -39,15 +39,15 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
                 <div>
                     <label class="form-label">Nombre comercial *</label>
-                    <input type="text" name="nombre_empresa" value="{{ old('nombre_empresa', $empresa->nombre_empresa) }}" required class="form-input">
+                    <input type="text" name="nombre_empresa" value="{{ old('nombre_empresa', $empresa->nombre_empresa) }}" required class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Razón social</label>
-                    <input type="text" name="razon_social" value="{{ old('razon_social', $empresa->razon_social) }}" class="form-input">
+                    <input type="text" name="razon_social" value="{{ old('razon_social', $empresa->razon_social) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">RFC</label>
-                    <input type="text" name="rfc" value="{{ old('rfc', $empresa->rfc) }}" class="form-input">
+                    <input type="text" name="rfc" value="{{ old('rfc', $empresa->rfc) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Estado</label>
@@ -67,19 +67,19 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
                 <div>
                     <label class="form-label">Nombre del responsable RH</label>
-                    <input type="text" name="nombre_rh" value="{{ old('nombre_rh', $empresa->nombre_rh) }}" class="form-input">
+                    <input type="text" name="nombre_rh" value="{{ old('nombre_rh', $empresa->nombre_rh) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Teléfono general</label>
-                    <input type="text" name="telefono" value="{{ old('telefono', $empresa->telefono) }}" class="form-input">
+                    <input type="text" name="telefono" value="{{ old('telefono', $empresa->telefono) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="off" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Teléfono directo</label>
-                    <input type="text" name="telefono_directo" value="{{ old('telefono_directo', $empresa->telefono_directo) }}" class="form-input">
+                    <input type="text" name="telefono_directo" value="{{ old('telefono_directo', $empresa->telefono_directo) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="off" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Página web</label>
-                    <input type="text" name="pagina_web" value="{{ old('pagina_web', $empresa->pagina_web) }}" placeholder="https://..." class="form-input">
+                    <input type="text" name="pagina_web" value="{{ old('pagina_web', $empresa->pagina_web) }}" placeholder="https://..." class="form-input" spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                 </div>
             </div>
         </div>
@@ -91,19 +91,19 @@
             <div style="display:grid; grid-template-columns:2fr 1fr 1fr 100px; gap:14px;">
                 <div>
                     <label class="form-label">Dirección</label>
-                    <input type="text" name="direccion" value="{{ old('direccion', $empresa->direccion) }}" class="form-input">
+                    <input type="text" name="direccion" value="{{ old('direccion', $empresa->direccion) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Ciudad</label>
-                    <input type="text" name="ciudad" value="{{ old('ciudad', $empresa->ciudad) }}" class="form-input">
+                    <input type="text" name="ciudad" value="{{ old('ciudad', $empresa->ciudad) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">Municipio</label>
-                    <input type="text" name="municipio" value="{{ old('municipio', $empresa->municipio) }}" class="form-input">
+                    <input type="text" name="municipio" value="{{ old('municipio', $empresa->municipio) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 </div>
                 <div>
                     <label class="form-label">CP</label>
-                    <input type="text" name="codigo_postal" value="{{ old('codigo_postal', $empresa->codigo_postal) }}" class="form-input">
+                    <input type="text" name="codigo_postal" value="{{ old('codigo_postal', $empresa->codigo_postal) }}" class="form-input" spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                 </div>
             </div>
         </div>
@@ -111,7 +111,7 @@
         {{-- Descripción --}}
         <div class="card" style="padding:24px;">
             <h2 style="margin:0 0 16px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#475569;">Descripción</h2>
-            <textarea name="descripcion" rows="4" class="form-input" placeholder="Sector, tamaño, actividad principal...">{{ old('descripcion', $empresa->descripcion) }}</textarea>
+            <textarea name="descripcion" rows="4" class="form-input" placeholder="Sector, tamaño, actividad principal..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('descripcion', $empresa->descripcion) }}</textarea>
         </div>
 
         <div style="display:flex; gap:10px; justify-content:flex-end;">

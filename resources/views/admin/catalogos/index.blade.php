@@ -1,17 +1,23 @@
 @php
-    $tabActivo = $tabActivo ?? request('tab', 'servicios');
+    $tabSolicitado = $tabActivo ?? request('tab', 'servicios');
+    $aliasTabs = ['opciones' => 'vacantes'];
     $baseQuery = request()->except(['tab', 'page', 'grupo', 'buscar', 'buscar_servicio']);
 
     $tabs = [
-        'servicios' => ['icono' => 'Servicios', 'label' => 'Servicios'],
-        'vacantes' => ['icono' => 'Vacantes', 'label' => 'Vacantes'],
-        'empresas' => ['icono' => 'Empresas', 'label' => 'Empresas'],
+        'servicios' => ['label' => 'Servicios'],
+        'vacantes' => ['label' => 'Vacantes'],
+        'empresas' => ['label' => 'Empresas'],
     ];
 
+    $tabActivo = $aliasTabs[$tabSolicitado] ?? $tabSolicitado;
+    if (! array_key_exists($tabActivo, $tabs)) {
+        $tabActivo = 'servicios';
+    }
+
     $hints = [
-        'servicios' => 'Servicios que tu empresa ofrece y los tipos que se pueden solicitar.',
+        'servicios' => 'Administra el catalogo que ven empresas y candidatos, y define si cada registro genera un servicio o una vacante.',
         'vacantes' => 'Listas que usa el formulario de vacantes: areas, niveles de estudio, contratos y jerarquias.',
-        'empresas' => 'Datos de las empresas clientes: sectores economicos.',
+        'empresas' => 'Datos generales de las empresas clientes: sectores economicos y listas relacionadas.',
     ];
 @endphp
 
@@ -45,8 +51,10 @@
 
     <div style="display:flex; gap:0; margin-bottom:18px; border-bottom:2px solid var(--border); flex-wrap:wrap;">
         @foreach($tabs as $key => $cfg)
-            <a href="{{ route('admin.catalogos.index', array_merge($baseQuery, ['tab' => $key])) }}"
-               style="padding:14px 24px; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:3px solid {{ $tabActivo === $key ? 'var(--accent)' : 'transparent' }}; color:{{ $tabActivo === $key ? 'var(--accent)' : 'var(--text-muted)' }}; margin-bottom:-2px;">
+            <a
+                href="{{ route('admin.catalogos.index', array_merge($baseQuery, ['tab' => $key])) }}"
+                style="padding:14px 24px; text-decoration:none; font-weight:600; font-size:1rem; border-bottom:3px solid {{ $tabActivo === $key ? 'var(--accent)' : 'transparent' }}; color:{{ $tabActivo === $key ? 'var(--accent)' : 'var(--text-muted)' }}; margin-bottom:-2px;"
+            >
                 {{ $cfg['label'] }}
             </a>
         @endforeach
@@ -59,41 +67,68 @@
                     <span class="metric-label">Servicios</span>
                 </div>
                 <div class="metric-value">{{ $serviciosStats['total'] }}</div>
-                <span class="metric-change text-muted">{{ $serviciosStats['activos'] }} visibles</span>
+                <span class="metric-change text-muted">{{ $serviciosStats['activos'] }} activos</span>
             </div>
             <div class="metric-card">
                 <div class="metric-top">
-                    <span class="metric-label">Empresa</span>
+                    <span class="metric-label">Normales</span>
                 </div>
-                <div class="metric-value">{{ $serviciosStats['empresa'] }}</div>
-                <span class="metric-change text-muted">Solo empresas</span>
+                <div class="metric-value">{{ $serviciosStats['servicio'] }}</div>
+                <span class="metric-change text-muted">Van a Servicios disponibles</span>
             </div>
             <div class="metric-card">
                 <div class="metric-top">
-                    <span class="metric-label">Candidato</span>
+                    <span class="metric-label">Vacantes</span>
                 </div>
-                <div class="metric-value">{{ $serviciosStats['candidato'] }}</div>
-                <span class="metric-change text-muted">Solo candidatos</span>
+                <div class="metric-value">{{ $serviciosStats['vacante'] }}</div>
+                <span class="metric-change text-muted">Abren el flujo de vacantes</span>
             </div>
             <div class="metric-card">
                 <div class="metric-top">
                     <span class="metric-label">Ambos</span>
                 </div>
                 <div class="metric-value">{{ $serviciosStats['ambos'] }}</div>
-                <span class="metric-change text-muted">Disponibles para ambos</span>
+                <span class="metric-change text-muted">Disponibles para ambos roles</span>
             </div>
         </div>
 
         <div class="card" style="padding:20px;">
-            <p style="margin:0 0 16px; font-size:13px; color:#64748b;">
-                Aqui defines los servicios que tu empresa puede dar: capacitaciones, coaching, mantenimiento y otros.
-            </p>
+            <p style="margin:0 0 16px; font-size:13px; color:#64748b;">{{ $hints['servicios'] }}</p>
 
-            <form method="GET" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+            <form method="GET" style="display:grid; grid-template-columns:minmax(220px, 1.5fr) repeat(4, minmax(140px, 1fr)) auto auto; gap:8px; margin-bottom:16px; align-items:center;">
                 <input type="hidden" name="tab" value="servicios">
-                <input type="text" name="buscar_servicio" class="form-input" value="{{ request('buscar_servicio') }}" placeholder="Buscar servicio..." style="flex:1; min-width:220px; padding:10px 14px;">
+                <input type="text" name="buscar_servicio" class="form-input" value="{{ request('buscar_servicio') }}" placeholder="Buscar servicio..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es">
+
+                <select name="tipo" class="form-input">
+                    <option value="">Todas las categorias</option>
+                    @foreach(\App\Models\CatalogoServicio::tipos() as $key => $label)
+                        <option value="{{ $key }}" @selected(request('tipo') === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+
+                <select name="flujo" class="form-input">
+                    <option value="">Todos los flujos</option>
+                    @foreach(\App\Models\CatalogoServicio::flujos() as $key => $label)
+                        <option value="{{ $key }}" @selected(request('flujo') === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+
+                <select name="para_quien" class="form-input">
+                    <option value="">Todos los roles</option>
+                    <option value="empresa" @selected(request('para_quien') === 'empresa')>Empresa</option>
+                    <option value="candidato" @selected(request('para_quien') === 'candidato')>Candidato</option>
+                    <option value="ambos" @selected(request('para_quien') === 'ambos')>Ambos</option>
+                </select>
+
+                <select name="estado_servicio" class="form-input">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" @selected(request('estado_servicio') === 'activo')>Activos</option>
+                    <option value="inactivo" @selected(request('estado_servicio') === 'inactivo')>Inactivos</option>
+                </select>
+
                 <button type="submit" class="btn btn-secondary">Buscar</button>
-                @if(request('buscar_servicio'))
+
+                @if(request()->hasAny(['buscar_servicio', 'tipo', 'flujo', 'para_quien', 'estado_servicio']))
                     <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-ghost">Limpiar</a>
                 @endif
             </form>
@@ -109,35 +144,41 @@
                     <table class="table" style="width:100%;">
                         <thead>
                             <tr>
-                                <th>Nombre del servicio</th>
+                                <th>Servicio</th>
+                                <th style="width:150px;">Categoria</th>
+                                <th style="width:150px;">Flujo</th>
                                 <th style="width:120px;">Para quien</th>
-                                <th style="width:100px; text-align:center;">Visible</th>
+                                <th style="width:110px; text-align:center;">Estado</th>
                                 <th style="width:160px; text-align:right;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($servicios as $servicio)
                                 @php
-                                    $pq = ['empresa' => 'Empresas', 'candidato' => 'Candidatos', 'ambos' => 'Ambos'];
+                                    $paraQuien = ['empresa' => 'Empresa', 'candidato' => 'Candidato', 'ambos' => 'Ambos'];
+                                    $bloqueado = $servicio->activo && ! $servicio->puedeDesactivarse();
                                 @endphp
                                 <tr>
                                     <td>
                                         <div style="font-weight:600; font-size:14px;">{{ $servicio->nombre }}</div>
                                         @if($servicio->descripcion)
-                                            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">{{ \Illuminate\Support\Str::limit($servicio->descripcion, 90) }}</div>
+                                            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">{{ \Illuminate\Support\Str::limit($servicio->descripcion, 100) }}</div>
                                         @endif
                                     </td>
-                                    <td><span style="font-size:12px;">{{ $pq[$servicio->para_quien] ?? 'Ambos' }}</span></td>
+                                    <td>{{ \App\Models\CatalogoServicio::tipos()[$servicio->tipo] ?? $servicio->tipo }}</td>
+                                    <td>{{ $servicio->flujoLabel() }}</td>
+                                    <td>{{ $paraQuien[$servicio->para_quien] ?? 'Empresa' }}</td>
                                     <td style="text-align:center;">
                                         <form method="POST" action="{{ route('admin.catalogo.toggle', $servicio) }}" style="display:inline;">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit"
-                                                    style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
-                                                           background:{{ $servicio->activo ? 'var(--success-light)' : 'var(--surface-2)' }};
-                                                           color:{{ $servicio->activo ? 'var(--success)' : 'var(--text-muted)' }};"
-                                                    title="{{ $servicio->activo ? 'Clic para ocultarlo' : 'Clic para mostrarlo' }}">
-                                                {{ $servicio->activo ? 'Si' : 'No' }}
+                                            <button
+                                                type="submit"
+                                                @disabled($bloqueado)
+                                                style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; border:none; background:{{ $servicio->activo ? 'var(--success-light)' : 'var(--surface-2)' }}; color:{{ $servicio->activo ? 'var(--success)' : 'var(--text-muted)' }}; opacity:{{ $bloqueado ? '.6' : '1' }}; cursor:{{ $bloqueado ? 'not-allowed' : 'pointer' }};"
+                                                title="{{ $bloqueado ? 'No se puede desactivar: tiene pedidos activos o en proceso' : ($servicio->activo ? 'Clic para desactivar' : 'Clic para activar') }}"
+                                            >
+                                                {{ $servicio->activo ? 'Activo' : 'Inactivo' }}
                                             </button>
                                         </form>
                                     </td>
@@ -155,25 +196,26 @@
                     <div class="candidate-mobile-list">
                         @foreach($servicios as $servicio)
                             @php
-                                $pq = ['empresa' => 'Empresas', 'candidato' => 'Candidatos', 'ambos' => 'Ambos'];
+                                $paraQuien = ['empresa' => 'Empresa', 'candidato' => 'Candidato', 'ambos' => 'Ambos'];
+                                $bloqueado = $servicio->activo && ! $servicio->puedeDesactivarse();
                             @endphp
                             <article class="candidate-mobile-card">
                                 <div class="candidate-inline-meta">
                                     <div>
                                         <h3 class="candidate-mobile-card-title">{{ $servicio->nombre }}</h3>
-                                        <p class="candidate-mobile-card-subtitle">{{ $pq[$servicio->para_quien] ?? 'Ambos' }}</p>
+                                        <p class="candidate-mobile-card-subtitle">{{ $servicio->flujoLabel() }}</p>
                                     </div>
-                                    <span class="badge {{ $servicio->activo ? 'badge-green' : 'badge-gray' }}">{{ $servicio->activo ? 'Visible' : 'Oculto' }}</span>
+                                    <span class="badge {{ $servicio->activo ? 'badge-green' : 'badge-gray' }}">{{ $servicio->activo ? 'Activo' : 'Inactivo' }}</span>
                                 </div>
 
                                 <div class="candidate-mobile-meta">
                                     <div>
-                                        <p class="candidate-mobile-meta-label">Tipo</p>
+                                        <p class="candidate-mobile-meta-label">Categoria</p>
                                         <p class="candidate-mobile-meta-value">{{ \App\Models\CatalogoServicio::tipos()[$servicio->tipo] ?? $servicio->tipo }}</p>
                                     </div>
                                     <div>
-                                        <p class="candidate-mobile-meta-label">Jerarquia</p>
-                                        <p class="candidate-mobile-meta-value">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicio->nivel_jerarquico) }}</p>
+                                        <p class="candidate-mobile-meta-label">Para quien</p>
+                                        <p class="candidate-mobile-meta-value">{{ $paraQuien[$servicio->para_quien] ?? 'Empresa' }}</p>
                                     </div>
                                     <div>
                                         <p class="candidate-mobile-meta-label">Descripcion</p>
@@ -185,7 +227,7 @@
                                     <form method="POST" action="{{ route('admin.catalogo.toggle', $servicio) }}">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-secondary btn-sm">{{ $servicio->activo ? 'Ocultar' : 'Mostrar' }}</button>
+                                        <button type="submit" class="btn btn-secondary btn-sm" @disabled($bloqueado) title="{{ $bloqueado ? 'No se puede desactivar: tiene pedidos activos o en proceso' : ($servicio->activo ? 'Desactivar' : 'Activar') }}">{{ $servicio->activo ? 'Desactivar' : 'Activar' }}</button>
                                     </form>
                                     <a href="{{ route('admin.catalogo.edit', $servicio) }}" class="btn btn-secondary btn-sm">Editar</a>
                                     <button type="button" onclick="rhModal('{{ route('admin.catalogo.accion.modal', [$servicio, 'eliminar']) }}')" class="btn btn-danger btn-sm">Borrar</button>
@@ -244,11 +286,11 @@
                     <option value="">Ver todas las listas de {{ $tabs[$tabActivo]['label'] }}</option>
                     @foreach($gruposModulo as $clave)
                         @if(isset($todosLosGrupos[$clave]))
-                            <option value="{{ $clave }}" {{ request('grupo') === $clave ? 'selected' : '' }}>{{ $todosLosGrupos[$clave] }}</option>
+                            <option value="{{ $clave }}" @selected(request('grupo') === $clave)>{{ $todosLosGrupos[$clave] }}</option>
                         @endif
                     @endforeach
                 </select>
-                <input type="text" name="buscar" class="form-input" value="{{ request('buscar') }}" placeholder="Buscar..." style="flex:1; min-width:200px; padding:10px 14px;">
+                <input type="text" name="buscar" class="form-input" value="{{ request('buscar') }}" placeholder="Buscar..." style="flex:1; min-width:200px; padding:10px 14px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es">
                 <button type="submit" class="btn btn-secondary">Buscar</button>
                 @if(request()->hasAny(['grupo', 'buscar']))
                     <a href="{{ route('admin.catalogos.index', ['tab' => $tabActivo]) }}" class="btn btn-ghost">Limpiar</a>
@@ -291,10 +333,7 @@
                                                 <form method="POST" action="{{ route('admin.catalogos.toggle', $opcion) }}" style="display:inline;">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit"
-                                                            style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
-                                                                   background:{{ $opcion->activo ? 'var(--success-light)' : 'var(--surface-2)' }};
-                                                                   color:{{ $opcion->activo ? 'var(--success)' : 'var(--text-muted)' }};">
+                                                    <button type="submit" style="padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none; background:{{ $opcion->activo ? 'var(--success-light)' : 'var(--surface-2)' }}; color:{{ $opcion->activo ? 'var(--success)' : 'var(--text-muted)' }};">
                                                         {{ $opcion->activo ? 'Si' : 'No' }}
                                                     </button>
                                                 </form>

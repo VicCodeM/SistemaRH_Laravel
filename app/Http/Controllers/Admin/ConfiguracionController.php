@@ -7,6 +7,7 @@ use App\Http\Requests\GuardarSitioRequest;
 use App\Models\Bitacora;
 use App\Models\ConfiguracionSistema;
 use App\Models\User;
+use App\Services\AccesoMunicipioService;
 use App\Services\BitacoraService;
 use App\Services\SitioService;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class ConfiguracionController extends Controller
 {
-    public function index(Request $request, SitioService $sitioService)
+    public function index(Request $request, SitioService $sitioService, AccesoMunicipioService $accesoMunicipio)
     {
         $tabActivo = $request->string('tab')->toString() ?: 'usuarios';
 
@@ -53,6 +54,8 @@ class ConfiguracionController extends Controller
 
         $parametros = [
             'candidato_requiere_aprobacion' => ConfiguracionSistema::boolean('candidato_requiere_aprobacion', false),
+            'acceso_municipios_todos' => $accesoMunicipio->permiteTodos(),
+            'acceso_municipios_permitidos_texto' => $accesoMunicipio->municipiosPermitidosTexto(),
         ];
 
         $stats = [
@@ -73,6 +76,12 @@ class ConfiguracionController extends Controller
     {
         $sitio->guardarTextos($request->validated());
 
+        if ($request->boolean('quitar_logo')) {
+            $sitio->eliminarLogo();
+        } elseif ($request->hasFile('logo')) {
+            $sitio->guardarLogo($request->file('logo'));
+        }
+
         if ($request->boolean('quitar_favicon')) {
             $sitio->eliminarFavicon();
         } elseif ($request->hasFile('favicon')) {
@@ -90,13 +99,18 @@ class ConfiguracionController extends Controller
             ->with('success', 'Configuración del sitio actualizada.');
     }
 
-    public function guardarParametros(Request $request, BitacoraService $bitacora): RedirectResponse
+    public function guardarParametros(Request $request, BitacoraService $bitacora, AccesoMunicipioService $accesoMunicipio): RedirectResponse
     {
         $request->validate([
             'candidato_requiere_aprobacion' => ['nullable', 'boolean'],
+            'acceso_municipios_todos' => ['nullable', 'boolean'],
+            'acceso_municipios_permitidos' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $requiereAprobacion = $request->boolean('candidato_requiere_aprobacion');
+        $permitirTodosMunicipios = $request->boolean('acceso_municipios_todos', true);
+        $municipiosPermitidos = preg_split('/\R/u', (string) $request->input('acceso_municipios_permitidos', '')) ?: [];
+        $municipiosPermitidos = $accesoMunicipio->normalizarLista($municipiosPermitidos);
 
         ConfiguracionSistema::guardar(
             'candidato_requiere_aprobacion',
@@ -104,15 +118,17 @@ class ConfiguracionController extends Controller
             [
                 'grupo' => 'accesos',
                 'tipo' => 'boolean',
-                'descripcion' => 'Si se activa, cada candidato debe recibir aprobación antes de completar su solicitud.',
+                'descripcion' => 'Si se activa, cada candidato debe recibir aprobacion antes de completar su solicitud.',
                 'orden' => 10,
             ]
         );
 
+        $accesoMunicipio->guardarConfiguracion($permitirTodosMunicipios, $municipiosPermitidos);
+
         $bitacora->registrar(
             'configuracion',
             'actualizar',
-            'Se actualizó el parámetro de aprobación previa de candidatos: ' . ($requiereAprobacion ? 'activado' : 'desactivado') . '.'
+            'Se actualizaron los parametros de aprobacion previa y acceso por municipio.'
         );
 
         return back()->with('success', 'Parámetros actualizados correctamente.');
@@ -184,6 +200,7 @@ class ConfiguracionController extends Controller
 
     public function guardarUsuario(Request $request, BitacoraService $bitacora): RedirectResponse
     {
+        $requiereVerificacion = User::requireEmailVerification();
         $rolesValidos = implode(',', array_keys(User::roles()));
         $estadosValidos = implode(',', array_keys(User::estados()));
 
@@ -201,8 +218,16 @@ class ConfiguracionController extends Controller
             'rol' => $data['rol'],
             'estado' => $data['estado'],
             'password' => Hash::make($data['password']),
-            'email_verified_at' => $data['estado'] === 'activo' ? now() : null,
+            'email_verified_at' => User::emailVerifiedAtInitial(),
         ]);
+
+        if ($requiereVerificacion) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         $bitacora->registrar(
             'usuarios',
@@ -210,7 +235,9 @@ class ConfiguracionController extends Controller
             "Se creó el usuario {$user->name} ({$user->email}) con rol {$user->rol}.",
         );
 
-        return back()->with('success', 'Usuario creado correctamente.');
+        return back()->with('success', $requiereVerificacion
+            ? 'Usuario creado correctamente. Se envio un correo de verificacion.'
+            : 'Usuario creado correctamente.');
     }
 
     public function actualizarUsuario(Request $request, User $usuario, BitacoraService $bitacora): RedirectResponse
@@ -249,7 +276,7 @@ class ConfiguracionController extends Controller
             $cambios[] = 'password';
         }
 
-        if ($usuario->estado === 'activo' && ! $usuario->email_verified_at) {
+        if ($usuario->estado === 'activo' && ! $usuario->email_verified_at && ! User::requireEmailVerification()) {
             $usuario->email_verified_at = now();
         }
 
@@ -300,3 +327,6 @@ class ConfiguracionController extends Controller
         return back()->with('success', 'Se generó el enlace de recuperación de acceso.');
     }
 }
+
+
+

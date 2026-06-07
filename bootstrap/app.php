@@ -13,7 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'email.verification' => \App\Http\Middleware\RequireEmailVerification::class,
+            'municipio.acceso' => \App\Http\Middleware\CheckMunicipioAccess::class,
         ]);
+
+        $middleware->authenticateSessions();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // DomainException → flash error amigable (regla de negocio violada)

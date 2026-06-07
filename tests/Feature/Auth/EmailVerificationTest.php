@@ -3,15 +3,25 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\BienvenidaCuentaVerificada;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('auth.require_email_verification', true);
+    }
 
     public function test_email_verification_screen_can_be_rendered(): void
     {
@@ -24,6 +34,7 @@ class EmailVerificationTest extends TestCase
 
     public function test_email_can_be_verified(): void
     {
+        Notification::fake();
         $user = User::factory()->unverified()->create();
 
         Event::fake();
@@ -38,6 +49,7 @@ class EmailVerificationTest extends TestCase
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
+        Notification::assertSentTo($user, BienvenidaCuentaVerificada::class);
         $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     }
 
@@ -54,5 +66,17 @@ class EmailVerificationTest extends TestCase
         $this->actingAs($user)->get($verificationUrl);
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_verification_email_can_be_resent(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->actingAs($user)->post(route('verification.send'));
+
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
+        $response->assertSessionHas('status', 'verification-link-sent');
     }
 }

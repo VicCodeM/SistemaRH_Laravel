@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario — SistemaRH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1e40af;
+            --color-primary-light: #3b82f6;
+            --color-primary-dark: #1e3a8a;
+            --color-secondary: #0f766e;
+            --color-accent: #f59e0b;
+            --color-bg: #f8fafc;
+            --color-card: #ffffff;
+            --color-text: #1e293b;
+            --color-text-muted: #64748b;
+            --color-border: #e2e8f0;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-info: #3b82f6;
+            --sidebar-width: 280px;
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-brand .icon {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.15);
+            border-radius: var(--radius);
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+        }
+        .sidebar-brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+        .sidebar-brand span { font-size: 0.75rem; opacity: 0.75; font-weight: 400; }
+        .nav-section { margin-bottom: 1.5rem; }
+        .nav-section-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.6;
+            margin-bottom: 0.5rem;
+            padding-left: 0.75rem;
+        }
+        .nav-list { list-style: none; }
+        .nav-list li a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-list li a:hover, .nav-list li a.active { background: rgba(255,255,255,0.12); color: white; }
+        .nav-list li a .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dot-admin { background: #fca5a5; }
+        .dot-empresa { background: #93c5fd; }
+        .dot-candidato { background: #86efac; }
+        .dot-interno { background: #fcd34d; }
+        .dot-general { background: rgba(255,255,255,0.5); }
+        .main { margin-left: var(--sidebar-width); flex: 1; min-width: 0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+        section { margin-bottom: 4rem; scroll-margin-top: 2rem; }
+        section h2 { font-size: 1.875rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.025em; }
+        section h3 { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+        .section-intro { color: var(--color-text-muted); font-size: 1.05rem; margin-bottom: 1.5rem; max-width: 700px; }
+        .hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .hero-content { position: relative; z-index: 1; }
+        .hero h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem; color: white; }
+        .hero p { font-size: 1.15rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+        .version-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(4px);
+            padding: 0.35rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .card {
+            background: var(--color-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .card-body { padding: 1.5rem; }
+        .card-body p:last-child { margin-bottom: 0; }
+        .card-body p { margin-bottom: 0.75rem; }
+        .creds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .cred-card {
+            background: var(--color-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--color-border);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cred-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .cred-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+        }
+        .cred-card.admin::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .cred-card.empresa::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .cred-card.candidato::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .cred-card.interno::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .cred-card .role-icon {
+            width: 48px; height: 48px;
+            border-radius: var(--radius);
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .cred-card.admin .role-icon { background: #fef2f2; }
+        .cred-card.empresa .role-icon { background: #eff6ff; }
+        .cred-card.candidato .role-icon { background: #ecfdf5; }
+        .cred-card.interno .role-icon { background: #fffbeb; }
+        .cred-card .role-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem; }
+        .cred-card .role-desc { font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem; }
+        .cred-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--color-border);
+            font-size: 0.875rem;
+        }
+        .cred-row:last-child { border-bottom: none; }
+        .cred-label { color: var(--color-text-muted); font-weight: 500; }
+        .cred-value {
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-weight: 600;
+            color: var(--color-text);
+            background: var(--color-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+        .feature-list {
+            list-style: none;
+            display: grid;
+            gap: 0.75rem;
+        }
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--color-card);
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-sm);
+        }
+        .feature-list li .icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .feature-list li .content strong { display: block; font-weight: 600; margin-bottom: 0.15rem; }
+        .feature-list li .content span { font-size: 0.875rem; color: var(--color-text-muted); }
+        .steps { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; position: relative; }
+        .step { display: flex; gap: 1rem; padding: 1rem 0; position: relative; }
+        .step:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 48px;
+            bottom: -8px;
+            width: 2px;
+            background: var(--color-border);
+        }
+        .step-num {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+        .step-body h5 { font-weight: 600; margin-bottom: 0.25rem; }
+        .step-body p { font-size: 0.9rem; color: var(--color-text-muted); }
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin: 1rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .info-box.warning { background: #fffbeb; border-color: #fcd34d; }
+        .info-box.danger { background: #fef2f2; border-color: #fecaca; }
+        .info-box.success { background: #ecfdf5; border-color: #a7f3d0; }
+        .info-box .icon { font-size: 1.25rem; flex-shrink: 0; }
+        .info-box h5 { font-weight: 600; margin-bottom: 0.25rem; font-size: 0.95rem; }
+        .info-box p { font-size: 0.9rem; color: var(--color-text-muted); }
+        footer {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+        footer .footer-brand { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        footer .footer-sub { opacity: 0.7; font-size: 0.95rem; margin-bottom: 1.5rem; }
+        footer .footer-author { font-weight: 600; font-size: 1.1rem; color: var(--color-accent); }
+        footer .footer-copy { margin-top: 1.5rem; font-size: 0.8rem; opacity: 0.5; }
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .menu-toggle {
+                display: block; position: fixed; top: 1rem; right: 1rem; z-index: 200;
+                background: var(--color-primary); color: white; border: none;
+                width: 44px; height: 44px; border-radius: var(--radius);
+                font-size: 1.25rem; cursor: pointer;
+            }
+        }
+        @media (min-width: 1025px) { .menu-toggle { display: none; } }
+        @media (max-width: 640px) {
+            .container { padding: 1.5rem 1rem; }
+            .hero h2 { font-size: 1.75rem; }
+            .creds-grid { grid-template-columns: 1fr; }
+        }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .text-muted { color: var(--color-text-muted); }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+        /* Diagrama flujo */
+        .flow-container { display:flex; flex-direction:column; gap:1.5rem; }
+        .flow-stage { background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:1.5rem; position:relative; }
+        .flow-stage-title { font-size:1.15rem; font-weight:800; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; color:#1e293b; }
+        .flow-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; }
+        .flow-node { background:white; border:2px solid #cbd5e1; border-radius:12px; padding:1rem 0.75rem; text-align:center; font-weight:600; font-size:0.92rem; box-shadow:0 2px 4px rgba(0,0,0,0.04); position:relative; z-index:1; }
+        .flow-node.start { border-color:#3b82f6; background:#eff6ff; }
+        .flow-node.decision { border-color:#f59e0b; background:#fffbeb; border-radius:999px; padding:1.25rem 0.75rem; }
+        .flow-node.end-good { border-color:#10b981; background:#ecfdf5; }
+        .flow-node.end-bad { border-color:#ef4444; background:#fef2f2; }
+        .flow-node.action { border-color:#8b5cf6; background:#f5f3ff; }
+        .flow-node.admin { border-color:#1e40af; background:#dbeafe; color:#1e3a8a; }
+        .flow-arrow-down { text-align:center; font-size:1.5rem; color:#94a3b8; margin:0.25rem 0; }
+        .flow-connector { display:flex; align-items:center; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin:0.5rem 0; }
+        .flow-connector-label { font-size:0.75rem; font-weight:700; color:#64748b; background:white; padding:0.15rem 0.5rem; border:1px solid #e2e8f0; border-radius:6px; white-space:nowrap; }
+        .flow-row { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; justify-content:center; }
+        .flow-row .flow-node { flex:1 1 160px; max-width:280px; }
+        .flow-stage-accent-reg { border-color:#93c5fd; background:#eff6ff; }
+        .flow-stage-accent-sol { border-color:#fcd34d; background:#fffbeb; }
+        .flow-stage-accent-vac { border-color:#86efac; background:#ecfdf5; }
+        .flow-stage-accent-ser { border-color:#c4b5fd; background:#f5f3ff; }
+        .flow-stage-accent-sup { border-color:#fda4af; background:#fff1f2; }
+        .flow-note { text-align:center; font-size:0.85rem; color:#64748b; margin:0.5rem 0; font-weight:500; }
+        @media (max-width:640px){ .flow-grid{grid-template-columns:1fr;} .flow-row{flex-direction:column;} .flow-row .flow-node{max-width:none;width:100%;} }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="icon">📘</div>
+                <div>
+                    <h1>Manual SistemaRH</h1>
+                    <span>Guia completa de usuario</span>
+                </div>
+            </div>
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Contenido</div>
+                    <ul class="nav-list">
+                        <li><a href="#inicio" class="active"><span class="dot dot-general"></span> Inicio</a></li>
+                        <li><a href="#acceso"><span class="dot dot-general"></span> Acceso al Sistema</a></li>
+                        <li><a href="#credenciales"><span class="dot dot-general"></span> Credenciales</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Modulos por Rol</div>
+                    <ul class="nav-list">
+                        <li><a href="#admin"><span class="dot dot-admin"></span> Administrador</a></li>
+                        <li><a href="#empresa"><span class="dot dot-empresa"></span> Empresa</a></li>
+                        <li><a href="#candidato"><span class="dot dot-candidato"></span> Candidato</a></li>
+                        <li><a href="#interno"><span class="dot dot-interno"></span> Personal Interno</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Mas</div>
+                    <ul class="nav-list">
+                        <li><a href="#mejoras"><span class="dot dot-general"></span> Mejoras del Sistema</a></li>
+                        <li><a href="#chat"><span class="dot dot-general"></span> Chat</a></li>
+                        <li><a href="#diagrama"><span class="dot dot-general"></span> Diagrama de Flujo</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        <main class="main">
+            <div class="hero" id="inicio">
+                <div class="hero-content">
+                    <h2>Manual de Usuario</h2>
+                    <p>Bienvenido al <strong>Sistema de Recursos Humanos (SistemaRH)</strong>. Aqui encontraras todo lo necesario para usar el sistema segun tu rol.</p>
+                    <div class="version-badge">SistemaRH v1.1</div>
+                </div>
+            </div>
+            <div class="container">
+
+                <section id="acceso">
+                    <h2>Acceso al Sistema</h2>
+                    <p class="section-intro">Para entrar a SistemaRH solo necesitas un navegador web y tus credenciales.</p>
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h5>Abrir la pagina</h5>
+                                <p>Escribe la direccion del sistema en tu navegador. Si lo usas en tu computadora sera algo como:<br><strong>http://localhost:8000</strong></p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h5>Iniciar sesion</h5>
+                                <p>Haz clic en <strong>Iniciar sesion</strong> y escribe tu correo y contrasena.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h5>Entrar a tu panel</h5>
+                                <p>El sistema te lleva automaticamente al panel que corresponde a tu rol: Admin, Empresa, Candidato o Interno.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="icon">💡</div>
+                        <div>
+                            <h5>Consejo</h5>
+                            <p>Todas las contrasenas de prueba son <strong>password</strong>. En produccion cada usuario tiene su propia contrasena segura.</p>
+                        </div>
+                    </div>
+                    <div class="info-box warning mt-2">
+                        <div class="icon">🔒</div>
+                        <div>
+                            <h5>Sesion unica por dispositivo</h5>
+                            <p>Por seguridad, solo puedes tener una sesion abierta a la vez. Si inicias sesion en otro navegador o computadora, el sistema te avisara y podras cerrar la sesion anterior para continuar. Veras los detalles del otro dispositivo (navegador, sistema operativo y ultima actividad) antes de decidir.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="credenciales">
+                    <h2>Credenciales de Acceso</h2>
+                    <p class="section-intro">Estas son las cuentas para entrar al sistema segun tu rol.</p>
+                    <div class="creds-grid">
+                        <div class="cred-card admin">
+                            <div class="role-icon">🛡️</div>
+                            <div class="role-title">Administrador</div>
+                            <div class="role-desc">Control total del sistema</div>
+                            <div class="cred-row"><span class="cred-label">Correo</span><span class="cred-value">admin@sistemarh.com</span></div>
+                            <div class="cred-row"><span class="cred-label">Contrasena</span><span class="cred-value">password</span></div>
+                            <div class="cred-row"><span class="cred-label">Estado</span><span class="badge badge-success">Activo</span></div>
+                        </div>
+                        <div class="cred-card empresa">
+                            <div class="role-icon">🏢</div>
+                            <div class="role-title">Empresa</div>
+                            <div class="role-desc">Cliente que pide servicios de RH (reclutamiento, capacitacion, etc.)</div>
+                            <div class="cred-row"><span class="cred-label">Correo</span><span class="cred-value">empresa1@sistemarh.com</span></div>
+                            <div class="cred-row"><span class="cred-label">Contrasena</span><span class="cred-value">password</span></div>
+                            <div class="cred-row"><span class="cred-label">Estado</span><span class="badge badge-success">Activa</span></div>
+                        </div>
+                        <div class="cred-card candidato">
+                            <div class="role-icon">👤</div>
+                            <div class="role-title">Candidato</div>
+                            <div class="role-desc">Persona que busca empleo</div>
+                            <div class="cred-row"><span class="cred-label">Correo</span><span class="cred-value">candidato1@sistemarh.com</span></div>
+                            <div class="cred-row"><span class="cred-label">Contrasena</span><span class="cred-value">password</span></div>
+                            <div class="cred-row"><span class="cred-label">Estado</span><span class="badge badge-success">Aprobado</span></div>
+                        </div>
+                        <div class="cred-card interno">
+                            <div class="role-icon">🔧</div>
+                            <div class="role-title">Personal Interno</div>
+                            <div class="role-desc">Ejecutor de tareas</div>
+                            <div class="cred-row"><span class="cred-label">Correo</span><span class="cred-value">interno1@sistemarh.com</span></div>
+                            <div class="cred-row"><span class="cred-label">Contrasena</span><span class="cred-value">password</span></div>
+                            <div class="cred-row"><span class="cred-label">Estado</span><span class="badge badge-success">Activo</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="admin">
+                    <h2>Administrador</h2>
+                    <p class="section-intro">El Administrador es el encargado principal del sistema. Revisa, aprueba y gestiona todo lo que hacen las empresas, los candidatos y el personal interno.</p>
+                    <ul class="feature-list">
+                        <li><div class="icon" style="background:#fef2f2">📊</div><div class="content"><strong>Ver estadisticas</strong><span>Cuanto empresas, candidatos, vacantes y tareas activas hay en el sistema.</span></div></li>
+                        <li><div class="icon" style="background:#eff6ff">🏢</div><div class="content"><strong>Aprobar o rechazar empresas</strong><span>Cuando una empresa nueva se registra, el admin debe revisar sus datos y darle acceso.</span></div></li>
+                        <li><div class="icon" style="background:#ecfdf5">👤</div><div class="content"><strong>Aprobar o rechazar candidatos</strong><span>Revisa la solicitud de empleo de cada candidato y decide si puede buscar trabajo.</span></div></li>
+                        <li><div class="icon" style="background:#fffbeb">📋</div><div class="content"><strong>Activar vacantes</strong><span>Cuando una empresa pide una vacante (servicio de reclutamiento), el admin la revisa y la activa para que los candidatos la vean.</span></div></li>
+                        <li><div class="icon" style="background:#fef2f2">🔍</div><div class="content"><strong>Buscar candidatos compatibles</strong><span>El sistema sugiere candidatos que se ajustan a una vacante segun sus habilidades, ciudad y experiencia.</span></div></li>
+                        <li><div class="icon" style="background:#f5f3ff">📌</div><div class="content"><strong>Crear y asignar tareas</strong><span>Cuando una empresa o candidato pide un servicio, el admin crea una tarea y la asigna a un empleado interno.</span></div></li>
+                        <li><div class="icon" style="background:#eff6ff">👥</div><div class="content"><strong>Gestionar personal interno</strong><span>Registra nuevos empleados internos y define que servicios pueden realizar.</span></div></li>
+                        <li><div class="icon" style="background:#ecfdf5">📚</div><div class="content"><strong>Configurar catalogos</strong><span>Cambia las opciones de los menus desplegables sin necesidad de tocar el sistema.</span></div></li>
+                        <li><div class="icon" style="background:#fffbeb">📈</div><div class="content"><strong>Generar reportes</strong><span>Descarga listados de empresas, candidatos, vacantes y tareas.</span></div></li>
+                    </ul>
+                    <div class="info-box">
+                        <div class="icon">💡</div>
+                        <div>
+                            <h5>Importante</h5>
+                            <p>Nada se activa en el sistema sin la aprobacion del Administrador. Es el pivote central de todo el flujo.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="empresa">
+                    <h2>Empresa</h2>
+                    <p class="section-intro">Las empresas son los clientes que piden servicios de Recursos Humanos: reclutamiento (vacantes), capacitaciones, coaching y mas. No gestionan el proceso directamente; lo solicitan y el equipo de RH (Admin) se encarga.</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>1. Registro:</strong> La empresa llena un formulario con sus datos fiscales (RFC, direccion, telefono) y espera a que el Admin la apruebe.</p>
+                            <p class="mt-1"><strong>2. Pedir una vacante:</strong> Una vez aprobada, solicita el servicio de reclutamiento para una vacante. Ahora tambien puedes indicar los <strong>ingresos ofrecidos</strong> y las <strong>prestaciones</strong> del puesto para que los candidatos conozcan la oferta completa antes de postularse. El Admin la revisa y la activa para que los candidatos la vean.</p>
+                            <p class="mt-1"><strong>3. Ver el avance:</strong> Consulta el estado de sus solicitudes y vacantes directamente en tu panel principal y en el detalle de cada solicitud. Podras ver si esta pendiente, en revision, activa o concluida, asi como quien fue asignado o seleccionado. El proceso de seleccion lo gestiona el equipo de RH (Admin); la empresa solo lo consulta.</p>
+                            <p class="mt-1"><strong>4. Solicitar otros servicios:</strong> Puede pedir capacitacion, coaching, evaluacion o consultoria para su personal.</p>
+                            <p class="mt-1"><strong>5. Chatear con el Admin:</strong> Tiene un chat directo para comunicarse con el Administrador.</p>
+                        </div>
+                    </div>
+                    <div class="info-box warning">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <h5>Restriccion</h5>
+                            <p>Si la empresa esta <strong>pendiente</strong> o <strong>rechazada</strong>, no puede pedir servicios ni usar el sistema.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="candidato">
+                    <h2>Candidato</h2>
+                    <p class="section-intro">Los candidatos son personas que buscan empleo. Llenan una solicitud de empleo detallada y se postulan a las vacantes disponibles.</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>1. Crear cuenta:</strong> Se registra con su correo y contrasena.</p>
+                            <p class="mt-1"><strong>2. Llenar solicitud de empleo:</strong> Completa 5 secciones: datos personales, contacto, estudios, historial laboral y extras. Los campos de texto cuentan con corrector ortografico para ayudarte a escribir mejor.</p>
+                            <p class="mt-1"><strong>3. Enviar solicitud:</strong> El Admin revisa y aprueba. Si no esta aprobada, no puede postularse.</p>
+                            <p class="mt-1"><strong>4. Buscar vacantes:</strong> Ve las vacantes activas que el sistema le recomienda segun su perfil. Ahora las vacantes muestran los <strong>ingresos ofrecidos</strong> y las <strong>prestaciones</strong> para que conozcas la oferta antes de postularte.</p>
+                            <p class="mt-1"><strong>5. Postularse:</strong> Selecciona una vacante y presiona "Postularme". El equipo de RH (Admin) revisa tu perfil.</p>
+                            <p class="mt-1"><strong>6. Seguimiento:</strong> Ve el estado de tus postulaciones directamente en tu panel principal y en el detalle de cada una: en revision, entrevista, seleccionado o rechazado.</p>
+                        </div>
+                    </div>
+                    <div class="info-box warning">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <h5>Restriccion</h5>
+                            <p>Un candidato solo puede postularse si su solicitud esta <strong>aprobada</strong>. Mientras este en borrador o pendiente, no puede aplicar a vacantes.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="interno">
+                    <h2>Personal Interno</h2>
+                    <p class="section-intro">El personal interno son los empleados operativos que ejecutan los servicios solicitados. Reciben tareas del Administrador y las completan.</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>1. Recibir tarea:</strong> El Admin le asigna una tarea (por ejemplo: capacitar al personal de una empresa).</p>
+                            <p class="mt-1"><strong>2. Tomar la tarea:</strong> En su panel ve la tarea y presiona "Tomar" para empezar a trabajar.</p>
+                            <p class="mt-1"><strong>3. Ejecutar:</strong> Realiza el servicio: entrevistas, capacitaciones, evaluaciones, reclutamiento, etc.</p>
+                            <p class="mt-1"><strong>4. Completar o Cancelar:</strong> Cuando termina, escribe un resumen y marca la tarea como completada. Si no puede hacerla, la cancela con un motivo.</p>
+                        </div>
+                    </div>
+                    <div class="info-box warning">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <h5>Restricciones</h5>
+                            <p>El interno solo ve sus propias tareas. No puede crear tareas, ni ver informacion de empresas o candidatos. Todo lo recibe del Administrador.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="chat">
+                    <h2>Chat Interno</h2>
+                    <p class="section-intro">El chat es una mensajeria directa para comunicarse dentro del sistema. No es como WhatsApp, tiene reglas especificas.</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <ul style="margin-left:1.25rem;">
+                                <li><strong>Solo chat uno a uno:</strong> No hay grupos. Cada conversacion es entre dos personas.</li>
+                                <li><strong>El Admin puede chatear con todos:</strong> Puede iniciar conversacion con cualquier empresa, candidato o interno.</li>
+                                <li><strong>Los demas solo chatean con el Admin:</strong> Una empresa no puede hablar con un candidato. Un interno no puede hablar con una empresa. Todo pasa por el Administrador.</li>
+                                <li><strong>Conversacion automatica:</strong> Si un usuario que no es Admin abre el chat, el sistema crea solo la conversacion con el Admin.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-box warning">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <h5>Importante</h5>
+                            <p>El chat es privado entre cada usuario y el Admin. No hay canales publicos ni grupos.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="diagrama">
+                    <h2>Diagrama de Flujo General</h2>
+                    <p class="section-intro">Asi funciona todo el sistema paso a paso. Desde que alguien se registra hasta que se completa un servicio.</p>
+
+                    <div class="flow-container">
+                        <div class="flow-stage flow-stage-accent-reg">
+                            <div class="flow-stage-title">1. Registro y Aprobacion (Todo pasa por el Admin)</div>
+                            <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:0.5rem;">
+                                <div style="flex:1; min-width:220px; max-width:320px; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+                                    <div class="flow-node start" style="width:100%;">Candidato se registra</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node" style="width:100%;">Llena solicitud de empleo<br><small style="color:#64748b;font-weight:400">(datos personales, estudios, experiencia)</small></div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div style="font-size:1.5rem; color:#94a3b8;">↘️</div>
+                                </div>
+                                <div style="min-width:220px; max-width:300px; display:flex; flex-direction:column; align-items:center; gap:0.5rem; justify-content:center;">
+                                    <div class="flow-node admin" style="width:100%; border-width:3px;">ADMIN REVISA<br>Y DECIDE<br><small style="color:#1e3a8a;font-weight:400">Pivote central del sistema</small></div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node decision" style="width:100%;">Aprobar o Rechazar?</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div style="display:flex; gap:0.5rem; width:100%;">
+                                        <div class="flow-node end-good" style="flex:1;">Aprobar</div>
+                                        <div class="flow-node end-bad" style="flex:1;">Rechazar</div>
+                                    </div>
+                                </div>
+                                <div style="flex:1; min-width:220px; max-width:320px; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+                                    <div class="flow-node start" style="width:100%;">Empresa se registra</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node" style="width:100%;">Envia datos fiscales<br><small style="color:#64748b;font-weight:400">(RFC, direccion, contacto)</small></div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div style="font-size:1.5rem; color:#94a3b8;">↙️</div>
+                                </div>
+                            </div>
+                            <div class="flow-row" style="margin-top:0.5rem;">
+                                <div class="flow-node end-good" style="max-width:200px;">Candidato Aprobado</div>
+                                <div class="flow-connector-label">Y</div>
+                                <div class="flow-node end-good" style="max-width:200px;">Empresa Activa</div>
+                            </div>
+                        </div>
+
+                        <div class="flow-note">Solo usuarios aprobados pueden continuar</div>
+
+                        <div class="flow-stage flow-stage-accent-vac">
+                            <div class="flow-stage-title">2. Vacantes (reclutamiento)</div>
+                            <div class="flow-node start">Empresa Activa pide una vacante<br><small style="color:#64748b;font-weight:400">(un puesto que necesita cubrir)</small></div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node admin">Admin revisa<br>y activa la vacante</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node end-good">Vacante Publicada<br>y Activa</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node action">Sistema calcula compatibilidad<br><small style="color:#64748b;font-weight:400">segun habilidades, ciudad, experiencia, estudios</small></div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-row">
+                                <div class="flow-node">Candidato aprobado<br>ve vacantes recomendadas</div>
+                                <div class="flow-connector-label">➡️</div>
+                                <div class="flow-node">Se postula</div>
+                            </div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node admin">El equipo de RH (Admin)<br>revisa las postulaciones<br><small style="color:#1e3a8a;font-weight:400">con la compatibilidad del sistema</small></div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node decision">Mueve el pipeline</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-grid" style="grid-template-columns: repeat(2, 1fr);">
+                                <div class="flow-node">En revision</div>
+                                <div class="flow-node">Entrevista</div>
+                                <div class="flow-node end-good">Seleccionado</div>
+                                <div class="flow-node end-bad">Rechazado</div>
+                            </div>
+                            <div class="flow-note" style="margin-top:0.75rem;">La empresa solo consulta el avance; no mueve candidatos.</div>
+                        </div>
+
+                        <div class="flow-note">Aparte del reclutamiento, se pueden pedir otros servicios</div>
+
+                        <div class="flow-stage flow-stage-accent-ser">
+                            <div class="flow-stage-title">3. Pedidos de servicio</div>
+                            <div class="flow-row">
+                                <div class="flow-node start">Empresa Activa<br>pide un servicio</div>
+                                <div class="flow-connector-label">Y</div>
+                                <div class="flow-node start">Candidato Aprobado<br>pide un servicio</div>
+                            </div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node">Tipos: Capacitacion, Coaching, Evaluacion, Consultoria</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node admin">Admin lo recibe<br>en el tablero (kanban)</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node admin">Admin asigna<br>a un Interno capacitado</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node">Interno toma la tarea<br>→ En proceso</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-node decision">Resultado?</div>
+                            <div class="flow-arrow-down">⬇️</div>
+                            <div class="flow-row">
+                                <div class="flow-node end-good">Completado<br>+ Resumen</div>
+                                <div class="flow-connector-label">O</div>
+                                <div class="flow-node end-bad">Cancelado<br>+ Motivo</div>
+                            </div>
+                        </div>
+
+                        <div class="flow-note">Soporte disponible para todos los roles</div>
+
+                        <div class="flow-stage flow-stage-accent-sup">
+                            <div class="flow-stage-title">4. Chat (Solo con el Admin)</div>
+                            <div class="flow-grid" style="grid-template-columns: repeat(2, 1fr);">
+                                <div>
+                                    <div class="flow-node start">Administrador</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node admin">Puede chatear<br>con cualquier rol</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node">Chat directo<br>uno a uno</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node end-good">Notificaciones<br>y mensajes</div>
+                                </div>
+                                <div>
+                                    <div class="flow-node start">Empresa / Candidato / Interno</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node">Solo pueden chatear<br>con el Admin</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node end-bad">No pueden chatear<br>entre ellos</div>
+                                    <div class="flow-arrow-down">⬇️</div>
+                                    <div class="flow-node end-good">Chat activo<br>con el Admin</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top:2.5rem;">Resumen por rol</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>🛡️ Admin:</strong> Aprueba todo. Revisa empresas, candidatos, vacantes y servicios. Crea y asigna tareas.</p>
+                            <p class="mt-1"><strong>🏢 Empresa:</strong> Pide servicios (reclutamiento, capacitacion...) y consulta el avance de sus solicitudes. No publica ni gestiona; eso lo hace el equipo de RH.</p>
+                            <p class="mt-1"><strong>👤 Candidato:</strong> Llena su solicitud, espera aprobacion y se postula a vacantes.</p>
+                            <p class="mt-1"><strong>🔧 Interno:</strong> Recibe tareas, las ejecuta y las cierra con un resumen.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="mejoras">
+                    <h2>Mejoras del Sistema</h2>
+                    <p class="section-intro">Estas son las funciones y mejoras agregadas recientemente para hacer tu experiencia mas completa y segura.</p>
+
+                    <ul class="feature-list">
+                        <li><div class="icon" style="background:#eff6ff">📧</div><div class="content"><strong>Notificaciones por correo</strong><span>El sistema ahora envia alertas importantes a tu correo electronico, como cambios de estado en tus solicitudes o recordatorios de actividades.</span></div></li>
+                        <li><div class="icon" style="background:#ecfdf5">✍️</div><div class="content"><strong>Corrector ortografico</strong><span>Los campos de texto de todo el sistema ahora cuentan con corrector ortografico para ayudarte a escribir con mayor precision.</span></div></li>
+                        <li><div class="icon" style="background:#fffbeb">💰</div><div class="content"><strong>Ingresos y prestaciones en vacantes</strong><span>Al publicar o consultar una vacante, ahora se muestra la informacion salarial y las prestaciones ofrecidas para mayor transparencia.</span></div></li>
+                        <li><div class="icon" style="background:#f5f3ff">📊</div><div class="content"><strong>Estatus visible en el panel</strong><span>Tanto empresas como candidatos pueden ver el estado de sus solicitudes y postulaciones directamente en su panel principal, sin necesidad de buscar en varias pantallas.</span></div></li>
+                        <li><div class="icon" style="background:#fef2f2">🔐</div><div class="content"><strong>Una sola sesion activa</strong><span>Por tu seguridad, solo puedes tener una sesion abierta a la vez. Si intentas entrar desde otro dispositivo, el sistema te mostrara una pantalla de confirmacion con los datos del otro equipo para que decidas si cerrarla.</span></div></li>
+                        <li><div class="icon" style="background:#eff6ff">🛡️</div><div class="content"><strong>Mayor seguridad</strong><span>Se reforzaron las medidas de proteccion del sistema para mantener tu informacion segura. Ademas, los mensajes de error fueron ajustados para ser mas claros y no mostrar detalles tecnicos que no necesitas.</span></div></li>
+                    </ul>
+                </section>
+
+                <div class="info-box success">
+                    <div class="icon">✅</div>
+                    <div>
+                        <h5>Manual completo</h5>
+                        <p>Este manual cubre todo lo necesario para usar SistemaRH. Si tienes dudas, contacta al Administrador.</p>
+                    </div>
+                </div>
+            </div>
+            <footer>
+                <div class="footer-brand">SistemaRH</div>
+                <div class="footer-sub">Sistema de Gestion de Recursos Humanos</div>
+                <div class="footer-author">Ing. Victor Maldonado</div>
+                <div class="footer-copy">2026 Todos los derechos reservados.</div>
+            </footer>
+        </main>
+    </div>
+    <script>
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-list a');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 120) current = section.getAttribute('id');
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+            });
+        });
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => document.querySelector('.sidebar').classList.remove('open'));
+        });
+    </script>
+</body>
+</html>

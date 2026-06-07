@@ -26,25 +26,27 @@ class ServicioCompletado extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $nombre = $this->servicio->servicio?->nombre ?? 'Tu pedido';
-        $quien  = $this->servicio->asignadoA?->name ?? 'el responsable';
+        $quien = $this->servicio->asignadoA?->name ?? 'el responsable';
+        $nombreNotificado = trim((string) ($notifiable->name ?? ''));
 
-        // El link cambia según el rol del solicitante
         $url = $notifiable->rol === 'empresa'
             ? route('empresa.servicios.index')
             : route('candidato.servicios.index');
 
         $mail = (new MailMessage)
-            ->subject("Tu pedido se completó: {$nombre}")
-            ->greeting("Hola {$notifiable->name}")
-            ->line("Tu pedido **{$nombre}** fue completado por **{$quien}**.");
+            ->subject("Tu servicio fue completado: {$nombre}")
+            ->greeting($nombreNotificado !== '' ? "Hola {$nombreNotificado}" : 'Hola')
+            ->line("Tu servicio **{$nombre}** fue completado por **{$quien}**.");
 
         if ($this->servicio->cierre_resumen) {
-            $mail->line("Resumen final:")
-                 ->line($this->servicio->cierre_resumen);
+            $mail->line('Resumen final:')
+                ->line($this->servicio->cierre_resumen);
         }
 
         return $mail
             ->action('Ver detalle', $url)
-            ->line('Gracias por confiar en nuestro equipo.');
+            ->line('Gracias por confiar en nuestro equipo.')
+            ->line('Si necesitas dar seguimiento adicional, puedes consultar el detalle desde tu panel.')
+            ->salutation('Saludos,');
     }
 }

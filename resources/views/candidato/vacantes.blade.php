@@ -13,7 +13,7 @@
         <form method="GET" class="candidate-filter-grid">
             <div>
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Buscar</label>
-                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Título o empresa..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);">
+                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Título o empresa..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             </div>
             <button type="submit" class="btn btn-primary" style="height:38px;">Filtrar</button>
         </form>
@@ -23,6 +23,9 @@
         <div class="candidate-vacancy-grid">
             @foreach($vacantes as $vacante)
                 <div class="card fade-in" style="display:flex; flex-direction:column; min-height:240px;">
+                    @php
+                        $postulacionActual = $vacante->postulaciones->first();
+                    @endphp
                     <div class="candidate-inline-meta" style="margin-bottom:12px;">
                         <div>
                             <h3 style="font-size:1.05rem; font-weight:600; margin-bottom:4px;">{{ $vacante->titulo }}</h3>
@@ -46,6 +49,11 @@
                         @endif
                         @if($vacante->ubicacion)
                             <span class="badge" style="background:rgba(245,158,11,.12); color:#d97706;">{{ $vacante->ubicacion }}</span>
+                        @endif
+                        @if($postulacionActual)
+                            <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacionActual->estado) }}">
+                                Tu solicitud: {{ \App\Models\Postulacion::estadoLabel($postulacionActual->estado) }}
+                            </span>
                         @endif
                     </div>
 

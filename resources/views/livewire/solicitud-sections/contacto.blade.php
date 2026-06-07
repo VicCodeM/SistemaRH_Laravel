@@ -16,11 +16,11 @@
             <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Teléfono fijo</label>
-                    <input type="text" class="form-input" wire:model="telefono" placeholder="Número de teléfono (opcional)">
+                    <input type="text" class="form-input" wire:model="telefono" placeholder="Número de teléfono (opcional)" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Celular <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model="celular" placeholder="Número de celular">
+                    <input type="text" class="form-input" wire:model="celular" placeholder="Número de celular" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
         </div>
@@ -33,26 +33,26 @@
             <div style="display:grid;gap:12px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Domicilio <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model="domicilio" placeholder="Calle, número y referencias">
+                    <input type="text" class="form-input" wire:model="domicilio" placeholder="Calle, número y referencias" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="solicitud-grid-2">
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Colonia <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model="colonia" placeholder="Colonia">
+                        <input type="text" class="form-input" wire:model="colonia" placeholder="Colonia" spellcheck="true" autocapitalize="sentences">
                     </div>
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Código postal <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model="codigo_postal" placeholder="CP">
+                        <input type="text" class="form-input" wire:model="codigo_postal" placeholder="CP" spellcheck="true" autocapitalize="sentences">
                     </div>
                 </div>
                 <div class="solicitud-grid-2">
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Municipio <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model="municipio" placeholder="Municipio">
+                        <input type="text" class="form-input" wire:model="municipio" placeholder="Municipio" spellcheck="true" autocapitalize="sentences">
                     </div>
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Ciudad <span style="color:var(--danger);">*</span></label>
-                        <input type="text" class="form-input" wire:model="ciudad" placeholder="Ciudad">
+                        <input type="text" class="form-input" wire:model="ciudad" placeholder="Ciudad" spellcheck="true" autocapitalize="sentences">
                     </div>
                 </div>
             </div>

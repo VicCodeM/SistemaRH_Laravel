@@ -134,7 +134,7 @@
         <div style="grid-column:span 2;">
             <label class="form-label" style="font-size:11px;">Buscar</label>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Servicio, interno, empresa..." class="form-input" style="flex:1; min-width:200px; font-size:13px; padding:7px 10px;">
+                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Servicio, interno, empresa..." class="form-input" style="flex:1; min-width:200px; font-size:13px; padding:7px 10px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 <button type="submit" class="btn btn-primary" style="font-size:13px;">Buscar</button>
                 @if(request()->hasAny(['buscar', 'servicio_id', 'solicitante_tipo', 'interno_id', 'urgencia']))
                     <a href="{{ route('admin.tareas.index', $estadoActual ? ['estado' => $estadoActual] : []) }}" class="btn btn-secondary" style="font-size:13px;">Limpiar</a>

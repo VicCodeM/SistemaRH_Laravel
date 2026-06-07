@@ -21,6 +21,8 @@ class Vacante extends Model
         'experiencia_minima',
         'salario_min',
         'salario_max',
+        'ingresos_ofrecidos',
+        'prestaciones',
         'ubicacion',
         'tipo_contrato',
         'cupos',
@@ -183,6 +185,52 @@ class Vacante extends Model
             'rechazada' => 'badge-red',
             default => 'badge-gray',
         };
+    }
+
+    public function salarioFormateado(): ?string
+    {
+        if ($this->salario_min === null && $this->salario_max === null) {
+            return null;
+        }
+
+        $min = $this->salario_min !== null
+            ? '$' . number_format((float) $this->salario_min, 0)
+            : null;
+
+        $max = $this->salario_max !== null
+            ? '$' . number_format((float) $this->salario_max, 0)
+            : null;
+
+        return match (true) {
+            $min !== null && $max !== null => "{$min} - {$max} MXN",
+            $min !== null => "Desde {$min} MXN",
+            $max !== null => "Hasta {$max} MXN",
+            default => null,
+        };
+    }
+
+    /**
+     * Resumen de compensación para mostrar en vistas y modales.
+     *
+     * @return array<string, string>
+     */
+    public function compensacionDetalles(): array
+    {
+        $detalles = [];
+
+        if ($salario = $this->salarioFormateado()) {
+            $detalles['Sueldo'] = $salario;
+        }
+
+        if ($this->ingresos_ofrecidos) {
+            $detalles['Ingresos ofrecidos'] = $this->ingresos_ofrecidos;
+        }
+
+        if ($this->prestaciones) {
+            $detalles['Prestaciones'] = $this->prestaciones;
+        }
+
+        return $detalles;
     }
 
     public function requisitoResumen(): string

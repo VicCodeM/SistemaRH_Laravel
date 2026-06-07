@@ -58,6 +58,7 @@
             </thead>
             <tbody>
                 @forelse($servicios as $servicio)
+                    @php $bloqueado = $servicio->activo && ! $servicio->puedeDesactivarse(); @endphp
                     <tr>
                         <td>
                             <div style="font-weight:600; color:var(--text);">{{ $servicio->nombre }}</div>
@@ -71,7 +72,7 @@
                             </span>
                         </td>
                         <td style="font-size:0.83rem; color:#94a3b8;">
-                            {{ \App\Models\CatalogoServicio::nivelesJerarquicos()[$servicio->nivel_jerarquico] ?? $servicio->nivel_jerarquico }}
+                            {{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicio->nivel_jerarquico) }}
                         </td>
                         <td style="font-size:0.8rem; color:#94a3b8;">
                             @php $pq = ['empresa'=>'Empresa','candidato'=>'Candidato','ambos'=>'Ambos']; @endphp
@@ -82,10 +83,13 @@
                             <form method="POST" action="{{ route('admin.catalogo.toggle', $servicio) }}" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <button type="submit"
+                                        @disabled($bloqueado)
                                         style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:none;
                                                background:{{ $servicio->activo ? 'var(--success-light)' : 'var(--surface-2)' }};
-                                               color:{{ $servicio->activo ? 'var(--success)' : 'var(--text-muted)' }};"
-                                        title="{{ $servicio->activo ? 'Clic para desactivar' : 'Clic para activar' }}">
+                                               color:{{ $servicio->activo ? 'var(--success)' : 'var(--text-muted)' }};
+                                               opacity:{{ $bloqueado ? '.6' : '1' }};
+                                               cursor:{{ $bloqueado ? 'not-allowed' : 'pointer' }};"
+                                        title="{{ $bloqueado ? 'No se puede desactivar: tiene pedidos activos o en proceso' : ($servicio->activo ? 'Clic para desactivar' : 'Clic para activar') }}">
                                     {{ $servicio->activo ? 'Activo' : 'Inactivo' }}
                                 </button>
                             </form>

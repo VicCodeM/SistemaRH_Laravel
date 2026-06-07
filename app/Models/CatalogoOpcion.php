@@ -92,6 +92,23 @@ class CatalogoOpcion extends Model
         return self::gruposPorModulo()[$modulo] ?? [];
     }
 
+    public static function moduloDelGrupo(?string $grupo): ?string
+    {
+        $grupo = is_string($grupo) ? trim($grupo) : '';
+
+        if ($grupo === '') {
+            return null;
+        }
+
+        foreach (self::gruposPorModulo() as $modulo => $grupos) {
+            if (in_array($grupo, $grupos, true)) {
+                return $modulo;
+            }
+        }
+
+        return null;
+    }
+
     public static function grupoLabel(?string $grupo): string
     {
         return self::gruposGestionables()[$grupo] ?? ucfirst(str_replace('_', ' ', (string) $grupo));

@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, authenticated users must verify their email address before
+    | they can access the protected application routes.
+    |
+    */
+
+    'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', false),
+
 ];

@@ -35,12 +35,15 @@ Route::middleware('guest')->group(function () {
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->middleware('signed')
         ->name('password.reset');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.store');
 });
 
@@ -62,6 +65,13 @@ Route::middleware('auth')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+
+    Route::get('sesiones/confirmar-cierre', [AuthenticatedSessionController::class, 'confirmarCierreSesiones'])
+        ->name('sesiones.confirmar-cierre');
+    Route::post('sesiones/cerrar-otras', [AuthenticatedSessionController::class, 'cerrarOtrasSesiones'])
+        ->name('sesiones.cerrar-otras');
+    Route::post('sesiones/continuar', [AuthenticatedSessionController::class, 'continuarSinCerrarSesiones'])
+        ->name('sesiones.continuar');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');

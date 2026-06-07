@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\BienvenidaCuentaVerificada;
+use App\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -11,8 +14,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
-#[Fillable(['name', 'email', 'password', 'google_sub', 'avatar_url', 'sexo', 'rol', 'estado', 'carga_trabajo_horas', 'capacidad_maxima_horas', 'nivel_jerarquico', 'departamento', 'disponibilidad', 'disponible_desde'])]
+#[Fillable(['name', 'email', 'password', 'google_sub', 'avatar_url', 'sexo', 'rol', 'estado', 'email_verified_at', 'carga_trabajo_horas', 'capacidad_maxima_horas', 'nivel_jerarquico', 'departamento', 'disponibilidad', 'disponible_desde'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -22,6 +26,31 @@ class User extends Authenticatable
     public function serviciosCapacitados(): BelongsToMany
     {
         return $this->belongsToMany(CatalogoServicio::class, 'interno_servicio', 'user_id', 'servicio_id');
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
+
+    public function sendWelcomeVerifiedNotification(): void
+    {
+        $this->notify(new BienvenidaCuentaVerificada);
+    }
+
+    public static function requireEmailVerification(): bool
+    {
+        return config('auth.require_email_verification', false);
+    }
+
+    public static function emailVerifiedAtInitial(): ?Carbon
+    {
+        return self::requireEmailVerification() ? null : now();
     }
 
     protected function casts(): array

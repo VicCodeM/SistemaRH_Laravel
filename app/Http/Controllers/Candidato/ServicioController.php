@@ -6,44 +6,77 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogoServicio;
 use App\Models\ServicioAsignado;
 use App\Services\ServicioAsignadoService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Solicitudes de servicio del lado CANDIDATO.
- *
- * El candidato puede pedir cursos individuales, coaching personal,
- * evaluaciones, etc. También ve los servicios donde un admin/empresa
- * lo inscribió como destinatario.
- */
 class ServicioController extends Controller
 {
     public function index(Request $request)
     {
         $candidato = $this->candidatoActual();
+        $buscar = trim((string) $request->input('buscar', ''));
+        $tipo = (string) $request->input('tipo', '');
 
-        $query = ServicioAsignado::with(['servicio', 'asignadoA', 'solicitadoPor'])
-            ->where('asignable_type', \App\Models\Candidato::class)
-            ->where('asignable_id', $candidato->id)
-            ->latest();
+        $baseQuery = $this->catalogosVisiblesQuery();
 
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
+        $catalogos = (clone $baseQuery)
+            ->when($buscar !== '', function (Builder $query) use ($buscar) {
+                $query->where(function (Builder $sub) use ($buscar) {
+                    $sub->where('nombre', 'like', "%{$buscar}%")
+                        ->orWhere('descripcion', 'like', "%{$buscar}%");
+                });
+            })
+            ->when($tipo !== '', fn (Builder $query) => $query->where('tipo', $tipo))
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
 
-        $servicios = $query->paginate(15)->withQueryString();
+        $catalogosDisponibles = (clone $baseQuery)->orderBy('orden')->orderBy('nombre')->get();
 
-        $stats = $this->estadisticas($candidato->id);
+        $tiposDisponibles = $catalogosDisponibles
+            ->pluck('tipo')
+            ->unique()
+            ->values();
 
-        return view('candidato.servicios.index', compact('servicios', 'stats'));
+        $stats = [
+            'disponibles' => $catalogosDisponibles->count(),
+            'categorias' => $tiposDisponibles->count(),
+            'solicitados' => ServicioAsignado::where('asignable_type', \App\Models\Candidato::class)
+                ->where('asignable_id', $candidato->id)
+                ->count(),
+        ];
+
+        return view('candidato.servicios.index', compact(
+            'catalogos',
+            'stats',
+            'tiposDisponibles',
+            'tipo'
+        ));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->candidatoActual();
-        $catalogo = CatalogoServicio::where('activo', true)->orderBy('nombre')->get();
+        $servicioId = $request->integer('servicio_id');
 
-        return view('candidato.servicios.create', compact('catalogo'));
+        if (! $servicioId) {
+            return redirect()
+                ->route('candidato.servicios.index')
+                ->with('warning', 'Selecciona un servicio desde la lista para ver su detalle.');
+        }
+
+        $servicioSeleccionado = $this->catalogosVisiblesQuery(conRecursos: true)
+            ->find($servicioId);
+
+        if (! $servicioSeleccionado) {
+            return redirect()
+                ->route('candidato.servicios.index')
+                ->with('error', 'Este servicio no esta disponible en este momento.');
+        }
+
+        return view('candidato.servicios.create', compact('servicioSeleccionado'));
     }
 
     public function store(Request $request, ServicioAsignadoService $servicio)
@@ -51,16 +84,24 @@ class ServicioController extends Controller
         $candidato = $this->candidatoActual();
 
         $data = $request->validate([
-            'servicio_id'     => ['required', 'integer', 'exists:catalogo_servicios,id'],
+            'servicio_id' => ['required', 'integer', 'exists:catalogo_servicios,id'],
             'horas_estimadas' => ['nullable', 'integer', 'min:0', 'max:500'],
-            'notas'           => ['required', 'string', 'max:2000'],
+            'notas' => ['required', 'string', 'max:2000'],
         ]);
+
+        $catalogoServicio = $this->catalogosVisiblesQuery()->find($data['servicio_id']);
+
+        if (! $catalogoServicio) {
+            return redirect()
+                ->route('candidato.servicios.index')
+                ->with('error', 'Este servicio no se puede solicitar desde aqui.');
+        }
 
         $servicio->registrar($data, $candidato);
 
         return redirect()
             ->route('candidato.servicios.index')
-            ->with('success', 'Solicitud enviada. Un administrador la revisará y te asignará un responsable.');
+            ->with('success', 'Solicitud enviada. Un administrador la revisara y te asignara un responsable.');
     }
 
     public function show(ServicioAsignado $servicio)
@@ -68,10 +109,10 @@ class ServicioController extends Controller
         $candidato = $this->candidatoActual();
         $this->autorizar($servicio, $candidato->id);
 
-        $servicio->load(['servicio', 'asignadoA', 'solicitadoPor']);
+        $servicio->load(['servicio', 'asignadoA', 'solicitadoPor', 'recursos.subidoPor']);
 
         return view('partials.pedido-avance', [
-            'servicio'    => $servicio,
+            'servicio' => $servicio,
             'rutaListado' => route('candidato.servicios.index'),
         ]);
     }
@@ -81,7 +122,7 @@ class ServicioController extends Controller
         $candidato = $this->candidatoActual();
         $this->autorizar($servicio, $candidato->id);
 
-        abort_unless($servicio->estado === 'pendiente', 422, 'Solo puedes eliminar solicitudes que aún no han sido aprobadas.');
+        abort_unless($servicio->estado === 'pendiente', 422, 'Solo puedes eliminar solicitudes que aun no han sido aprobadas.');
 
         $servicio->comentarios()->delete();
         $servicio->delete();
@@ -95,7 +136,8 @@ class ServicioController extends Controller
     {
         $candidato = Auth::user()?->candidato;
         abort_unless($candidato, 403, 'Debes completar tu solicitud primero.');
-        abort_unless($candidato->solicitud_estado === 'aprobada', 403, 'Tu solicitud aún no ha sido aprobada.');
+        abort_unless($candidato->solicitud_estado === 'aprobada', 403, 'Tu solicitud aun no ha sido aprobada.');
+
         return $candidato;
     }
 
@@ -108,16 +150,17 @@ class ServicioController extends Controller
         );
     }
 
-    private function estadisticas(int $candidatoId): array
+    private function catalogosVisiblesQuery(bool $conRecursos = false): Builder
     {
-        $base = ServicioAsignado::where('asignable_type', \App\Models\Candidato::class)
-            ->where('asignable_id', $candidatoId);
+        $query = CatalogoServicio::query()
+            ->select('catalogo_servicios.*')
+            ->distinct()
+            ->visiblesParaRol('candidato');
 
-        return [
-            'pendientes'  => (clone $base)->where('estado', 'pendiente')->count(),
-            'activos'     => (clone $base)->where('estado', 'activo')->count(),
-            'en_proceso'  => (clone $base)->where('estado', 'en_proceso')->count(),
-            'completados' => (clone $base)->where('estado', 'completado')->count(),
-        ];
+        if ($conRecursos && CatalogoServicio::tieneTablaRecursos()) {
+            $query->with('recursos.subidoPor');
+        }
+
+        return $query;
     }
 }

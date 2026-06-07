@@ -76,6 +76,46 @@
         </div>
     </div>
 
+    @php
+        $ultimaPostulacion = $postulacionesRecientes->first();
+    @endphp
+
+    <div class="card fade-in" style="margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+            <div>
+                <h3 style="font-weight:700; margin:0 0 4px; font-size:1rem;">Estado de tu última postulación</h3>
+                <p style="margin:0; color:#64748b; font-size:13px;">
+                    Revisa aquí el avance más reciente sin abrir el detalle.
+                </p>
+            </div>
+
+            @if($ultimaPostulacion)
+                <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($ultimaPostulacion->estado) }}">
+                    {{ \App\Models\Postulacion::estadoLabel($ultimaPostulacion->estado) }}
+                </span>
+            @endif
+        </div>
+
+        @if($ultimaPostulacion)
+            <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; margin-top:16px; padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2);">
+                <div>
+                    <div style="font-weight:600;">{{ $ultimaPostulacion->vacante?->titulo ?? 'Vacante' }}</div>
+                    <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                        {{ $ultimaPostulacion->vacante?->empresa?->nombre_empresa ?? 'Empresa' }}
+                        @if($ultimaPostulacion->fecha_postulacion)
+                            · {{ $ultimaPostulacion->fecha_postulacion->format('d/m/Y H:i') }}
+                        @endif
+                    </div>
+                </div>
+                <a href="{{ route('candidato.postulaciones') }}" class="btn btn-secondary btn-sm">Ver seguimiento</a>
+            </div>
+        @else
+            <div style="margin-top:16px; padding:16px; border:1px dashed var(--border); border-radius:10px; color:#64748b; font-size:13px;">
+                Todavía no has enviado postulaciones. Cuando apliques a una vacante, aquí verás su estatus.
+            </div>
+        @endif
+    </div>
+
     <div class="candidate-actions">
         <a href="{{ route('candidato.solicitud') }}" class="btn btn-primary">Mi solicitud</a>
         @if($aprobado)

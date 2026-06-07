@@ -59,6 +59,14 @@ class CatalogoOpcionController extends Controller
             $serviciosQuery->where('para_quien', $request->para_quien);
         }
 
+        if ($request->filled('flujo')) {
+            $serviciosQuery->where('flujo', $request->flujo);
+        }
+
+        if ($request->filled('estado_servicio')) {
+            $serviciosQuery->where('activo', $request->estado_servicio === 'activo');
+        }
+
         if ($request->filled('buscar_servicio')) {
             $buscarServicio = $request->buscar_servicio;
             $serviciosQuery->where(function ($q) use ($buscarServicio) {
@@ -84,6 +92,8 @@ class CatalogoOpcionController extends Controller
         $serviciosStats = [
             'total' => CatalogoServicio::count(),
             'activos' => CatalogoServicio::where('activo', true)->count(),
+            'servicio' => CatalogoServicio::where('flujo', 'servicio')->count(),
+            'vacante' => CatalogoServicio::where('flujo', 'vacante')->count(),
             'empresa' => CatalogoServicio::where('para_quien', 'empresa')->count(),
             'candidato' => CatalogoServicio::where('para_quien', 'candidato')->count(),
             'ambos' => CatalogoServicio::where('para_quien', 'ambos')->count(),
@@ -136,7 +146,9 @@ class CatalogoOpcionController extends Controller
 
         CatalogoOpcion::create($data);
 
-        return redirect()->route('admin.catalogos.index')->with('success', 'Opción creada correctamente.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => CatalogoOpcion::moduloDelGrupo($data['grupo']) ?? 'vacantes'])
+            ->with('success', 'Opción creada correctamente.');
     }
 
     public function edit(CatalogoOpcion $catalogo)
@@ -165,7 +177,9 @@ class CatalogoOpcionController extends Controller
 
         $catalogo->update($data);
 
-        return redirect()->route('admin.catalogos.index')->with('success', 'Opción actualizada correctamente.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => CatalogoOpcion::moduloDelGrupo($data['grupo']) ?? 'vacantes'])
+            ->with('success', 'Opción actualizada correctamente.');
     }
 
     public function toggle(CatalogoOpcion $catalogo)

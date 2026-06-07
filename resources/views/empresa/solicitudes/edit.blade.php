@@ -24,7 +24,7 @@
 
                 <div class="form-group">
                     <label class="form-label" for="titulo">Título / Puesto <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror" value="{{ old('titulo', $vacante->titulo) }}" maxlength="200">
+                    <input type="text" id="titulo" name="titulo" class="form-input @error('titulo') is-invalid @enderror" value="{{ old('titulo', $vacante->titulo) }}" maxlength="200" spellcheck="true" autocapitalize="sentences">
                     @error('titulo')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
@@ -69,7 +69,7 @@
 
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" for="area_requerida">Área o carrera requerida</label>
-                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror"
+                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror" spellcheck="true" autocapitalize="sentences"
                                    value="{{ old('area_requerida', $vacante->area_requerida) }}" maxlength="150" placeholder="Ej: Sistemas, Medicina, RH">
                             @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
@@ -83,9 +83,53 @@
                     </div>
                 </div>
 
+
+                <div class="card" style="margin-top:18px; padding:18px; background:var(--surface-2);">
+                    <h2 style="margin:0 0 6px; font-size:0.98rem;">Compensación y prestaciones</h2>
+                    <p style="margin:0 0 14px; font-size:0.84rem; color:#64748b;">Agrega el sueldo y beneficios que ofreces para que empresa y candidatos vean la oferta completa.</p>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 2fr; gap:14px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="salario_min">Sueldo desde</label>
+                            <input type="number" id="salario_min" name="salario_min" class="form-input @error('salario_min') is-invalid @enderror"
+                                   value="{{ old('salario_min', $vacante->salario_min) }}" min="0" step="0.01" placeholder="0.00">
+                            @error('salario_min')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="salario_max">Sueldo hasta</label>
+                            <input type="number" id="salario_max" name="salario_max" class="form-input @error('salario_max') is-invalid @enderror"
+                                   value="{{ old('salario_max', $vacante->salario_max) }}" min="0" step="0.01" placeholder="0.00">
+                            @error('salario_max')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="ubicacion">Lugar de trabajo</label>
+                            <input type="text" id="ubicacion" name="ubicacion" class="form-input @error('ubicacion') is-invalid @enderror"
+                                   value="{{ old('ubicacion', $vacante->ubicacion) }}" maxlength="200" placeholder="Ciudad, sucursal o remoto" spellcheck="true" autocapitalize="sentences">
+                            @error('ubicacion')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <div style="display:grid; gap:14px; margin-top:14px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="ingresos_ofrecidos">Ingresos que se ofrecen</label>
+                            <textarea id="ingresos_ofrecidos" name="ingresos_ofrecidos" class="form-input @error('ingresos_ofrecidos') is-invalid @enderror" rows="3" maxlength="1000" spellcheck="true" autocapitalize="sentences"
+                                      placeholder="Ej. sueldo base, bonos, comisiones, pago semanal o quincenal, etc.">{{ old('ingresos_ofrecidos', $vacante->ingresos_ofrecidos) }}</textarea>
+                            @error('ingresos_ofrecidos')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" for="prestaciones">Prestaciones</label>
+                            <textarea id="prestaciones" name="prestaciones" class="form-input @error('prestaciones') is-invalid @enderror" rows="4" maxlength="2000" spellcheck="true" autocapitalize="sentences"
+                                      placeholder="Ej. día de descanso, IMSS, Infonavit, vacaciones, fondo de ahorro, etc.">{{ old('prestaciones', $vacante->prestaciones) }}</textarea>
+                            @error('prestaciones')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" style="margin-top:16px;">
                     <label class="form-label" for="requerimientos">Requerimientos del cliente</label>
-                    <textarea id="requerimientos" name="requerimientos" class="form-input @error('requerimientos') is-invalid @enderror" rows="3" maxlength="2000" placeholder="Lo que el cliente describió al solicitar el servicio...">{{ old('requerimientos', $vacante->requerimientos) }}</textarea>
+                    <textarea id="requerimientos" name="requerimientos" class="form-input @error('requerimientos') is-invalid @enderror" rows="3" maxlength="2000" placeholder="Lo que el cliente describió al solicitar el servicio..." spellcheck="true" autocapitalize="sentences">{{ old('requerimientos', $vacante->requerimientos) }}</textarea>
                     @error('requerimientos')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 

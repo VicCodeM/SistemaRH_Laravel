@@ -19,7 +19,7 @@
     @endif
 
     <form method="GET" class="form-inline" style="margin-bottom:20px;">
-        <input type="text" name="buscar" class="form-input" placeholder="Nombre, email o empresa..." value="{{ request('buscar') }}" style="min-width:220px;">
+        <input type="text" name="buscar" class="form-input" placeholder="Nombre, email o empresa..." value="{{ request('buscar') }}" style="min-width:220px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
         <select name="especialidad" class="form-input" onchange="this.form.submit()">
             <option value="">Todas las especialidades</option>
             @foreach (\App\Models\CatalogoServicio::tipos() as $key => $label)

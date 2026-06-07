@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CatalogoOpcionController;
 use App\Http\Controllers\Admin\CatalogoServicioController;
+use App\Http\Controllers\Admin\CatalogoServicioRecursoController;
 use App\Http\Controllers\Admin\ConfiguracionController;
 use App\Http\Controllers\Admin\ServicioAsignadoController;
 use App\Http\Controllers\Admin\PersonalExternoController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Interno\TareaController;
 use App\Http\Controllers\Empresa\EmpresaController;
 use App\Http\Controllers\PaginaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServicioRecursoController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -28,7 +30,7 @@ Route::get('/', function () {
 Route::get('/privacidad', [PaginaController::class, 'privacidad'])->name('paginas.privacidad');
 Route::get('/terminos', [PaginaController::class, 'terminos'])->name('paginas.terminos');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'email.verification', 'municipio.acceso'])->group(function () {
     Route::get('/dashboard', function () {
         $rol = auth()->user()->rol;
 
@@ -99,6 +101,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('catalogo', CatalogoServicioController::class)->except(['show']);
         Route::patch('/catalogo/{catalogo}/toggle', [CatalogoServicioController::class, 'toggle'])->name('catalogo.toggle');
         Route::get('/catalogo/{catalogo}/acciones/{accion}/modal', [CatalogoServicioController::class, 'accionModal'])->name('catalogo.accion.modal');
+        Route::post('/catalogo/{catalogo}/recursos', [CatalogoServicioRecursoController::class, 'store'])->name('catalogo.recursos.store');
+        Route::patch('/catalogo/recursos/{recurso}', [CatalogoServicioRecursoController::class, 'update'])->name('catalogo.recursos.update');
+        Route::delete('/catalogo/recursos/{recurso}', [CatalogoServicioRecursoController::class, 'destroy'])->name('catalogo.recursos.destroy');
 
         Route::get('/buscar', [AdminController::class, 'buscarGlobal'])->name('buscar');
         Route::get('/buscar-json', [AdminController::class, 'buscarJson'])->name('buscar.json');
@@ -198,6 +203,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/pedidos-servicio/{servicio}/comentarios', [ComentarioServicioController::class, 'store'])->name('pedidos.comentarios.store');
     Route::get('/pedidos-servicio/comentarios/{comentario}/eliminar/modal', [ComentarioServicioController::class, 'destroyModal'])->name('pedidos.comentarios.destroy.modal');
     Route::delete('/pedidos-servicio/comentarios/{comentario}', [ComentarioServicioController::class, 'destroy'])->name('pedidos.comentarios.destroy');
+    Route::post('/pedidos-servicio/{servicio}/recursos', [ServicioRecursoController::class, 'store'])->name('pedidos.recursos.store');
+    Route::delete('/pedidos-servicio/recursos/{recurso}', [ServicioRecursoController::class, 'destroy'])->name('pedidos.recursos.destroy');
 
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', fn () => view('chat.index'))->name('index');

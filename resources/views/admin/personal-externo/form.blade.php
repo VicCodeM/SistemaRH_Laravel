@@ -30,12 +30,12 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div class="form-group">
                     <label class="form-label" for="nombre">Nombre <span style="color: #ef4444;">*</span></label>
-                    <input id="nombre" class="form-input" type="text" name="nombre" value="{{ old('nombre', $persona->nombre) }}" required>
+                    <input id="nombre" class="form-input" type="text" name="nombre" value="{{ old('nombre', $persona->nombre) }}" required spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
                     @error('nombre') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="apellidos">Apellidos <span style="color: #ef4444;">*</span></label>
-                    <input id="apellidos" class="form-input" type="text" name="apellidos" value="{{ old('apellidos', $persona->apellidos) }}" required>
+                    <input id="apellidos" class="form-input" type="text" name="apellidos" value="{{ old('apellidos', $persona->apellidos) }}" required spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
                     @error('apellidos') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -48,14 +48,14 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="telefono">Teléfono</label>
-                    <input id="telefono" class="form-input" type="tel" name="telefono" value="{{ old('telefono', $persona->telefono) }}" placeholder="55 0000 0000">
+                    <input id="telefono" class="form-input" type="tel" name="telefono" value="{{ old('telefono', $persona->telefono) }}" placeholder="55 0000 0000" spellcheck="true" autocorrect="on" autocapitalize="off" lang="es-MX">
                     @error('telefono') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="empresa_o_razon_social">Empresa / Razón social</label>
-                <input id="empresa_o_razon_social" class="form-input" type="text" name="empresa_o_razon_social" value="{{ old('empresa_o_razon_social', $persona->empresa_o_razon_social) }}" placeholder="Si trabaja de forma independiente, puede quedar vacío">
+                <input id="empresa_o_razon_social" class="form-input" type="text" name="empresa_o_razon_social" value="{{ old('empresa_o_razon_social', $persona->empresa_o_razon_social) }}" placeholder="Si trabaja de forma independiente, puede quedar vacío" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 @error('empresa_o_razon_social') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
@@ -103,7 +103,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="descripcion">Descripción / Perfil</label>
-                <textarea id="descripcion" class="form-input" name="descripcion" rows="3" placeholder="Experiencia, certificaciones, áreas de enfoque...">{{ old('descripcion', $persona->descripcion) }}</textarea>
+                <textarea id="descripcion" class="form-input" name="descripcion" rows="3" placeholder="Experiencia, certificaciones, áreas de enfoque..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('descripcion', $persona->descripcion) }}</textarea>
                 @error('descripcion') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 

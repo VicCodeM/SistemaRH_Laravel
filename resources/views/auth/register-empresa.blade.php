@@ -72,7 +72,7 @@
 
                         <div class="form-group">
                             <label class="form-label" for="name">Nombre del responsable</label>
-                            <input id="name" class="form-input" type="text" name="name" value="{{ old('name', $wizardData['name'] ?? '') }}" required autofocus autocomplete="name" placeholder="Nombre de la persona de contacto">
+                            <input id="name" class="form-input" type="text" name="name" value="{{ old('name', $wizardData['name'] ?? '') }}" required autofocus autocomplete="name" placeholder="Nombre de la persona de contacto" spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
                             @error('name') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -101,26 +101,26 @@
 
                         <div class="form-group">
                             <label class="form-label" for="nombre_empresa">Nombre de la empresa</label>
-                            <input id="nombre_empresa" class="form-input" type="text" name="nombre_empresa" value="{{ old('nombre_empresa', $wizardData['nombre_empresa'] ?? '') }}" required placeholder="Nombre comercial o razón social corta">
+                            <input id="nombre_empresa" class="form-input" type="text" name="nombre_empresa" value="{{ old('nombre_empresa', $wizardData['nombre_empresa'] ?? '') }}" required placeholder="Nombre comercial o razón social corta" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             @error('nombre_empresa') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
                             <div class="form-group">
                                 <label class="form-label" for="razon_social">Razón social</label>
-                                <input id="razon_social" class="form-input" type="text" name="razon_social" value="{{ old('razon_social', $wizardData['razon_social'] ?? '') }}" placeholder="Opcional">
+                                <input id="razon_social" class="form-input" type="text" name="razon_social" value="{{ old('razon_social', $wizardData['razon_social'] ?? '') }}" placeholder="Opcional" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 @error('razon_social') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="rfc">RFC</label>
-                                <input id="rfc" class="form-input" type="text" name="rfc" value="{{ old('rfc', $wizardData['rfc'] ?? '') }}" placeholder="Opcional" maxlength="20" style="text-transform:uppercase;">
+                                <input id="rfc" class="form-input" type="text" name="rfc" value="{{ old('rfc', $wizardData['rfc'] ?? '') }}" placeholder="Opcional" maxlength="20" style="text-transform:uppercase;" spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                                 @error('rfc') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="giro_o_industria">Giro o industria</label>
-                            <input id="giro_o_industria" class="form-input" type="text" name="giro_o_industria" value="{{ old('giro_o_industria', $wizardData['giro_o_industria'] ?? '') }}" placeholder="Ej.: Manufactura, TI, Salud">
+                            <input id="giro_o_industria" class="form-input" type="text" name="giro_o_industria" value="{{ old('giro_o_industria', $wizardData['giro_o_industria'] ?? '') }}" placeholder="Ej.: Manufactura, TI, Salud" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             @error('giro_o_industria') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                     @else
@@ -132,31 +132,31 @@
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
                             <div class="form-group">
                                 <label class="form-label" for="telefono">Teléfono</label>
-                                <input id="telefono" class="form-input" type="text" name="telefono" value="{{ old('telefono', $wizardData['telefono'] ?? '') }}" placeholder="55 0000 0000">
+                                <input id="telefono" class="form-input" type="text" name="telefono" value="{{ old('telefono', $wizardData['telefono'] ?? '') }}" placeholder="55 0000 0000" spellcheck="true" autocorrect="on" autocapitalize="off" lang="es-MX">
                                 @error('telefono') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="ciudad">Ciudad</label>
-                                <input id="ciudad" class="form-input" type="text" name="ciudad" value="{{ old('ciudad', $wizardData['ciudad'] ?? '') }}" placeholder="Ciudad, Estado">
+                                <input id="ciudad" class="form-input" type="text" name="ciudad" value="{{ old('ciudad', $wizardData['ciudad'] ?? '') }}" placeholder="Ciudad, Estado" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 @error('ciudad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="direccion">Dirección completa</label>
-                            <input id="direccion" class="form-input" type="text" name="direccion" value="{{ old('direccion', $wizardData['direccion'] ?? '') }}" placeholder="Calle, número, colonia y referencias">
+                            <input id="direccion" class="form-input" type="text" name="direccion" value="{{ old('direccion', $wizardData['direccion'] ?? '') }}" placeholder="Calle, número, colonia y referencias" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             @error('direccion') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
                             <div class="form-group">
                                 <label class="form-label" for="municipio">Municipio</label>
-                                <input id="municipio" class="form-input" type="text" name="municipio" value="{{ old('municipio', $wizardData['municipio'] ?? '') }}" placeholder="Opcional">
+                                <input id="municipio" class="form-input" type="text" name="municipio" value="{{ old('municipio', $wizardData['municipio'] ?? '') }}" placeholder="Municipio de la empresa" required spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 @error('municipio') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="codigo_postal">Código postal</label>
-                                <input id="codigo_postal" class="form-input" type="text" name="codigo_postal" value="{{ old('codigo_postal', $wizardData['codigo_postal'] ?? '') }}" placeholder="Opcional">
+                                <input id="codigo_postal" class="form-input" type="text" name="codigo_postal" value="{{ old('codigo_postal', $wizardData['codigo_postal'] ?? '') }}" placeholder="Opcional" spellcheck="true" autocorrect="on" autocapitalize="none" lang="es-MX">
                                 @error('codigo_postal') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>

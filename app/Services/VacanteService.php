@@ -53,6 +53,9 @@ class VacanteService
             ? (float) $input['salario_max']
             : null;
 
+        $datos['ingresos_ofrecidos'] = $this->limpiarNulo($input['ingresos_ofrecidos'] ?? null);
+        $datos['prestaciones'] = $this->limpiarNulo($input['prestaciones'] ?? null);
+
         $datos['ubicacion'] = $this->limpiarNulo($input['ubicacion'] ?? null);
 
         // Cupos: cantidad de personas a contratar. Mínimo 1.
@@ -75,7 +78,7 @@ class VacanteService
     {
         $datos = $this->prepararDatos($input);
         $datos['empresa_id'] = $empresaId;
-        $datos['estado'] = $estadoInicial;
+        $datos['estado'] = $input['estado'] ?? $estadoInicial;
         $datos['fecha_publicacion'] = now();
 
         return Vacante::create($datos);

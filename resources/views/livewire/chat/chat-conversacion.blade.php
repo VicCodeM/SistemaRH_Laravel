@@ -1,4 +1,4 @@
-<div wire:poll.1500ms.visible="actualizarMensajes" style="display:flex; flex-direction:column; height:100%;">
+<div style="display:flex; flex-direction:column; height:100%;">
     {{-- Encabezado --}}
     <div class="chat-conv-header">
         <a href="{{ route('chat.index') }}" class="chat-back-btn" title="Volver a conversaciones">
@@ -110,7 +110,7 @@
     <div class="chat-input-area">
         <form id="chat-form" wire:submit="enviar" class="chat-input-form">
             <textarea id="chat-textarea" wire:model="mensaje" rows="1" autocomplete="off"
-                placeholder="Escribe un mensaje..." class="chat-input-textarea"></textarea>
+                placeholder="Escribe un mensaje..." class="chat-input-textarea" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX"></textarea>
             <button type="submit" class="chat-input-btn" title="Enviar (Enter)">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             </button>
@@ -162,7 +162,7 @@
                 // Limpiar burbujas optimistas cuando llega la respuesta real
                 if (mio) document.querySelectorAll('.chat-optimistic').forEach(el => el.remove());
 
-                if (ajeno && listo && snd.recibido) snd.recibido();
+                if (ajeno) { sondeoTouch(); if (listo && snd.recibido) snd.recibido(); }
                 if (escribiendo && listo && snd.escribiendo) snd.escribiendo();
                 if (mio || escribiendo || cerca) abajo();
                 if (mio && ta) ta.focus();
@@ -202,6 +202,48 @@
             e.preventDefault();
             chatEnviarRapido();
         });
+
+        // ── Sondeo adaptativo (reemplaza wire:poll) ──────────────────
+        // Activo: 500ms · Idle 15s: 2s · Idle 60s: 5s · Tab oculta: pausa
+        let sondeoTimer = null;
+        let sondeoActividad = Date.now();
+        let sondeoThrottle = 0;
+
+        function sondeoPoll() {
+            if (document.hidden) { sondeoSchedule(); return; }
+            $wire.actualizarMensajes()
+                .then(() => sondeoSchedule())
+                .catch(() => setTimeout(sondeoSchedule, 3000));
+        }
+
+        function sondeoSchedule() {
+            if (sondeoTimer) clearTimeout(sondeoTimer);
+            const idle = Date.now() - sondeoActividad;
+            const delay = idle < 15000 ? 500 : idle < 60000 ? 2000 : 5000;
+            sondeoTimer = setTimeout(sondeoPoll, delay);
+        }
+
+        function sondeoTouch() {
+            const now = Date.now();
+            if (now - sondeoThrottle < 2000) return;
+            sondeoThrottle = now;
+            const estabaInactivo = (now - sondeoActividad) > 15000;
+            sondeoActividad = now;
+            if (estabaInactivo) { clearTimeout(sondeoTimer); sondeoPoll(); }
+        }
+
+        document.addEventListener('mousemove', sondeoTouch, { passive: true });
+        document.addEventListener('keydown', sondeoTouch);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearTimeout(sondeoTimer);
+            } else {
+                sondeoActividad = Date.now();
+                sondeoPoll();
+            }
+        });
+
+        sondeoSchedule();
     </script>
     @endscript
 </div>

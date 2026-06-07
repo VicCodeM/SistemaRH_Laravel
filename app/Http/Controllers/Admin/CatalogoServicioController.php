@@ -27,19 +27,28 @@ class CatalogoServicioController extends Controller
             'nombre' => ['required', 'string', 'max:200'],
             'descripcion' => ['nullable', 'string'],
             'tipo' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
-            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
-            'para_quien' => ['required', 'in:empresa,candidato,ambos'],
+            'flujo' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::flujos()))],
+            'nivel_jerarquico' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
+            'para_quien' => ['nullable', 'in:empresa,candidato,ambos'],
             'activo' => ['boolean'],
             'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico']);
+        $data['flujo'] = $data['flujo'] ?? 'servicio';
+        $data['para_quien'] = $data['para_quien'] ?? 'empresa';
+        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico'] ?? 'todos');
+
+        if ($data['flujo'] === 'vacante') {
+            $data['para_quien'] = 'empresa';
+            $data['nivel_jerarquico'] = 'todos';
+        }
+
         $data['activo'] = $request->boolean('activo', true);
 
-        CatalogoServicio::create($data);
+        $catalogo = CatalogoServicio::create($data);
 
-        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
-            ->with('success', 'Servicio creado correctamente.');
+        return redirect()->route('admin.catalogo.edit', $catalogo)
+            ->with('success', 'Servicio creado correctamente. Ahora puedes agregar su presentacion.');
     }
 
     public function edit(CatalogoServicio $catalogo)
@@ -53,23 +62,36 @@ class CatalogoServicioController extends Controller
             'nombre' => ['required', 'string', 'max:200'],
             'descripcion' => ['nullable', 'string'],
             'tipo' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::tipos()))],
-            'nivel_jerarquico' => ['required', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
-            'para_quien' => ['required', 'in:empresa,candidato,ambos'],
+            'flujo' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::flujos()))],
+            'nivel_jerarquico' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
+            'para_quien' => ['nullable', 'in:empresa,candidato,ambos'],
             'activo' => ['boolean'],
             'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico']);
+        $data['flujo'] = $data['flujo'] ?? 'servicio';
+        $data['para_quien'] = $data['para_quien'] ?? 'empresa';
+        $data['nivel_jerarquico'] = CatalogoServicio::normalizarNivelJerarquico($data['nivel_jerarquico'] ?? 'todos');
+
+        if ($data['flujo'] === 'vacante') {
+            $data['para_quien'] = 'empresa';
+            $data['nivel_jerarquico'] = 'todos';
+        }
+
         $data['activo'] = $request->boolean('activo');
 
         $catalogo->update($data);
 
-        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
+        return redirect()->route('admin.catalogo.edit', $catalogo)
             ->with('success', 'Servicio actualizado correctamente.');
     }
 
     public function toggle(CatalogoServicio $catalogo)
     {
+        if ($catalogo->activo && ! $catalogo->puedeDesactivarse()) {
+            return back()->with('error', 'No se puede desactivar este servicio porque ya tiene pedidos activos o en proceso.');
+        }
+
         $catalogo->update(['activo' => ! $catalogo->activo]);
 
         return back()->with('success', $catalogo->activo ? 'Servicio activado.' : 'Servicio desactivado.');
@@ -80,9 +102,9 @@ class CatalogoServicioController extends Controller
         abort_if($accion !== 'eliminar', 404);
 
         $config = [
-            'titulo' => 'Eliminar servicio del catalogo',
-            'descripcion' => 'El servicio dejara de aparecer para empresas y candidatos.',
-            'mensaje' => 'Confirma si deseas eliminar este servicio del catalogo. Esta accion no se puede deshacer.',
+            'titulo' => 'Eliminar servicio del catálogo',
+            'descripcion' => 'El servicio dejará de aparecer para empresas y candidatos.',
+            'mensaje' => 'Confirma si deseas eliminar este servicio del catálogo. Esta acción no se puede deshacer.',
             'ruta' => route('admin.catalogo.destroy', $catalogo),
             'metodo' => 'DELETE',
             'boton' => 'Eliminar servicio',
@@ -99,6 +121,10 @@ class CatalogoServicioController extends Controller
 
     public function destroy(CatalogoServicio $catalogo)
     {
+        if ($catalogo->tieneSolicitudesRelacionadas()) {
+            return back()->with('error', 'No se puede eliminar este servicio porque ya tiene solicitudes asociadas. Desactivalo en su lugar.');
+        }
+
         $catalogo->delete();
 
         return back()->with('success', 'Servicio eliminado.');

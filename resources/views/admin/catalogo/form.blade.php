@@ -1,107 +1,151 @@
-@php
-    $editando = $servicio->exists;
-    $action = $editando
-        ? route('admin.catalogo.update', $servicio)
-        : route('admin.catalogo.store');
-    $nivelActual = old('nivel_jerarquico', \App\Models\CatalogoServicio::normalizarNivelJerarquico($servicio->nivel_jerarquico));
-@endphp
-
 <x-app-layout>
     <x-slot name="header">
         <nav class="breadcrumbs">
-            <a href="{{ route('admin.dashboard') }}">Administración</a>
+            <a href="{{ route('admin.dashboard') }}">Inicio</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}">Catálogo de servicios</a>
+            <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}">Catalogos</a>
             <span class="breadcrumb-sep">&rsaquo;</span>
-            <span>{{ $editando ? 'Editar servicio' : 'Nuevo servicio' }}</span>
+            <span>{{ $servicio->exists ? 'Editar servicio' : 'Nuevo servicio' }}</span>
         </nav>
-        <h1 class="page-title">{{ $editando ? 'Editar servicio' : 'Agregar servicio al catálogo' }}</h1>
+        <h1 class="page-title">{{ $servicio->exists ? 'Editar servicio' : 'Nuevo servicio' }}</h1>
+        <p class="page-subtitle">Configura el catalogo, define el flujo y agrega aqui mismo la presentacion visual del servicio.</p>
     </x-slot>
 
-    <div style="max-width:640px;">
-        <div class="card">
-            <form method="POST" action="{{ $action }}">
-                @csrf
-                @if($editando)
-                    @method('PUT')
-                @endif
+    @if(session('success'))
+        <div class="alert alert-success mb-4">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger mb-4">{{ session('error') }}</div>
+    @endif
+
+    @php
+        $flujoInicial = old('flujo', $servicio->flujo ?? 'servicio');
+    @endphp
+
+    <div style="max-width:980px; display:flex; flex-direction:column; gap:20px;">
+        <form
+            method="POST"
+            action="{{ $servicio->exists ? route('admin.catalogo.update', $servicio) : route('admin.catalogo.store') }}"
+            class="card"
+            style="padding:24px;"
+            x-data="{ flujo: '{{ $flujoInicial }}' }"
+        >
+            @csrf
+            @if($servicio->exists)
+                @method('PUT')
+            @endif
+
+            <div class="form-grid form-grid-2">
+                <div class="form-group">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" name="nombre" class="form-input" value="{{ old('nombre', $servicio->nombre) }}" required maxlength="200">
+                    @error('nombre') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="nombre">Nombre del servicio <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="nombre" name="nombre" class="form-input @error('nombre') is-invalid @enderror"
-                           value="{{ old('nombre', $servicio->nombre) }}" maxlength="200"
-                           placeholder="Ej: Reclutamiento ejecutivo, Coaching de liderazgo">
-                    @error('nombre')<div class="form-error">{{ $message }}</div>@enderror
+                    <label class="form-label">Categoria *</label>
+                    <select name="tipo" class="form-input" required>
+                        @foreach(\App\Models\CatalogoServicio::tipos() as $key => $label)
+                            <option value="{{ $key }}" @selected(old('tipo', $servicio->tipo) === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('tipo') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="form-group" style="margin-top:18px;">
-                    <label class="form-label" for="descripcion">Descripción</label>
-                    <textarea id="descripcion" name="descripcion" class="form-input @error('descripcion') is-invalid @enderror"
-                              rows="3" placeholder="Breve descripción del servicio">{{ old('descripcion', $servicio->descripcion) }}</textarea>
-                    @error('descripcion')<div class="form-error">{{ $message }}</div>@enderror
+                <div class="form-group">
+                    <label class="form-label">Flujo *</label>
+                    <select name="flujo" class="form-input" x-model="flujo">
+                        @foreach(\App\Models\CatalogoServicio::flujos() as $key => $label)
+                            <option value="{{ $key }}" @selected($flujoInicial === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">
+                        <span x-show="flujo === 'servicio'">Queda disponible para solicitarse desde el catalogo del rol correspondiente.</span>
+                        <span x-show="flujo === 'vacante'">Abre el formulario actual de vacantes sin cambiar su logica interna.</span>
+                    </p>
+                    @error('flujo') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;">
-                    <div class="form-group">
-                        <label class="form-label" for="tipo">Tipo de servicio <span style="color:var(--danger)">*</span></label>
-                        <select id="tipo" name="tipo" class="form-input @error('tipo') is-invalid @enderror">
-                            <option value="">— Selecciona —</option>
-                            @foreach(\App\Models\CatalogoServicio::tipos() as $key => $label)
-                                <option value="{{ $key }}" {{ old('tipo', $servicio->tipo) === $key ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        @error('tipo')<div class="form-error">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="nivel_jerarquico">Jerarquía de servicio <span style="color:var(--danger)">*</span></label>
-                        <select id="nivel_jerarquico" name="nivel_jerarquico" class="form-input @error('nivel_jerarquico') is-invalid @enderror">
-                            <option value="">— Selecciona —</option>
-                            @foreach(\App\Models\CatalogoServicio::nivelesJerarquicosFormulario() as $key => $label)
-                                <option value="{{ $key }}" {{ $nivelActual === $key ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        @error('nivel_jerarquico')<div class="form-error">{{ $message }}</div>@enderror
-                    </div>
+                <div class="form-group" x-show="flujo !== 'vacante'">
+                    <label class="form-label">Para quien *</label>
+                    <select name="para_quien" class="form-input">
+                        @foreach([
+                            'empresa' => 'Empresa',
+                            'candidato' => 'Candidato',
+                            'ambos' => 'Ambos',
+                        ] as $key => $label)
+                            <option value="{{ $key }}" @selected(old('para_quien', $servicio->para_quien ?: 'empresa') === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">Empresa ve servicios marcados como Empresa o Ambos. Candidato solo ve Candidato o Ambos.</p>
+                    @error('para_quien') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;">
-                    <div class="form-group">
-                        <label class="form-label" for="para_quien">Disponible para <span style="color:var(--danger)">*</span></label>
-                        <select id="para_quien" name="para_quien" class="form-input @error('para_quien') is-invalid @enderror">
-                            <option value="empresa" {{ old('para_quien', $servicio->para_quien) === 'empresa' ? 'selected' : '' }}>Empresas</option>
-                            <option value="candidato" {{ old('para_quien', $servicio->para_quien) === 'candidato' ? 'selected' : '' }}>Candidatos</option>
-                            <option value="ambos" {{ old('para_quien', $servicio->para_quien) === 'ambos' ? 'selected' : '' }}>Ambos</option>
-                        </select>
-                        @error('para_quien')<div class="form-error">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="orden">Orden de aparición</label>
-                        <input type="number" id="orden" name="orden" class="form-input @error('orden') is-invalid @enderror"
-                               value="{{ old('orden', $servicio->orden ?? 0) }}" min="0">
-                        <div style="font-size:0.75rem; color:#64748b; margin-top:3px;">Número menor = aparece primero</div>
-                        @error('orden')<div class="form-error">{{ $message }}</div>@enderror
-                    </div>
+                <div class="form-group" x-show="flujo === 'vacante'">
+                    <label class="form-label">Para quien</label>
+                    <input type="hidden" name="para_quien" value="empresa">
+                    <div class="form-input" style="display:flex; align-items:center; color:#475569; background:var(--surface-2);">Empresa</div>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">Las solicitudes de vacante solo se publican para empresas.</p>
                 </div>
 
-                <div class="form-group" style="margin-top:18px;">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="hidden" name="activo" value="0">
-                        <input type="checkbox" name="activo" value="1"
-                               {{ old('activo', $servicio->activo ?? true) ? 'checked' : '' }}
-                               style="width:16px; height:16px; accent-color:var(--accent);">
-                        <span class="form-label" style="margin:0;">Servicio activo (visible para clientes)</span>
+                <div class="form-group" x-show="flujo !== 'vacante'">
+                    <label class="form-label">Nivel jerarquico *</label>
+                    <select name="nivel_jerarquico" class="form-input">
+                        @foreach(\App\Models\CatalogoServicio::nivelesJerarquicosCompatibles() as $key => $label)
+                            <option value="{{ $key }}" @selected(old('nivel_jerarquico', $servicio->nivel_jerarquico ?: 'todos') === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">Usalo solo para servicios de empresa. En candidato normalmente aplica "Todos".</p>
+                    @error('nivel_jerarquico') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="form-group" x-show="flujo === 'vacante'">
+                    <label class="form-label">Nivel del catalogo</label>
+                    <input type="hidden" name="nivel_jerarquico" value="todos">
+                    <div class="form-input" style="display:flex; align-items:center; color:#475569; background:var(--surface-2);">Todos</div>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">El nivel real se define despues en el formulario de vacante.</p>
+                </div>
+
+                <div class="form-group form-grid-span-2">
+                    <label class="form-label">Descripcion</label>
+                    <textarea name="descripcion" class="form-input" rows="4" maxlength="4000" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es">{{ old('descripcion', $servicio->descripcion) }}</textarea>
+                    <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">Este texto alimenta el tooltip de la lista y el detalle completo del servicio.</p>
+                    @error('descripcion') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Orden</label>
+                    <input type="number" name="orden" class="form-input" value="{{ old('orden', $servicio->orden ?? 0) }}" min="0">
+                    @error('orden') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="form-group" style="display:flex; align-items:end; gap:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-weight:600; margin:0;">
+                        <input type="checkbox" name="activo" value="1" @checked(old('activo', $servicio->exists ? $servicio->activo : true))>
+                        Servicio activo
                     </label>
                 </div>
+            </div>
 
-                <div style="display:flex; gap:12px; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
-                    <button type="submit" class="btn btn-primary">
-                        {{ $editando ? 'Guardar cambios' : 'Agregar al catálogo' }}
-                    </button>
-                    <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
-        </div>
+            <div x-show="flujo === 'vacante'" style="margin-top:18px; padding:14px 16px; border:1px solid #bfdbfe; background:#eff6ff; border-radius:12px; color:#1d4ed8; font-size:13px;">
+                Este servicio aparecera en Servicios disponibles, pero el boton del detalle abrira el flujo actual de vacantes.
+            </div>
+
+            <div class="mt-6 flex gap-3 justify-end">
+                <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">{{ $servicio->exists ? 'Guardar cambios' : 'Crear servicio' }}</button>
+            </div>
+        </form>
+
+        @if($servicio->exists)
+            @include('partials.catalogo-servicio-recursos', [
+                'catalogo' => $servicio,
+                'puedeGestionar' => true,
+            ])
+        @else
+            <div class="card" style="padding:20px;">
+                <p style="margin:0; color:#64748b;">Guarda primero el servicio para poder cargar las imagenes de su presentacion.</p>
+            </div>
+        @endif
     </div>
 </x-app-layout>

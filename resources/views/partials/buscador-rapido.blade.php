@@ -4,7 +4,7 @@
         {{-- Caja de búsqueda --}}
         <div style="display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #e2e8f0;">
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;color:#94a3b8;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-            <input id="rh-buscador-input" type="text" autocomplete="off"
+            <input id="rh-buscador-input" type="text" autocomplete="off" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX"
                 placeholder="Buscar empresas, candidatos, internos, vacantes o servicios..."
                 style="flex:1; border:none; outline:none; font-size:15px; color:#1e293b; background:transparent;">
             <kbd style="background:#f1f5f9; color:#64748b; font-size:11px; padding:2px 6px; border-radius:4px;">Esc</kbd>

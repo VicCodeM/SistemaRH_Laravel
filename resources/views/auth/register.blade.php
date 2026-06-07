@@ -27,13 +27,13 @@
                     <div style="margin-bottom:18px;">
                         <h4 style="margin:0 0 4px; font-size:1rem; font-weight:800;">Crea tu acceso</h4>
                         <p style="margin:0; color:#64748b; font-size:0.86rem;">
-                            Te pedimos solo lo indispensable para entrar al sistema.
+                            Te pedimos tu nombre, correo y municipio para validar tu acceso al sistema.
                         </p>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="name">Nombre completo</label>
-                        <input id="name" class="form-input" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Escribe tu nombre completo">
+                        <input id="name" class="form-input" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Escribe tu nombre completo" spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
                         @error('name') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
 
@@ -41,6 +41,12 @@
                         <label class="form-label" for="email">Correo electrónico</label>
                         <input id="email" class="form-input" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" placeholder="tu@correo.com">
                         @error('email') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="municipio">Municipio</label>
+                        <input id="municipio" class="form-input" type="text" name="municipio" value="{{ old('municipio') }}" required autocomplete="address-level2" placeholder="Escribe tu municipio" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
+                        @error('municipio') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">

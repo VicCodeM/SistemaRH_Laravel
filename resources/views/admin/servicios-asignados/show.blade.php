@@ -65,7 +65,7 @@
                             </div>
                         </div>
                     @else
-                        <span class="badge badge-orange" style="font-size:12px;">Pendiente de asignacion</span>
+                        <span class="badge badge-orange" style="font-size:12px;">Pendiente de asignación</span>
                     @endif
                 </div>
 
@@ -110,7 +110,7 @@
             @include('partials.pedido-comentarios', ['servicio' => $tarea])
 
             <div class="card fade-in">
-                <h4 style="font-weight:600; font-size:14px; margin:0 0 14px;">Informacion</h4>
+                <h4 style="font-weight:600; font-size:14px; margin:0 0 14px;">Información</h4>
                 <div style="display:grid; gap:10px; font-size:13px;">
                     <div>
                         <p style="color:var(--text-muted); margin:0 0 2px; font-size:11px; text-transform:uppercase; letter-spacing:.05em;">Solicitado por</p>
@@ -137,5 +137,9 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div style="margin-top:20px;">
+        @include('partials.servicio-recursos', ['servicio' => $tarea])
     </div>
 </x-app-layout>

@@ -211,7 +211,8 @@ class ServiciosKanbanBoard extends Component
             app(ServicioAsignadoService::class)->asignarInterno($solicitud, $interno);
             $this->notificar("Asignado a {$interno->name}", 'success');
         } catch (\Throwable $e) {
-            $this->notificar($e->getMessage(), 'error');
+            report($e);
+            $this->notificar('No fue posible asignar el interno. Intenta de nuevo.', 'error');
         }
     }
 

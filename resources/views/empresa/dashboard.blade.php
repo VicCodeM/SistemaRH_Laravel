@@ -55,12 +55,12 @@
 
         <div class="metric-card">
             <div class="metric-top">
-                <span class="metric-label">Candidatos asignados</span>
+                <span class="metric-label">Personal contratado</span>
                 <div class="metric-icon" style="background:var(--accent-light); color:var(--accent);">
                     <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z"/></svg>
                 </div>
             </div>
-            <div class="metric-value">{{ $stats['candidatos_total'] }}</div>
+            <div class="metric-value">{{ $stats['contratados'] }}</div>
             <span class="metric-change" style="font-size:12px; color:#64748b;">Total en todos tus servicios</span>
         </div>
 
@@ -74,6 +74,46 @@
             <div class="metric-value">{{ $stats['en_proceso'] }}</div>
             <span class="metric-change" style="font-size:12px; color:#64748b;">Ya entrevistado</span>
         </div>
+    </div>
+
+    @php
+        $ultimaSolicitud = $solicitudes_recientes->first();
+    @endphp
+
+    <div class="card fade-in" style="margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+            <div>
+                <h3 style="font-weight:700; margin:0 0 4px; font-size:1rem;">Estado de tu solicitud más reciente</h3>
+                <p style="margin:0; color:#64748b; font-size:13px;">
+                    Así puedes revisar el avance sin abrir el detalle.
+                </p>
+            </div>
+
+            @if($ultimaSolicitud)
+                <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($ultimaSolicitud->estado) }}">
+                    {{ \App\Models\Vacante::estadoLabel($ultimaSolicitud->estado) }}
+                </span>
+            @endif
+        </div>
+
+        @if($ultimaSolicitud)
+            <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; margin-top:16px; padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2);">
+                <div>
+                    <div style="font-weight:600;">{{ $ultimaSolicitud->titulo }}</div>
+                    <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                        {{ \App\Models\Vacante::tiposServicio()[$ultimaSolicitud->tipo_servicio] ?? '—' }}
+                        @if($ultimaSolicitud->fecha_publicacion)
+                            · {{ $ultimaSolicitud->fecha_publicacion->format('d/m/Y') }}
+                        @endif
+                    </div>
+                </div>
+                <a href="{{ route('empresa.solicitudes.ver', $ultimaSolicitud) }}" class="btn btn-secondary btn-sm">Ver detalle</a>
+            </div>
+        @else
+            <div style="margin-top:16px; padding:16px; border:1px dashed var(--border); border-radius:10px; color:#64748b; font-size:13px;">
+                Todavía no has publicado solicitudes. Cuando crees una, aquí verás su estatus.
+            </div>
+        @endif
     </div>
 
     <div class="card fade-in" style="margin-top:24px;">
@@ -98,7 +138,7 @@
                         <tr style="border-bottom:2px solid var(--border);">
                             <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Solicitud</th>
                             <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Tipo</th>
-                            <th style="text-align:center; padding:10px 8px; color:var(--text-muted); font-weight:500;">Candidatos</th>
+                            <th style="text-align:center; padding:10px 8px; color:var(--text-muted); font-weight:500;">Contratados</th>
                             <th style="text-align:left; padding:10px 8px; color:var(--text-muted); font-weight:500;">Estado</th>
                             <th style="text-align:right; padding:10px 8px; color:var(--text-muted); font-weight:500;"></th>
                         </tr>
@@ -139,7 +179,7 @@
 
                             <div class="candidate-mobile-meta">
                                 <div>
-                                    <p class="candidate-mobile-meta-label">Candidatos</p>
+                                    <p class="candidate-mobile-meta-label">Contratados</p>
                                     <p class="candidate-mobile-meta-value">{{ $sol->postulaciones_count }}</p>
                                 </div>
                             </div>

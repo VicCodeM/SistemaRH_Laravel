@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Notifica al candidato cuando su postulación cambia a 'seleccionado' o 'rechazado'.
+ * Notifica al candidato cuando su postulacion cambia a seleccionado o rechazado.
  */
 class PostulacionCambioEstado extends Notification
 {
@@ -25,29 +25,32 @@ class PostulacionCambioEstado extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $vacante  = $this->postulacion->vacante;
-        $empresa  = $vacante?->empresa?->nombre_empresa ?? 'la empresa';
-        $titulo   = $vacante?->titulo ?? 'la vacante';
-        $esBuena  = $this->postulacion->estado === 'seleccionado';
+        $vacante = $this->postulacion->vacante;
+        $empresa = $vacante?->empresa?->nombre_empresa ?? 'la empresa';
+        $titulo = $vacante?->titulo ?? 'la vacante';
+        $esBuena = $this->postulacion->estado === 'seleccionado';
+        $nombre = trim((string) ($notifiable->name ?? ''));
 
         $mail = (new MailMessage)
             ->subject($esBuena
-                ? "¡Felicidades! Fuiste seleccionado para {$titulo}"
-                : "Actualización sobre tu postulación a {$titulo}");
+                ? "¡Buenas noticias! Fuiste seleccionado para {$titulo}"
+                : "Actualización sobre tu postulacion a {$titulo}")
+            ->greeting($nombre !== '' ? "Hola {$nombre}" : 'Hola');
 
         if ($esBuena) {
-            $mail->greeting("¡Hola {$notifiable->name}!")
-                ->line("Tenemos buenas noticias. **{$empresa}** te seleccionó para el puesto de **{$titulo}**.")
-                ->line('El siguiente paso es esperar a que la empresa te contacte para coordinar.')
-                ->action('Ver mi postulación', route('candidato.postulaciones'))
-                ->line('Mucho éxito en esta nueva etapa.');
+            $mail->line("Tenemos buenas noticias: **{$empresa}** te seleccionó para el puesto de **{$titulo}**.")
+                ->line('En breve podrían contactarte para continuar con el proceso.')
+                ->action('Ver mi postulacion', route('candidato.postulaciones'))
+                ->line('Gracias por confiar en SistemaRH para tu búsqueda laboral.')
+                ->line('Te deseamos mucho éxito en esta nueva etapa.');
         } else {
-            $mail->greeting("Hola {$notifiable->name}")
-                ->line("Queremos avisarte que **{$empresa}** decidió no continuar con tu postulación a **{$titulo}** en esta ocasión.")
-                ->line('No te desanimes. Sigue explorando otras vacantes activas que pueden ser para ti.')
-                ->action('Ver vacantes disponibles', route('candidato.vacantes'));
+            $mail->line("Te informamos que **{$empresa}** decidió no continuar con tu postulacion a **{$titulo}** en esta ocasión.")
+                ->line('Sabemos que cada proceso es importante, así que te invitamos a seguir explorando nuevas vacantes activas.')
+                ->action('Ver vacantes disponibles', route('candidato.vacantes'))
+                ->line('Tu postulacion queda registrada en el sistema para futuras consultas.')
+                ->line('Te deseamos éxito en tus próximas oportunidades.');
         }
 
-        return $mail;
+        return $mail->salutation('Saludos,');
     }
 }

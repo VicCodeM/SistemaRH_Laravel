@@ -26,6 +26,7 @@
 
     @php
         $tipos = \App\Models\Vacante::tiposServicio();
+        $compensacion = $vacante->compensacionDetalles();
     @endphp
 
     <div style="display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start;">
@@ -52,6 +53,14 @@
                         <span>{{ $vacante->fecha_publicacion?->format('d/m/Y') ?? '—' }}</span>
                     </div>
                     <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
+                        <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">Estado actual</span>
+                        <span>
+                            <span class="badge {{ \App\Models\Vacante::estadoBadgeClass($vacante->estado) }}" style="font-size:0.78rem;">
+                                {{ \App\Models\Vacante::estadoLabel($vacante->estado) }}
+                            </span>
+                        </span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
                         <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">Requisitos</span>
                         <span style="font-size:0.9rem; line-height:1.6; color:var(--text);">{{ $vacante->requisitoResumen() }}</span>
                     </div>
@@ -61,12 +70,25 @@
                             <div style="font-size:0.9rem; line-height:1.6; color:var(--text); white-space:pre-line;">{{ $vacante->requerimientos }}</div>
                         </div>
                     @endif
+                    @if(!empty($compensacion))
+                        <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:4px;">
+                            <div style="color:#64748b; font-size:0.85rem; margin-bottom:8px;">Compensación y prestaciones</div>
+                            <div style="display:grid; gap:10px;">
+                                @foreach($compensacion as $label => $valor)
+                                    <div style="display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:start;">
+                                        <span style="color:#64748b; font-size:0.85rem; padding-top:1px;">{{ $label }}</span>
+                                        <span style="font-size:0.9rem; line-height:1.6; color:var(--text); white-space:pre-line;">{{ $valor }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             @if($vacante->postulaciones->isNotEmpty())
                 <div class="card" style="margin-top:16px;">
-                    <h3 style="font-weight:600; font-size:1rem; margin:0 0 16px;">Candidatos asignados</h3>
+                    <h3 style="font-weight:600; font-size:1rem; margin:0 0 16px;">Personal asignado</h3>
 
                     <div style="display:grid; gap:10px;">
                         @foreach($vacante->postulaciones as $postulacion)
@@ -82,14 +104,7 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    @if($postulacion->asignacion_forzada)
-                                        <span class="badge badge-red">Excepción</span>
-                                    @endif
-                                    <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacion->estado) }}" style="font-size:0.75rem;">
-                                        {{ \App\Models\Postulacion::estadoLabel($postulacion->estado) }}
-                                    </span>
-                                </div>
+                                <span class="badge badge-success" style="font-size:0.75rem;">Contratado</span>
                             </div>
                         @endforeach
                     </div>
@@ -114,7 +129,11 @@
                     </div>
                     @if($vacante->postulaciones->isNotEmpty())
                         <div style="margin-top:12px; font-size:0.85rem; color:#22c55e; font-weight:600;">
-                            {{ $vacante->postulaciones->count() }} candidato(s) asignado(s)
+                            {{ $vacante->postulaciones->count() }} candidato(s) contratado(s)
+                        </div>
+                    @else
+                        <div style="margin-top:12px; font-size:0.85rem; color:#f59e0b; font-weight:500;">
+                            En proceso de selección
                         </div>
                     @endif
                 @elseif($vacante->estado === 'rechazada')

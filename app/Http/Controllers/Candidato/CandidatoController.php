@@ -114,7 +114,10 @@ class CandidatoController extends Controller
             return $redirect;
         }
 
+        $candidato = $this->candidatoActual();
+
         $query = Vacante::with('empresa')
+            ->with(['postulaciones' => fn ($postulaciones) => $postulaciones->where('candidato_id', $candidato->id)])
             ->where('estado', 'activa')
             ->orderByDesc('fecha_publicacion');
 
@@ -139,15 +142,19 @@ class CandidatoController extends Controller
         }
 
         $candidato = $this->candidatoActual();
-        $yaPostulado = Postulacion::where('candidato_id', $candidato->id)
-            ->where('vacante_id', $vacante->id)
-            ->exists();
+        $vacante->load([
+            'empresa.usuario',
+            'postulaciones' => fn ($postulaciones) => $postulaciones->where('candidato_id', $candidato->id),
+        ]);
+
+        $postulacionActual = $vacante->postulaciones->first();
+        $yaPostulado = (bool) $postulacionActual;
 
         $puedePostular = $candidato->solicitud_estado === 'aprobada'
             && $vacante->estado === 'activa'
             && ! $yaPostulado;
 
-        return view('candidato.vacante-modal', compact('vacante', 'candidato', 'yaPostulado', 'puedePostular'));
+        return view('candidato.vacante-modal', compact('vacante', 'candidato', 'yaPostulado', 'puedePostular', 'postulacionActual'));
     }
 
     public function postulaciones(): View|RedirectResponse

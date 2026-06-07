@@ -64,7 +64,7 @@
             <option value="bloqueado" {{ request('estado') === 'bloqueado' ? 'selected' : '' }}>Bloqueados</option>
         </select>
         <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Nombre o email..."
-               style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); min-width:220px;">
+               style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); min-width:220px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
         <button type="submit" class="btn btn-secondary" style="padding:8px 14px; font-size:13px;">Buscar</button>
         @if(request('buscar') || request('estado'))
             <a href="{{ route('admin.personal-interno.index') }}" class="btn btn-secondary" style="padding:8px 12px; font-size:13px;">Limpiar</a>

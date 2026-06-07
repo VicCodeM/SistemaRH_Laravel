@@ -170,7 +170,7 @@ class ServicioAsignadoController extends Controller
 
     public function show(ServicioAsignado $tarea)
     {
-        $tarea->load(['servicio', 'asignable', 'asignadoA', 'asignadoPor', 'solicitadoPor']);
+        $tarea->load(['servicio', 'asignable', 'asignadoA', 'asignadoPor', 'solicitadoPor', 'recursos.subidoPor']);
 
         return view('admin.servicios-asignados.show', compact('tarea'));
     }
@@ -310,7 +310,9 @@ class ServicioAsignadoController extends Controller
         try {
             $servicio->cambiarEstado($tarea, $nuevoEstado);
         } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'No fue posible actualizar el estado. Intenta de nuevo.');
         }
 
         return back()->with('success', 'Estado actualizado correctamente.');
@@ -338,7 +340,9 @@ class ServicioAsignadoController extends Controller
                 $data['motivo_asignacion'] ?? null
             );
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'No fue posible asignar el interno. Intenta de nuevo.');
         }
 
         return redirect()
@@ -358,7 +362,9 @@ class ServicioAsignadoController extends Controller
         try {
             $servicio->liberarInterno($tarea, $data['motivo'] ?? null);
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'No fue posible liberar al interno. Intenta de nuevo.');
         }
 
         return back()->with('success', 'Interno liberado. Ya puedes asignar a otro.');

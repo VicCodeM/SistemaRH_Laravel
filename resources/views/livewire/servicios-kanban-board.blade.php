@@ -40,7 +40,7 @@
                 </select>
             @endif
 
-            <input type="text" wire:model.live.debounce.300ms="buscar" placeholder="Buscar..." class="form-input" style="width: 220px; padding: 7px 12px; font-size: 0.85rem;">
+            <input type="text" wire:model.live.debounce.300ms="buscar" placeholder="Buscar..." class="form-input" style="width: 220px; padding: 7px 12px; font-size: 0.85rem;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
         </div>
     </div>
 

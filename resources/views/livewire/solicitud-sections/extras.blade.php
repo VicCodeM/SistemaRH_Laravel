@@ -21,19 +21,19 @@
             <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">CURP <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="curp" placeholder="CURP (18 caracteres)">
+                    <input type="text" class="form-input" wire:model="curp" placeholder="CURP (18 caracteres)" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">NSS — Número de seguro social <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="nore_seguro_social" placeholder="Número de seguro social">
+                    <input type="text" class="form-input" wire:model="nore_seguro_social" placeholder="Número de seguro social" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">RFC <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="rfc" placeholder="RFC">
+                    <input type="text" class="form-input" wire:model="rfc" placeholder="RFC" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Afore <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="afore" placeholder="Nombre de tu Afore">
+                    <input type="text" class="form-input" wire:model="afore" placeholder="Nombre de tu Afore" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
         </div>
@@ -60,7 +60,7 @@
                 @if($cartilla_tiene === 'si')
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Número de cartilla</label>
-                        <input type="text" class="form-input" wire:model="cartilla_militar" placeholder="Número de cartilla militar">
+                        <input type="text" class="form-input" wire:model="cartilla_militar" placeholder="Número de cartilla militar" spellcheck="true" autocapitalize="sentences">
                     </div>
                 @endif
             </div>
@@ -88,7 +88,7 @@
                 @if($pasaporte_tiene === 'si')
                     <div class="form-group" style="margin:0;">
                         <label class="form-label">Número de pasaporte</label>
-                        <input type="text" class="form-input" wire:model="pasaporte" placeholder="Número de pasaporte">
+                        <input type="text" class="form-input" wire:model="pasaporte" placeholder="Número de pasaporte" spellcheck="true" autocapitalize="sentences">
                     </div>
                 @endif
             </div>
@@ -117,11 +117,11 @@
                     <div class="solicitud-grid-3">
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Clase</label>
-                            <input type="text" class="form-input" wire:model="licencia_conducir.clase" placeholder="Ej. A, B, C">
+                            <input type="text" class="form-input" wire:model="licencia_conducir.clase" placeholder="Ej. A, B, C" spellcheck="true" autocapitalize="sentences">
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Número</label>
-                            <input type="text" class="form-input" wire:model="licencia_conducir.numero" placeholder="Número de licencia">
+                            <input type="text" class="form-input" wire:model="licencia_conducir.numero" placeholder="Número de licencia" spellcheck="true" autocapitalize="sentences">
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Vigencia</label>
@@ -151,25 +151,25 @@
                             <div class="solicitud-grid-4" style="margin-bottom:10px;">
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Nombre</label>
-                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.nombre" placeholder="Nombre completo">
+                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.nombre" placeholder="Nombre completo" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Teléfono</label>
-                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.telefono" placeholder="Teléfono">
+                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.telefono" placeholder="Teléfono" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Ocupación</label>
-                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.ocupacion" placeholder="Ocupación">
+                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.ocupacion" placeholder="Ocupación" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Tiempo de conocerlo</label>
-                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.tiempo" placeholder="Ej. 3 años">
+                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.tiempo" placeholder="Ej. 3 años" spellcheck="true" autocapitalize="sentences">
                                 </div>
                             </div>
                             <div style="display:flex;gap:10px;align-items:flex-end;">
                                 <div class="form-group" style="margin:0;flex:1;">
                                     <label class="form-label">Domicilio</label>
-                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.domicilio" placeholder="Domicilio de la referencia">
+                                    <input type="text" class="form-input" wire:model="referencias_personales.{{ $index }}.domicilio" placeholder="Domicilio de la referencia" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <button type="button" class="btn btn-ghost btn-sm" x-on:click="$wire.eliminarReferencia({{ $index }})" wire:loading.attr="disabled" style="color:var(--danger);border-color:var(--danger-light);flex-shrink:0;">Quitar</button>
                             </div>

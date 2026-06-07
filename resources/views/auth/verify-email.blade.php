@@ -17,7 +17,7 @@
 
     <div class="divider"></div>
 
-    <form method="POST" action="{{ route('logout') }}">
+    <form method="POST" action="{{ route('logout') }}" data-no-spa>
         @csrf
         <button type="submit" class="btn btn-secondary btn-lg" style="width: 100%;">Cerrar sesión</button>
     </form>

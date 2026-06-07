@@ -44,7 +44,7 @@
                class="btn btn-primary">
                 Cerrar sesión
             </a>
-            <form id="logout-form-pendiente" method="POST" action="{{ route('logout') }}" style="display:none;">
+            <form id="logout-form-pendiente" method="POST" action="{{ route('logout') }}" style="display:none;" data-no-spa>
                 @csrf
             </form>
             <a href="{{ route('login') }}" class="btn btn-secondary">Volver al inicio de sesión</a>

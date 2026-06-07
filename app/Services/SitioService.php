@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ConfiguracionSistema;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Maneja la identidad pública del sitio: SEO, favicon, contenido del landing
@@ -28,6 +29,7 @@ class SitioService
         'sitio_nombre'        => 'SistemaRH',
         'sitio_subtitulo'     => 'Gestión de talento',
         'sitio_descripcion'   => 'Plataforma de gestión de talento - Reclutamiento, seguimiento de candidatos y automatización de procesos.',
+        'sitio_logo'          => null,
         'sitio_favicon'       => null,
 
         // Hero del landing
@@ -64,10 +66,18 @@ class SitioService
      */
     public function valores(): array
     {
-        $guardados = ConfiguracionSistema::query()
-            ->whereIn('clave', array_keys(self::DEFAULTS))
-            ->pluck('valor', 'clave')
-            ->toArray();
+        try {
+            if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+                return self::DEFAULTS;
+            }
+
+            $guardados = ConfiguracionSistema::query()
+                ->whereIn('clave', array_keys(self::DEFAULTS))
+                ->pluck('valor', 'clave')
+                ->toArray();
+        } catch (\Throwable) {
+            return self::DEFAULTS;
+        }
 
         $resultado = [];
         foreach (self::DEFAULTS as $clave => $defecto) {
@@ -85,7 +95,7 @@ class SitioService
      */
     public function clavesTexto(): array
     {
-        return array_values(array_diff(array_keys(self::DEFAULTS), ['sitio_favicon']));
+        return array_values(array_diff(array_keys(self::DEFAULTS), ['sitio_logo', 'sitio_favicon']));
     }
 
     /**
@@ -95,6 +105,10 @@ class SitioService
      */
     public function guardarTextos(array $datos): void
     {
+        if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+            return;
+        }
+
         foreach ($this->clavesTexto() as $clave) {
             if (! array_key_exists($clave, $datos)) {
                 continue;
@@ -112,6 +126,10 @@ class SitioService
      */
     public function guardarFavicon(UploadedFile $archivo): string
     {
+        if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+            return '';
+        }
+
         $this->eliminarFavicon();
 
         $ruta = $archivo->store(self::CARPETA_FAVICON, 'public');
@@ -125,10 +143,35 @@ class SitioService
     }
 
     /**
+     * Sube un nuevo logo del sitio (reemplaza el anterior).
+     */
+    public function guardarLogo(UploadedFile $archivo): string
+    {
+        if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+            return '';
+        }
+
+        $this->eliminarLogo();
+
+        $ruta = $archivo->store(self::CARPETA_FAVICON, 'public');
+
+        ConfiguracionSistema::guardar('sitio_logo', $ruta, [
+            'grupo' => self::GRUPO,
+            'tipo'  => 'string',
+        ]);
+
+        return $ruta;
+    }
+
+    /**
      * Elimina el favicon actual del almacenamiento y limpia su valor.
      */
     public function eliminarFavicon(): void
     {
+        if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+            return;
+        }
+
         $actual = ConfiguracionSistema::texto('sitio_favicon');
 
         if ($actual && Storage::disk('public')->exists($actual)) {
@@ -142,11 +185,43 @@ class SitioService
     }
 
     /**
+     * Elimina el logo actual del almacenamiento y limpia su valor.
+     */
+    public function eliminarLogo(): void
+    {
+        if (! Schema::hasTable((new ConfiguracionSistema)->getTable())) {
+            return;
+        }
+
+        $actual = ConfiguracionSistema::texto('sitio_logo');
+
+        if ($actual && Storage::disk('public')->exists($actual)) {
+            Storage::disk('public')->delete($actual);
+        }
+
+        ConfiguracionSistema::guardar('sitio_logo', '', [
+            'grupo' => self::GRUPO,
+            'tipo'  => 'string',
+        ]);
+    }
+
+    /**
      * URL pública del favicon, o null si no hay.
      */
     public function faviconUrl(): ?string
     {
         $ruta = ConfiguracionSistema::texto('sitio_favicon');
+
+        return $ruta ? asset('storage/' . $ruta) : null;
+    }
+
+    /**
+     * URL pública del logo del sitio. Si no hay logo, cae al favicon.
+     */
+    public function logoUrl(): ?string
+    {
+        $ruta = ConfiguracionSistema::texto('sitio_logo')
+            ?: ConfiguracionSistema::texto('sitio_favicon');
 
         return $ruta ? asset('storage/' . $ruta) : null;
     }

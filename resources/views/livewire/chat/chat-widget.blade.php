@@ -1,8 +1,5 @@
 <div class="chat-fab-wrap" data-noleidos="{{ $noLeidosTotal }}"
-    @if($abierto && $conv) wire:poll.1500ms
-    @elseif($abierto) wire:poll.3s
-    @else wire:poll.5s
-    @endif>
+    data-estado="{{ $abierto && $conv ? 'conv' : ($abierto ? 'lista' : 'cerrado') }}">
     {{-- Botón flotante --}}
     <button type="button" class="chat-fab {{ $abierto ? 'abierto' : '' }} {{ (!$abierto && $noLeidosTotal > 0) ? 'tiene-nuevos' : '' }}" wire:click="toggle" title="Mensajes">
         @if($abierto)
@@ -114,7 +111,7 @@
                 <div class="chat-input-area">
                     <form id="fab-form" wire:submit="enviar" class="chat-input-form">
                         <textarea id="fab-textarea" wire:model="mensaje" rows="1" autocomplete="off"
-                            placeholder="Escribe un mensaje..." class="chat-input-textarea"></textarea>
+                            placeholder="Escribe un mensaje..." class="chat-input-textarea" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX"></textarea>
                         <button type="submit" class="chat-input-btn" title="Enviar">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                         </button>
@@ -136,7 +133,7 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform .2s; {{ $mostrarNuevos ? 'transform:rotate(180deg);' : '' }}"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             @if($mostrarNuevos)
-                                <input type="text" wire:model.live.debounce.300ms="buscarUsuario" placeholder="Buscar persona..." class="chat-new-search">
+                                <input type="text" wire:model.live.debounce.300ms="buscarUsuario" placeholder="Buscar persona..." class="chat-new-search" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 <div class="chat-new-list">
                                     @forelse($usuariosSinChat as $u)
                                         <button type="button" wire:click="iniciarChatConUsuario({{ $u->id }})" class="chat-new-user">
@@ -260,6 +257,28 @@
             cont.scrollTop = cont.scrollHeight;
         }
 
+        // ── Notificaciones de escritorio ──
+        if ('Notification' in window && Notification.permission === 'default') {
+            // Pedir permiso tras primera interacción del usuario
+            document.addEventListener('click', function _perm() {
+                Notification.requestPermission();
+                document.removeEventListener('click', _perm);
+            }, { once: true });
+        }
+
+        function fabNotificarEscritorio(cantidad) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            if (!document.hidden) return; // solo si la pestaña está oculta
+            const n = new Notification('Nuevo mensaje', {
+                body: cantidad > 1 ? 'Tienes ' + cantidad + ' mensajes sin leer' : 'Tienes un mensaje nuevo',
+                icon: document.querySelector('link[rel="icon"]')?.href || '/favicon.ico',
+                tag: 'chat-rh', // reemplaza notificaciones anteriores
+                silent: true,   // el sonido ya lo maneja el chat
+            });
+            n.onclick = () => { window.focus(); n.close(); };
+            setTimeout(() => n.close(), 6000);
+        }
+
         function fabCheckSonidos() {
             const wrap = document.querySelector('.chat-fab-wrap');
             if (!wrap) return;
@@ -275,6 +294,7 @@
                 } else {
                     // Estoy en la lista o cerrado: sonido de "notificación"
                     if (snd.notificacion) snd.notificacion();
+                    fabNotificarEscritorio(nuevoNoLeidos);
                 }
             }
             fabPrevNoLeidos = nuevoNoLeidos;
@@ -316,6 +336,60 @@
             fabCheckSonidos();
             setTimeout(() => { fabListo = true; }, 800);
         });
+
+        // ── Sondeo adaptativo (reemplaza wire:poll) ──────────────────
+        // Conv abierta: 500ms-5s · Lista: 3s · Cerrado: 8s · Tab oculta: pausa
+        let fabSondeoTimer = null;
+        let fabSondeoActividad = Date.now();
+        let fabSondeoThrottle = 0;
+
+        function fabGetDelay() {
+            const wrap = document.querySelector('.chat-fab-wrap');
+            const estado = wrap ? wrap.dataset.estado : 'cerrado';
+
+            if (estado === 'conv') {
+                const idle = Date.now() - fabSondeoActividad;
+                return idle < 15000 ? 500 : idle < 60000 ? 2000 : 5000;
+            }
+            if (estado === 'lista') return 3000;
+            return 4000; // cerrado: solo badge
+        }
+
+        function fabSondeoPoll() {
+            $wire.$refresh()
+                .then(() => fabSondeoSchedule())
+                .catch(() => setTimeout(fabSondeoSchedule, 5000));
+        }
+
+        function fabSondeoSchedule() {
+            if (fabSondeoTimer) clearTimeout(fabSondeoTimer);
+            // Tab oculta: sondeo lento (15s) para seguir detectando mensajes y notificar
+            const delay = document.hidden ? 15000 : fabGetDelay();
+            fabSondeoTimer = setTimeout(fabSondeoPoll, delay);
+        }
+
+        function fabSondeoTouch() {
+            const now = Date.now();
+            if (now - fabSondeoThrottle < 2000) return;
+            fabSondeoThrottle = now;
+            const estabaInactivo = (now - fabSondeoActividad) > 15000;
+            fabSondeoActividad = now;
+            if (estabaInactivo) { clearTimeout(fabSondeoTimer); fabSondeoPoll(); }
+        }
+
+        document.addEventListener('mousemove', fabSondeoTouch, { passive: true });
+        document.addEventListener('keydown', fabSondeoTouch);
+        document.addEventListener('visibilitychange', () => {
+            clearTimeout(fabSondeoTimer);
+            if (document.hidden) {
+                fabSondeoSchedule(); // sondeo lento (15s) para notificaciones de escritorio
+            } else {
+                fabSondeoActividad = Date.now();
+                fabSondeoPoll(); // volver a velocidad normal
+            }
+        });
+
+        fabSondeoSchedule();
     </script>
     @endscript
 </div>

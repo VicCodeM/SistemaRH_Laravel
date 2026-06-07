@@ -1,4 +1,4 @@
-@php
+﻿@php
     $tabActivo = $tabActivo ?? request('tab', 'usuarios');
     $baseQuery = request()->except(['tab', 'page']);
     $tabs = [
@@ -20,12 +20,12 @@
         'parametros' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'parametros'])),
             'titulo' => 'Parametros',
-            'detalle' => 'Reglas base del sistema.',
+            'detalle' => 'Reglas base del sistema y acceso por municipio.',
         ],
         'sitio' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'sitio'])),
             'titulo' => 'Sitio web',
-            'detalle' => 'Nombre, favicon, landing y paginas legales.',
+            'detalle' => 'Nombre, logo, favicon, landing y paginas legales.',
         ],
         'catalogos' => [
             'ruta' => route('admin.configuracion', array_merge($baseQuery, ['tab' => 'catalogos'])),
@@ -115,7 +115,7 @@
                         <input type="hidden" name="tab" value="usuarios">
                         <div>
                             <label class="form-label">Buscar</label>
-                            <input type="text" name="buscar" value="{{ request('buscar') }}" class="form-input" placeholder="Nombre o correo...">
+                        <input type="text" name="buscar" value="{{ request('buscar') }}" class="form-input" placeholder="Nombre o correo..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                         </div>
                         <div>
                             <label class="form-label">Rol</label>
@@ -388,6 +388,24 @@
                         </label>
                     </div>
 
+
+                    <div style="margin-top:18px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--surface-2);">
+                        <label style="display:flex; gap:12px; align-items:flex-start; cursor:pointer;">
+                            <input type="checkbox" name="acceso_municipios_todos" value="1" {{ $parametros['acceso_municipios_todos'] ? 'checked' : '' }} style="margin-top:4px; width:18px; height:18px;">
+                            <div>
+                                <div style="font-weight:700; color:var(--text);">Permitir acceso desde todos los municipios</div>
+                                <div style="margin-top:4px; color:#64748b; font-size:0.84rem; line-height:1.6;">
+                                    Si se desactiva, solo podran entrar los municipios que escribas abajo.
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div style="margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--surface-2);">
+                        <div style="font-weight:700; color:var(--text); margin-bottom:6px;">Municipios permitidos</div>
+                        <p style="margin:0 0 10px; color:#64748b; font-size:0.84rem; line-height:1.6;">Escribe uno por linea. Solo aplica cuando la opcion anterior esta desactivada.</p>
+                        <textarea name="acceso_municipios_permitidos" class="form-input" rows="6" placeholder="Monterrey&#10;Guadalupe&#10;Apodaca" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('acceso_municipios_permitidos', $parametros['acceso_municipios_permitidos_texto']) }}</textarea>
+                    </div>
                     <div class="toolbar-wrap" style="margin-top:18px;">
                         <button type="submit" class="btn btn-primary">Guardar parametros</button>
                     </div>
@@ -405,28 +423,56 @@
                     {{-- Identidad / SEO --}}
                     <div class="card" style="margin-bottom:16px;">
                         <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Identidad y SEO</h2>
-                        <p style="margin:0 0 16px; color:#64748b; font-size:0.84rem;">Nombre del sitio, descripcion para buscadores e icono (favicon).</p>
+                        <p style="margin:0 0 16px; color:#64748b; font-size:0.84rem;">Nombre del sitio, descripcion para buscadores, logo y favicon.</p>
 
                         <div style="display:grid; gap:14px;">
                             <div>
                                 <label class="form-label">Nombre del sitio</label>
-                                <input type="text" name="sitio_nombre" class="form-input" value="{{ old('sitio_nombre', $sitio['sitio_nombre']) }}" maxlength="120" required>
+                                <input type="text" name="sitio_nombre" class="form-input" value="{{ old('sitio_nombre', $sitio['sitio_nombre']) }}" maxlength="120" required spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">La segunda parte se muestra en azul (ej. "Sistema<strong>RH</strong>" o pon un espacio: "Mi Empresa RH").</p>
                             </div>
                             <div>
                                 <label class="form-label">Subtitulo / eslogan</label>
-                                <input type="text" name="sitio_subtitulo" class="form-input" value="{{ old('sitio_subtitulo', $sitio['sitio_subtitulo']) }}" maxlength="120" placeholder="Ej. Gestion de talento">
+                                <input type="text" name="sitio_subtitulo" class="form-input" value="{{ old('sitio_subtitulo', $sitio['sitio_subtitulo']) }}" maxlength="120" placeholder="Ej. Gestion de talento" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                 <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">Aparece bajo el nombre en login y registro.</p>
                             </div>
                             <div>
                                 <label class="form-label">Descripcion (SEO)</label>
-                                <textarea name="sitio_descripcion" class="form-input" rows="2" maxlength="300" placeholder="Frase corta que aparece en buscadores...">{{ old('sitio_descripcion', $sitio['sitio_descripcion']) }}</textarea>
+                                <textarea name="sitio_descripcion" class="form-input" rows="2" maxlength="300" placeholder="Frase corta que aparece en buscadores..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('sitio_descripcion', $sitio['sitio_descripcion']) }}</textarea>
+                            </div>
+                            <div>
+                                @php
+                                    $logoSitioActual = !empty($sitio['sitio_logo'])
+                                        ? $sitio['sitio_logo']
+                                        : (!empty($sitio['sitio_favicon']) ? $sitio['sitio_favicon'] : null);
+                                @endphp
+                                <label class="form-label">Logo para correos y marca</label>
+                                <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                                    @if($logoSitioActual)
+                                        <img src="{{ asset('storage/' . $logoSitioActual) }}" alt="logo actual"
+                                             style="width:64px; height:64px; border-radius:14px; border:1px solid var(--border); object-fit:contain; background:#fff;"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                        <span style="display:none; font-size:0.78rem; color:var(--danger, #dc2626);">No se pudo cargar. Ejecuta: php artisan storage:link</span>
+                                    @else
+                                        <span style="font-size:0.82rem; color:#94a3b8;">Sin logo configurado</span>
+                                    @endif
+                                    <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.svg,.ico" class="form-input" style="max-width:320px;">
+                                </div>
+                                <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">PNG, JPG, WEBP, SVG o ICO. Maximo 1 MB. Este logo se usa primero en los correos; si no hay uno, se toma el favicon.</p>
+                                @if(!empty($sitio['sitio_logo']))
+                                    <label style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.84rem; cursor:pointer;">
+                                        <input type="checkbox" name="quitar_logo" value="1"> Quitar el logo actual
+                                    </label>
+                                @endif
                             </div>
                             <div>
                                 <label class="form-label">Favicon (icono de la pestana)</label>
                                 <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
                                     @if(!empty($sitio['sitio_favicon']))
-                                        <img src="{{ asset('storage/' . $sitio['sitio_favicon']) }}" alt="favicon" style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); object-fit:contain; background:#fff;">
+                                        <img src="{{ asset('storage/' . $sitio['sitio_favicon']) }}" alt="favicon actual"
+                                             style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); object-fit:contain; background:#fff;"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                        <span style="display:none; font-size:0.78rem; color:var(--danger, #dc2626);">No se pudo cargar. Ejecuta: php artisan storage:link</span>
                                     @else
                                         <span style="font-size:0.82rem; color:#94a3b8;">Sin favicon</span>
                                     @endif
@@ -450,20 +496,20 @@
                         <div style="display:grid; gap:14px;">
                             <div>
                                 <label class="form-label">Etiqueta superior</label>
-                                <input type="text" name="landing_hero_badge" class="form-input" value="{{ old('landing_hero_badge', $sitio['landing_hero_badge']) }}" maxlength="120">
+                                <input type="text" name="landing_hero_badge" class="form-input" value="{{ old('landing_hero_badge', $sitio['landing_hero_badge']) }}" maxlength="120" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             </div>
                             <div>
                                 <label class="form-label">Titulo principal</label>
-                                <textarea name="landing_hero_titulo" class="form-input" rows="2" maxlength="200" required>{{ old('landing_hero_titulo', $sitio['landing_hero_titulo']) }}</textarea>
+                                <textarea name="landing_hero_titulo" class="form-input" rows="2" maxlength="200" required spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('landing_hero_titulo', $sitio['landing_hero_titulo']) }}</textarea>
                                 <p style="margin:6px 0 0; font-size:0.78rem; color:#94a3b8;">Cada salto de linea se respeta en la pagina.</p>
                             </div>
                             <div>
                                 <label class="form-label">Frase destacada (en color)</label>
-                                <input type="text" name="landing_hero_acento" class="form-input" value="{{ old('landing_hero_acento', $sitio['landing_hero_acento']) }}" maxlength="120">
+                                <input type="text" name="landing_hero_acento" class="form-input" value="{{ old('landing_hero_acento', $sitio['landing_hero_acento']) }}" maxlength="120" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             </div>
                             <div>
                                 <label class="form-label">Subtitulo</label>
-                                <textarea name="landing_hero_subtitulo" class="form-input" rows="2" maxlength="400">{{ old('landing_hero_subtitulo', $sitio['landing_hero_subtitulo']) }}</textarea>
+                                <textarea name="landing_hero_subtitulo" class="form-input" rows="2" maxlength="400" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('landing_hero_subtitulo', $sitio['landing_hero_subtitulo']) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -476,14 +522,14 @@
                         <div style="display:grid; gap:14px;">
                             <div>
                                 <label class="form-label">Titulo de la seccion</label>
-                                <input type="text" name="landing_feat_label" class="form-input" value="{{ old('landing_feat_label', $sitio['landing_feat_label']) }}" maxlength="120">
+                                <input type="text" name="landing_feat_label" class="form-input" value="{{ old('landing_feat_label', $sitio['landing_feat_label']) }}" maxlength="120" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                             </div>
                             @for($n = 1; $n <= 5; $n++)
                                 <div style="padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
                                     <div style="font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;">Tarjeta {{ $n }}</div>
                                     <div style="display:grid; gap:10px;">
-                                        <input type="text" name="landing_feat_{{ $n }}_titulo" class="form-input" value="{{ old('landing_feat_'.$n.'_titulo', $sitio['landing_feat_'.$n.'_titulo']) }}" maxlength="120" placeholder="Titulo">
-                                        <textarea name="landing_feat_{{ $n }}_texto" class="form-input" rows="2" maxlength="300" placeholder="Descripcion">{{ old('landing_feat_'.$n.'_texto', $sitio['landing_feat_'.$n.'_texto']) }}</textarea>
+                                        <input type="text" name="landing_feat_{{ $n }}_titulo" class="form-input" value="{{ old('landing_feat_'.$n.'_titulo', $sitio['landing_feat_'.$n.'_titulo']) }}" maxlength="120" placeholder="Titulo" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
+                                        <textarea name="landing_feat_{{ $n }}_texto" class="form-input" rows="2" maxlength="300" placeholder="Descripcion" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('landing_feat_'.$n.'_texto', $sitio['landing_feat_'.$n.'_texto']) }}</textarea>
                                     </div>
                                 </div>
                             @endfor
@@ -494,8 +540,8 @@
                     <div class="card" style="margin-bottom:16px;">
                         <h2 style="margin:0 0 4px; font-size:1rem; font-weight:700;">Pie de pagina</h2>
                         <div style="margin-top:12px;">
-                            <label class="form-label">Texto del footer (despues del año)</label>
-                            <input type="text" name="landing_footer" class="form-input" value="{{ old('landing_footer', $sitio['landing_footer']) }}" maxlength="200">
+                            <label class="form-label">Texto del footer (después del año)</label>
+                            <input type="text" name="landing_footer" class="form-input" value="{{ old('landing_footer', $sitio['landing_footer']) }}" maxlength="200" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                         </div>
                     </div>
 
@@ -507,15 +553,15 @@
                         <div style="display:grid; gap:14px;">
                             <div>
                                 <label class="form-label">Politicas de privacidad
-                                    <a href="{{ route('paginas.privacidad') }}" target="_blank" style="font-weight:400; font-size:0.8rem; color:var(--accent); margin-left:6px;">ver pagina ↗</a>
+                                    <a href="{{ route('paginas.privacidad') }}" target="_blank" style="font-weight:400; font-size:0.8rem; color:var(--accent); margin-left:6px;">ver p&aacute;gina</a>
                                 </label>
-                                <textarea name="privacidad_contenido" class="form-input" rows="8" maxlength="20000" placeholder="Escribe aqui las politicas de privacidad...">{{ old('privacidad_contenido', $sitio['privacidad_contenido']) }}</textarea>
+                                <textarea name="privacidad_contenido" class="form-input" rows="8" maxlength="20000" placeholder="Escribe aqui las politicas de privacidad..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('privacidad_contenido', $sitio['privacidad_contenido']) }}</textarea>
                             </div>
                             <div>
                                 <label class="form-label">Terminos del servicio
-                                    <a href="{{ route('paginas.terminos') }}" target="_blank" style="font-weight:400; font-size:0.8rem; color:var(--accent); margin-left:6px;">ver pagina ↗</a>
+                                    <a href="{{ route('paginas.terminos') }}" target="_blank" style="font-weight:400; font-size:0.8rem; color:var(--accent); margin-left:6px;">ver p&aacute;gina</a>
                                 </label>
-                                <textarea name="terminos_contenido" class="form-input" rows="8" maxlength="20000" placeholder="Escribe aqui los terminos del servicio...">{{ old('terminos_contenido', $sitio['terminos_contenido']) }}</textarea>
+                                <textarea name="terminos_contenido" class="form-input" rows="8" maxlength="20000" placeholder="Escribe aqui los terminos del servicio..." spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">{{ old('terminos_contenido', $sitio['terminos_contenido']) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -530,7 +576,7 @@
                         <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Catalogo de servicios</h3>
                         <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Servicios primero, opciones reutilizables despues.</p>
                     </a>
-                    <a href="{{ route('admin.catalogos.index', ['tab' => 'opciones']) }}" class="card" style="text-decoration:none; color:inherit;">
+                    <a href="{{ route('admin.catalogos.index', ['tab' => 'vacantes']) }}" class="card" style="text-decoration:none; color:inherit;">
                         <h3 style="margin:0 0 8px; font-size:1rem; font-weight:700;">Opciones del sistema</h3>
                         <p style="margin:0; color:#64748b; font-size:0.86rem; line-height:1.6;">Estados, roles y catalogos generales en un solo hub.</p>
                     </a>

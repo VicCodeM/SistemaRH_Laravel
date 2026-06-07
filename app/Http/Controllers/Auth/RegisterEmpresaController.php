@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Empresa;
 use App\Models\User;
+use App\Services\AccesoMunicipioService;
+use App\Services\SesionUnicaService;
 use App\Services\WorkflowService;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -21,8 +23,11 @@ class RegisterEmpresaController extends Controller
 {
     private const SESSION_KEY = 'register.empresa';
 
-    public function __construct(private readonly WorkflowService $workflow)
-    {
+    public function __construct(
+        private readonly WorkflowService $workflow,
+        private readonly SesionUnicaService $sesionUnica,
+        private readonly AccesoMunicipioService $accesoMunicipio,
+    ) {
     }
 
     public function create(Request $request): View
@@ -40,6 +45,7 @@ class RegisterEmpresaController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $requiereVerificacion = User::requireEmailVerification();
         $step = max(1, min(3, (int) $request->input('step', 1)));
         $wizardData = session(self::SESSION_KEY . '.data', []);
 
@@ -110,7 +116,7 @@ class RegisterEmpresaController extends Controller
                 'telefono' => ['required', 'string', 'max:20'],
                 'direccion' => ['required', 'string', 'max:255'],
                 'ciudad' => ['required', 'string', 'max:100'],
-                'municipio' => ['nullable', 'string', 'max:150'],
+                'municipio' => ['required', 'string', 'max:150'],
                 'codigo_postal' => ['nullable', 'string', 'max:10'],
                 'acepta_terminos' => ['accepted'],
             ],
@@ -118,6 +124,7 @@ class RegisterEmpresaController extends Controller
                 'telefono.required' => 'Escribe un teléfono de contacto.',
                 'direccion.required' => 'Escribe la dirección completa de la empresa.',
                 'ciudad.required' => 'Escribe la ciudad de la empresa.',
+                'municipio.required' => 'Escribe el municipio de la empresa.',
                 'acepta_terminos.accepted' => 'Debes aceptar los Términos del servicio y la Política de privacidad.',
             ]
         );
@@ -139,6 +146,12 @@ class RegisterEmpresaController extends Controller
                 ->with('error', 'Ya existe una empresa registrada con ese RFC.');
         }
 
+        if (! $this->accesoMunicipio->municipioPermitido((string) $validated['municipio'])) {
+            return redirect()->route('register.empresa', ['step' => 3])
+                ->with('error', 'Tu municipio no está autorizado para registrar la empresa.')
+                ->withInput();
+        }
+
         try {
             $user = DB::transaction(function () use ($wizardData, $email, $rfc, $validated) {
                 $user = User::create([
@@ -147,7 +160,7 @@ class RegisterEmpresaController extends Controller
                     'password' => Hash::make((string) $wizardData['password']),
                     'rol' => 'empresa',
                     'estado' => 'activo',
-                    'email_verified_at' => now(),
+                    'email_verified_at' => User::emailVerifiedAtInitial(),
                 ]);
 
                 $empresa = Empresa::create([
@@ -187,6 +200,22 @@ class RegisterEmpresaController extends Controller
 
         event(new Registered($user));
         Auth::login($user);
+        $request->session()->regenerate();
+        $this->sesionUnica->cerrarOtrasSesiones($user, $request->session()->getId());
+
+        if ($requiereVerificacion) {
+            session()->forget(self::SESSION_KEY);
+
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('status', 'Te enviamos un correo para verificar tu cuenta.');
+        }
 
         session()->forget(self::SESSION_KEY);
 

@@ -4,6 +4,7 @@
     $salario = $vacante->salario_min || $vacante->salario_max
         ? '$' . number_format((float) ($vacante->salario_min ?? 0), 0) . ' - $' . number_format((float) ($vacante->salario_max ?? 0), 0) . ' MXN'
         : 'Sin definir';
+    $compensacion = $vacante->compensacionDetalles();
 @endphp
 
 <div style="font-family:inherit;">
@@ -93,6 +94,20 @@
             </div>
         </div>
 
+        @if(!empty($compensacion))
+            <div>
+                <p class="modal-section-label">Compensación y prestaciones</p>
+                <div class="modal-grid-auto">
+                    @foreach($compensacion as $label => $valor)
+                        <div style="padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);">
+                            <p class="modal-field-label" style="margin-bottom:8px;">{{ $label }}</p>
+                            <p class="modal-field-value" style="line-height:1.6;">{{ $valor }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @if($vacante->area_requerida || $vacante->descripcion || $vacante->requerimientos || $vacante->notas_internas)
             <div class="modal-grid-auto">
                 @if($vacante->area_requerida)
@@ -166,7 +181,7 @@
                 </form>
                 <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'rechazar']) }}')" class="btn btn-danger">Rechazar</button>
             @elseif($vacante->estado === 'activa')
-                <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'cerrar']) }}')" class="btn btn-secondary">Cerrar</button>
+                <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'cerrar']) }}')" class="btn btn-secondary">Desactivar</button>
             @elseif($vacante->estado === 'cerrada')
                 <form method="POST" action="{{ route('admin.vacantes.reabrir', $vacante) }}" style="margin:0;">
                     @csrf

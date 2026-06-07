@@ -93,7 +93,7 @@
                 <input type="hidden" name="estado" value="{{ $estadoActual }}">
             @endif
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Título o empresa..."
-                   style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); width:220px;">
+                   style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); width:220px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             <button type="submit" class="btn btn-secondary" style="padding:8px 14px; font-size:13px;">Buscar</button>
             @if(request()->hasAny(['buscar', 'estado']))
                 <a href="{{ route('admin.vacantes', ['modo' => $modo]) }}" class="btn btn-secondary" style="padding:8px 12px; font-size:13px;" title="Limpiar filtros">&times;</a>
@@ -215,7 +215,7 @@
                                         </form>
                                         <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'rechazar']) }}')" class="btn btn-danger" style="padding:4px 10px; font-size:0.8rem;">Rechazar</button>
                                     @elseif($vacante->estado === 'activa')
-                                        <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'cerrar']) }}')" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Cerrar</button>
+                                        <button type="button" onclick="rhModal('{{ route('admin.vacantes.accion.modal', [$vacante, 'cerrar']) }}')" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Desactivar</button>
                                     @elseif($vacante->estado === 'cerrada')
                                         <form method="POST" action="{{ route('admin.vacantes.reabrir', $vacante) }}">
                                             @csrf

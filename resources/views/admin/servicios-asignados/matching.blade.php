@@ -215,7 +215,7 @@
                                         <input type="hidden" name="forzar" value="1">
                                         <div style="flex:1; min-width:200px;">
                                             <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Motivo de excepcion</label>
-                                            <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidio" required>
+                                        <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidio" required spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                         </div>
                                         <button type="submit" class="btn btn-primary">Asignar con excepcion</button>
                                     @else

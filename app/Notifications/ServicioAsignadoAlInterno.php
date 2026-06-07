@@ -25,14 +25,15 @@ class ServicioAsignadoAlInterno extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $nombre   = $this->servicio->servicio?->nombre ?? 'Pedido de servicio';
+        $nombre = $this->servicio->servicio?->nombre ?? 'Pedido de servicio';
         $solicita = $this->servicio->asignableNombre();
-        $horas    = (int) $this->servicio->horas_estimadas;
+        $horas = (int) $this->servicio->horas_estimadas;
+        $nombreNotificado = trim((string) ($notifiable->name ?? ''));
 
         $mail = (new MailMessage)
-            ->subject("Te asignaron: {$nombre}")
-            ->greeting("Hola {$notifiable->name}")
-            ->line("Tienes un nuevo pedido asignado: **{$nombre}**.")
+            ->subject("Nuevo servicio asignado: {$nombre}")
+            ->greeting($nombreNotificado !== '' ? "Hola {$nombreNotificado}" : 'Hola')
+            ->line("Se te ha asignado el servicio **{$nombre}**.")
             ->line("Solicitado por: **{$solicita}**");
 
         if ($horas > 0) {
@@ -40,7 +41,9 @@ class ServicioAsignadoAlInterno extends Notification
         }
 
         return $mail
-            ->action('Ver mi tarea', route('interno.tareas.index'))
-            ->line('Entra al sistema para iniciar el trabajo cuando estés listo.');
+            ->action('Abrir mi tarea', route('interno.tareas.index'))
+            ->line('Entra al sistema para revisar los detalles y comenzar el trabajo cuando estés listo.')
+            ->line('Tu seguimiento oportuno ayuda a mantener la operación al día.')
+            ->salutation('Saludos,');
     }
 }

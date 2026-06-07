@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Candidato;
 use App\Models\ConfiguracionSistema;
 use App\Models\User;
+use App\Services\AccesoMunicipioService;
+use App\Services\SesionUnicaService;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +21,12 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(
+        private readonly SesionUnicaService $sesionUnica,
+        private readonly AccesoMunicipioService $accesoMunicipio,
+    ) {
+    }
+
     public function create(): View
     {
         return view('auth.register');
@@ -26,10 +34,12 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $requiereVerificacion = User::requireEmailVerification();
         $validated = $request->validate(
             [
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')],
+                'municipio' => ['required', 'string', 'max:150'],
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
                 'acepta_terminos' => ['accepted'],
             ],
@@ -37,11 +47,18 @@ class RegisteredUserController extends Controller
                 'name.required' => 'Escribe tu nombre completo.',
                 'email.required' => 'Escribe tu correo electrónico.',
                 'email.unique' => 'Ya existe una cuenta con ese correo. Usa recuperación de acceso.',
+                'municipio.required' => 'Escribe tu municipio de residencia.',
                 'password.required' => 'Define una contraseña.',
                 'password.confirmed' => 'Las contraseñas no coinciden.',
                 'acepta_terminos.accepted' => 'Debes aceptar los Términos del servicio y la Política de privacidad.',
             ]
         );
+
+        if (! $this->accesoMunicipio->municipioPermitido($validated['municipio'])) {
+            return back()
+                ->withErrors(['municipio' => 'Tu municipio no está autorizado para registrarse en este sistema.'])
+                ->withInput();
+        }
 
         $requiereAprobacion = ConfiguracionSistema::boolean('candidato_requiere_aprobacion', false);
         $estadoUsuario = $requiereAprobacion ? 'pendiente' : 'activo';
@@ -54,12 +71,13 @@ class RegisteredUserController extends Controller
                     'password' => Hash::make($validated['password']),
                     'rol' => 'candidato',
                     'estado' => $estadoUsuario,
-                    'email_verified_at' => $estadoUsuario === 'activo' ? now() : null,
+                    'email_verified_at' => User::emailVerifiedAtInitial(),
                 ]);
 
                 Candidato::create([
                     'usuario_id' => $user->id,
                     'nombre' => trim($validated['name']),
+                    'municipio' => trim($validated['municipio']),
                     'solicitud_estado' => 'borrador',
                 ]);
 
@@ -85,6 +103,21 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
         Auth::login($user);
+        $request->session()->regenerate();
+
+        $this->sesionUnica->cerrarOtrasSesiones($user, $request->session()->getId());
+
+        if ($requiereVerificacion) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('status', 'Te enviamos un correo para verificar tu cuenta.');
+        }
 
         if ($requiereAprobacion) {
             return redirect()

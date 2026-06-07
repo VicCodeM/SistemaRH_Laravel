@@ -8,7 +8,7 @@
         <div class="candidate-inline-meta">
             <div>
                 <h1 class="page-title">Vacantes</h1>
-                <p class="page-subtitle">Puestos que solicitaste cubrir. &iquest;Necesitas capacitacion u otro servicio? Ve a <a href="{{ route('empresa.servicios.index') }}" style="color:var(--accent);">Servicios solicitados</a>.</p>
+                <p class="page-subtitle">Puestos que solicitaste cubrir. &iquest;Necesitas capacitacion u otro servicio? Ve a <a href="{{ route('empresa.servicios.index') }}" style="color:var(--accent);">Servicios disponibles</a>.</p>
             </div>
             <a href="{{ route('empresa.solicitudes.crear') }}" class="btn btn-primary">+ Nueva vacante</a>
         </div>

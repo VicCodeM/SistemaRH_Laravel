@@ -18,6 +18,8 @@ class GuardarSitioRequest extends FormRequest
             'sitio_nombre'      => ['required', 'string', 'max:120'],
             'sitio_subtitulo'   => ['nullable', 'string', 'max:120'],
             'sitio_descripcion' => ['nullable', 'string', 'max:300'],
+            'logo'              => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg,ico', 'max:1024'],
+            'quitar_logo'       => ['nullable', 'boolean'],
             'favicon'           => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg,ico', 'max:1024'],
             'quitar_favicon'    => ['nullable', 'boolean'],
 
@@ -54,6 +56,8 @@ class GuardarSitioRequest extends FormRequest
         return [
             'sitio_nombre.required'      => 'El nombre del sitio es obligatorio.',
             'landing_hero_titulo.required' => 'El título principal es obligatorio.',
+            'logo.mimes'                 => 'El logo debe ser PNG, JPG, WEBP, SVG o ICO.',
+            'logo.max'                   => 'El logo no debe pesar más de 1 MB.',
             'favicon.image'              => 'El favicon debe ser una imagen.',
             'favicon.mimes'              => 'El favicon debe ser PNG, JPG, WEBP, SVG o ICO.',
             'favicon.max'                => 'El favicon no debe pesar más de 1 MB.',

@@ -71,7 +71,7 @@
                 <input type="hidden" name="estado" value="{{ $estadoActual }}">
             @endif
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Nombre o RFC..."
-                   style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); min-width:200px;">
+                   style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--surface); min-width:200px;" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             <button type="submit" class="btn btn-secondary" style="padding:8px 14px; font-size:13px;">Buscar</button>
             @if(request('buscar'))
                 <a href="{{ route('admin.empresas', $estadoActual ? ['estado' => $estadoActual] : []) }}" class="btn btn-secondary" style="padding:8px 12px; font-size:13px;">Limpiar</a>

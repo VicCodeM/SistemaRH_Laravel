@@ -14,6 +14,10 @@
     </div>
 
     <div class="modal-body modal-stack">
+        @php
+            $compensacion = $vacante->compensacionDetalles();
+        @endphp
+
         {{-- Resumen --}}
         @if($vacante->requisitoResumen())
             <p style="margin:0;color:var(--text-secondary);font-size:13px;line-height:1.5;">{{ $vacante->requisitoResumen() }}</p>
@@ -48,6 +52,34 @@
                 </div>
             @endforeach
         </div>
+
+        @if($postulacionActual)
+            <div style="padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--bg-muted);">
+                <div class="modal-field-label" style="margin-bottom:8px;">Estado de tu solicitud</div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacionActual->estado) }}">
+                        {{ \App\Models\Postulacion::estadoLabel($postulacionActual->estado) }}
+                    </span>
+                    @if($postulacionActual->fecha_postulacion)
+                        <span style="color:var(--text-secondary); font-size:13px;">Postulada el {{ $postulacionActual->fecha_postulacion->format('d/m/Y') }}</span>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        @if(!empty($compensacion))
+            <div style="padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--bg-muted);">
+                <div class="modal-field-label" style="margin-bottom:8px;">Compensación y prestaciones</div>
+                <div style="display:grid; gap:10px;">
+                    @foreach($compensacion as $label => $valor)
+                        <div style="display:grid; grid-template-columns:170px 1fr; gap:10px; align-items:start;">
+                            <span class="modal-field-label">{{ $label }}</span>
+                            <span style="color:var(--text-secondary); line-height:1.6; font-size:13px;">{{ $valor }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         @if($vacante->requerimientos)
             <div style="padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--bg-muted);">

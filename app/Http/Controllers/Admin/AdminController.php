@@ -390,12 +390,12 @@ class AdminController extends Controller
                 'clase' => 'btn-danger',
             ],
             'cerrar' => [
-                'titulo' => 'Cerrar solicitud',
-                'descripcion' => 'La solicitud dejará de recibir movimiento y quedará marcada como Cerrada.',
-                'mensaje' => '¿Deseas cerrar esta solicitud ahora? Si cambia la necesidad, luego podrás reabrirla.',
+                'titulo' => 'Desactivar solicitud',
+                'descripcion' => 'La solicitud dejará de mostrarse como activa y quedará marcada como Cerrada.',
+                'mensaje' => '¿Deseas desactivar esta solicitud ahora? Si cambia la necesidad, luego podrás reactivarla.',
                 'ruta' => route('admin.vacantes.cerrar', $vacante),
                 'metodo' => 'PATCH',
-                'boton' => 'Confirmar cierre',
+                'boton' => 'Confirmar desactivación',
                 'clase' => 'btn-secondary',
             ],
             'eliminar' => [
@@ -455,6 +455,7 @@ class AdminController extends Controller
             'empresa_id'            => 'required|exists:empresas,id',
             'titulo'                => 'required|string|max:200',
             'nivel_jerarquico'      => "required|in:{$nivelesValidos}",
+            'estado'                => 'nullable|in:pendiente,activa',
             'cupos'                 => 'nullable|integer|min:1|max:100',
             'notas_internas'        => 'nullable|string|max:2000',
             'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
@@ -465,15 +466,23 @@ class AdminController extends Controller
             'requerimientos'        => 'nullable|string|max:2000',
             'salario_min'           => 'nullable|numeric|min:0',
             'salario_max'           => 'nullable|numeric|min:0',
+            'ingresos_ofrecidos'    => 'nullable|string|max:1000',
+            'prestaciones'          => 'nullable|string|max:2000',
             'ubicacion'             => 'nullable|string|max:200',
         ]);
 
         // Vacante = solo reclutamiento (los demás servicios van por ServicioAsignado)
         $data['tipo_servicio'] = 'reclutamiento';
 
-        $vacanteService->crear($data, (int) $data['empresa_id'], 'activa');
+        $estadoInicial = $data['estado'] ?? 'activa';
+        $vacanteService->crear($data, (int) $data['empresa_id'], $estadoInicial);
 
-        return redirect()->route('admin.vacantes')->with('success', 'Vacante creada y activada.');
+        return redirect()->route('admin.vacantes')->with(
+            'success',
+            $estadoInicial === 'pendiente'
+                ? 'Vacante creada como pendiente.'
+                : 'Vacante creada y activada.'
+        );
     }
 
     public function cerrarVacanteManual(Request $request, Vacante $vacante, VacanteService $vacanteService)
@@ -492,7 +501,9 @@ class AdminController extends Controller
         try {
             $vacanteService->reabrir($vacante);
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'No fue posible reabrir la solicitud. Intenta de nuevo.');
         }
 
         return back()->with('success', "Vacante \"{$vacante->titulo}\" reabierta.");
@@ -526,6 +537,8 @@ class AdminController extends Controller
             'requerimientos'        => 'nullable|string|max:2000',
             'salario_min'           => 'nullable|numeric|min:0',
             'salario_max'           => 'nullable|numeric|min:0',
+            'ingresos_ofrecidos'    => 'nullable|string|max:1000',
+            'prestaciones'          => 'nullable|string|max:2000',
             'ubicacion'             => 'nullable|string|max:200',
         ]);
 
@@ -535,7 +548,10 @@ class AdminController extends Controller
         try {
             $vacanteService->actualizar($vacante, $data);
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage())->withInput();
+            report($e);
+
+            return back()->with('error', 'No fue posible actualizar la vacante. Revisa los datos e inténtalo de nuevo.')
+                ->withInput();
         }
 
         return redirect()->route('admin.vacantes')->with('success', "Vacante \"{$vacante->titulo}\" actualizada.");
@@ -576,7 +592,9 @@ class AdminController extends Controller
         try {
             $postulacionService->mover($postulacion, $request->estado);
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'No fue posible cambiar el estado de la postulación. Intenta de nuevo.');
         }
 
         return back()->with('success', $postulacionService->mensajeParaEstado($request->estado));

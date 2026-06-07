@@ -69,7 +69,7 @@
 
         <div class="form-group">
             <label class="form-label" for="name">Nombre Completo</label>
-            <input id="name" name="name" type="text" class="form-input" value="{{ old('name', $user->name) }}" required>
+            <input id="name" name="name" type="text" class="form-input" value="{{ old('name', $user->name) }}" required spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX">
             @error('name') <p class="form-error">{{ $message }}</p> @enderror
         </div>
 

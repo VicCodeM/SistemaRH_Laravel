@@ -38,7 +38,7 @@
                     <form method="POST" action="{{ route('admin.vacantes.cerrar-manual', $vacante) }}" style="display:inline;" onsubmit="return confirm('¿Cerrar esta vacante ahora? Ya no recibirá más postulaciones.')">
                         @csrf
                         <input type="hidden" name="motivo" value="">
-                        <button type="submit" class="btn btn-danger" title="Cerrar la vacante manualmente (aunque no esté llena)">Cerrar vacante</button>
+                        <button type="submit" class="btn btn-danger" title="Desactivar la vacante manualmente (aunque no esté llena)">Desactivar vacante</button>
                     </form>
                 @endif
                 <a href="{{ route('admin.vacantes.candidatos.csv', $vacante) }}" class="btn btn-secondary" style="font-size:13px;" title="Descargar lista de candidatos en Excel">⬇ Excel</a>
@@ -115,7 +115,7 @@
             </div>
             <div style="min-width:0;">
                 <label class="form-label">Aspiración</label>
-                <input type="text" name="aspiracion" value="{{ request('aspiracion') }}" placeholder="Puesto deseado..." class="form-input">
+                <input type="text" name="aspiracion" value="{{ request('aspiracion') }}" placeholder="Puesto deseado..." class="form-input" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button type="submit" class="btn btn-primary">Filtrar</button>
@@ -293,7 +293,7 @@
                                         <input type="hidden" name="forzar" value="1">
                                         <div style="flex:1; min-width:200px;">
                                             <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Motivo de excepción</label>
-                                            <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidió">
+                                            <input type="text" name="motivo_asignacion" class="form-input" maxlength="1000" placeholder="Ej. el cliente lo pidió" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                                         </div>
                                         <button type="submit" class="btn btn-primary">Asignar con excepción</button>
                                     @else

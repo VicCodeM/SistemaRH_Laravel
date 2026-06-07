@@ -22,14 +22,16 @@ class PersonalInternoService
      */
     public function crear(array $datos, array $serviciosIds = []): User
     {
-        return DB::transaction(function () use ($datos, $serviciosIds) {
+        $requiereVerificacion = User::requireEmailVerification();
+
+        return DB::transaction(function () use ($datos, $serviciosIds, $requiereVerificacion) {
             $interno = User::create([
                 'name'                   => $datos['name'],
                 'email'                  => $datos['email'],
                 'rol'                    => 'interno',
                 'estado'                 => 'activo',
                 'password'               => Hash::make(Str::random(20)),
-                'email_verified_at'      => now(),
+                'email_verified_at'      => User::emailVerifiedAtInitial(),
                 'capacidad_maxima_horas' => $datos['capacidad_maxima_horas'] ?? 40,
                 'carga_trabajo_horas'    => 0,
                 'departamento'           => $datos['departamento'] ?? null,
@@ -41,6 +43,14 @@ class PersonalInternoService
             }
 
             Password::sendResetLink(['email' => $interno->email]);
+
+            if ($requiereVerificacion) {
+                try {
+                    $interno->sendEmailVerificationNotification();
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
 
             return $interno;
         });

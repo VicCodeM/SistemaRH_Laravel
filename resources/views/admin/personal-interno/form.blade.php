@@ -31,7 +31,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
                 <div>
                     <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Nombre completo</label>
-                    <input type="text" name="name" value="{{ old('name') }}" required autofocus
+                    <input type="text" name="name" value="{{ old('name') }}" required autofocus spellcheck="true" autocorrect="on" autocapitalize="words" lang="es-MX"
                            placeholder="Ej. María González"
                            style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface); box-sizing:border-box;">
                 </div>
@@ -58,7 +58,7 @@
                 </div>
                 <div>
                     <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Departamento</label>
-                    <input type="text" name="departamento" value="{{ old('departamento') }}"
+                    <input type="text" name="departamento" value="{{ old('departamento') }}" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX"
                            placeholder="Ej. Capacitación"
                            style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface); box-sizing:border-box;">
                     <p style="margin:4px 0 0; font-size:11px; color:#94a3b8;">Opcional</p>

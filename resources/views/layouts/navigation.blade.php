@@ -121,7 +121,7 @@
                 </a>
                 <a wire:navigate href="{{ route('empresa.servicios.index') }}" class="sidebar-link {{ request()->routeIs('empresa.servicios*') ? 'active' : '' }}">
                     <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
-                    Servicios solicitados
+                    Servicios disponibles
                 </a>
             @endif
         @endif
@@ -150,7 +150,7 @@
                 </a>
                 <a wire:navigate href="{{ route('candidato.servicios.index') }}" class="sidebar-link {{ request()->routeIs('candidato.servicios*') ? 'active' : '' }}">
                     <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
-                    Mis servicios
+                    Servicios disponibles
                 </a>
             @endif
         @endif
@@ -208,7 +208,7 @@
             Mi cuenta
         </a>
 
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('logout') }}" data-no-spa>
             @csrf
             <button type="submit" class="sidebar-logout">
                 <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg>

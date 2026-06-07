@@ -1,10 +1,14 @@
-<x-app-layout>
-    <div style="max-width:520px; margin:60px auto; text-align:center;">
-        <div style="font-size:64px; margin-bottom:12px;">⚠️</div>
-        <h1 style="font-size:1.6rem; margin:0 0 8px; color:var(--text);">Algo salió mal</h1>
-        <p style="color:#64748b; margin:0 0 24px; font-size:0.95rem;">
-            Tuvimos un problema. Intenta de nuevo o regresa al inicio. Si pasa otra vez, avisa al administrador.
+<x-guest-layout>
+    <div style="text-align:center; padding: 18px 6px 4px;">
+        <div style="font-size:64px; line-height:1; margin-bottom:14px; font-weight:700; color:var(--accent);">500</div>
+        <h1 style="font-size:1.55rem; margin:0 0 10px; color:var(--text); font-weight:700;">Algo salió mal</h1>
+        <p style="color:var(--text-muted); margin:0 auto 28px; font-size:0.96rem; line-height:1.7; max-width: 440px;">
+            Tuvimos un problema interno. Intenta de nuevo en unos minutos. Si vuelve a ocurrir, avisa al administrador.
         </p>
-        <a href="{{ url('/dashboard') }}" class="btn btn-primary">Volver al inicio</a>
+
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <a href="{{ auth()->check() ? url('/dashboard') : url('/') }}" class="btn btn-primary">Volver al inicio</a>
+            <a href="{{ url('/') }}" class="btn btn-secondary">Ir a la portada</a>
+        </div>
     </div>
-</x-app-layout>
+</x-guest-layout>

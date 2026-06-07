@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ServicioAsignado extends Model
@@ -123,6 +124,15 @@ class ServicioAsignado extends Model
         return $this->hasMany(ComentarioServicio::class, 'servicio_asignado_id')
             ->with('autor')
             ->latest();
+    }
+
+    public function recursos(): HasMany
+    {
+        return $this->hasMany(ServicioRecurso::class, 'servicio_asignado_id')
+            ->with('subidoPor')
+            ->orderBy('tipo', 'desc')
+            ->orderBy('orden')
+            ->orderBy('created_at');
     }
 
     public function estaPendiente(): bool

@@ -27,8 +27,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call(DummyDataSeeder::class);
-
         $this->command->info('Datos base listos: admin@sistemarh.com / password');
     }
 }

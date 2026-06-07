@@ -1,4 +1,4 @@
-<div wire:poll.5s>
+<div wire:poll.3s.visible>
     {{-- Barra superior: iniciar conversación --}}
     @if(auth()->user()->esAdmin())
         <div class="chat-new-top">
@@ -13,7 +13,7 @@
 
             @if($mostrarNuevos)
                 <input type="text" wire:model.live.debounce.300ms="buscarUsuario"
-                       placeholder="Buscar empresa, candidato o interno..." class="chat-new-search">
+                       placeholder="Buscar empresa, candidato o interno..." class="chat-new-search" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
                 <div class="chat-new-list">
                     @forelse($usuariosSinChat as $u)
                         <button type="button" wire:click="iniciarChatConUsuario({{ $u->id }})" class="chat-new-user">

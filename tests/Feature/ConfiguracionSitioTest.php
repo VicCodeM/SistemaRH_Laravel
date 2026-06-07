@@ -96,6 +96,24 @@ class ConfiguracionSitioTest extends TestCase
         Storage::disk('public')->assertExists($ruta);
     }
 
+    public function test_admin_puede_subir_un_logo_para_correos(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin())
+            ->post(route('admin.configuracion.sitio.guardar'), [
+                'sitio_nombre'        => 'Con Logo',
+                'landing_hero_titulo' => 'Hola',
+                'logo'                => UploadedFile::fake()->image('logo.png', 240, 240),
+            ]);
+
+        $response->assertRedirect();
+
+        $ruta = ConfiguracionSistema::texto('sitio_logo');
+        $this->assertNotEmpty($ruta);
+        Storage::disk('public')->assertExists($ruta);
+    }
+
     public function test_pagina_de_privacidad_es_publica_y_muestra_el_contenido(): void
     {
         ConfiguracionSistema::guardar('privacidad_contenido', 'Texto de privacidad de prueba', [

@@ -6,65 +6,125 @@ use App\Http\Controllers\Controller;
 use App\Models\CatalogoServicio;
 use App\Models\ServicioAsignado;
 use App\Services\ServicioAsignadoService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Solicitudes de servicio del lado EMPRESA.
- *
- * La empresa puede pedir capacitaciones, coaching, mantenimiento, etc.
- * Internamente cada solicitud es un ServicioAsignado donde la empresa
- * es el `asignable` (destinatario del servicio).
- */
 class ServicioController extends Controller
 {
     public function index(Request $request)
     {
         $empresa = $this->empresaActual();
+        $buscar = trim((string) $request->input('buscar', ''));
+        $tipo = (string) $request->input('tipo', '');
+        $nivel = (string) $request->input('nivel', '');
 
-        $query = ServicioAsignado::with(['servicio', 'asignadoA'])
-            ->where('asignable_type', \App\Models\Empresa::class)
-            ->where('asignable_id', $empresa->id)
-            ->latest();
+        $baseQuery = $this->catalogosVisiblesQuery();
 
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
+        $catalogos = (clone $baseQuery)
+            ->when($buscar !== '', function (Builder $query) use ($buscar) {
+                $query->where(function (Builder $sub) use ($buscar) {
+                    $sub->where('nombre', 'like', "%{$buscar}%")
+                        ->orWhere('descripcion', 'like', "%{$buscar}%");
+                });
+            })
+            ->when($tipo !== '', fn (Builder $query) => $query->where('tipo', $tipo))
+            ->when($nivel !== '', function (Builder $query) use ($nivel) {
+                $query->where(function (Builder $sub) use ($nivel) {
+                    $sub->where('nivel_jerarquico', $nivel)
+                        ->orWhere('nivel_jerarquico', 'todos');
+                });
+            })
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
 
-        $servicios = $query->paginate(15)->withQueryString();
+        $catalogosDisponibles = (clone $baseQuery)->orderBy('orden')->orderBy('nombre')->get();
 
-        $stats = $this->estadisticas($empresa->id);
+        $tiposDisponibles = $catalogosDisponibles
+            ->pluck('tipo')
+            ->unique()
+            ->values();
 
-        return view('empresa.servicios.index', compact('servicios', 'stats'));
+        $nivelesDisponibles = $catalogosDisponibles
+            ->filter(fn (CatalogoServicio $catalogo) => ! $catalogo->esFlujoVacante())
+            ->pluck('nivel_jerarquico')
+            ->map(fn (?string $nivel) => CatalogoServicio::normalizarNivelJerarquico($nivel))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $stats = [
+            'disponibles' => $catalogosDisponibles->count(),
+            'categorias' => $tiposDisponibles->count(),
+            'vacantes' => $catalogosDisponibles->where('flujo', 'vacante')->count(),
+            'solicitados' => ServicioAsignado::where('asignable_type', \App\Models\Empresa::class)
+                ->where('asignable_id', $empresa->id)
+                ->count(),
+        ];
+
+        return view('empresa.servicios.index', compact(
+            'catalogos',
+            'stats',
+            'tiposDisponibles',
+            'nivelesDisponibles',
+            'tipo',
+            'nivel'
+        ));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->empresaActual();
-        $catalogo = CatalogoServicio::where('activo', true)->orderBy('nombre')->get();
-        $niveles  = CatalogoServicio::nivelesJerarquicosFormulario();
+        $servicioId = $request->integer('servicio_id');
 
-        return view('empresa.servicios.create', compact('catalogo', 'niveles'));
+        if (! $servicioId) {
+            return redirect()
+                ->route('empresa.servicios.index')
+                ->with('warning', 'Selecciona un servicio desde la lista para ver su detalle.');
+        }
+
+        $servicioSeleccionado = $this->catalogosVisiblesQuery(conRecursos: true)
+            ->find($servicioId);
+
+        if (! $servicioSeleccionado) {
+            return redirect()
+                ->route('empresa.servicios.index')
+                ->with('error', 'Este servicio no esta disponible en este momento.');
+        }
+
+        $niveles = CatalogoServicio::nivelesJerarquicosFormulario();
+
+        return view('empresa.servicios.create', compact('servicioSeleccionado', 'niveles'));
     }
 
     public function store(Request $request, ServicioAsignadoService $servicio)
     {
         $empresa = $this->empresaActual();
-
-        $nivelesValidos = array_keys(\App\Models\CatalogoServicio::nivelesJerarquicos());
+        $nivelesValidos = array_keys(CatalogoServicio::nivelesJerarquicos());
 
         $data = $request->validate([
-            'servicio_id'      => ['required', 'integer', 'exists:catalogo_servicios,id'],
+            'servicio_id' => ['required', 'integer', 'exists:catalogo_servicios,id'],
             'nivel_jerarquico' => ['required', 'string', 'in:' . implode(',', $nivelesValidos)],
-            'horas_estimadas'  => ['nullable', 'integer', 'min:0', 'max:500'],
-            'notas'            => ['required', 'string', 'max:2000'],
+            'horas_estimadas' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'notas' => ['required', 'string', 'max:2000'],
         ]);
+
+        $catalogoServicio = $this->catalogosVisiblesQuery()->find($data['servicio_id']);
+
+        if (! $catalogoServicio || $catalogoServicio->esFlujoVacante()) {
+            return redirect()
+                ->route('empresa.servicios.index')
+                ->with('error', 'Este servicio no se puede solicitar desde aqui.');
+        }
 
         $servicio->registrar($data, $empresa);
 
         return redirect()
             ->route('empresa.servicios.index')
-            ->with('success', 'Solicitud de servicio enviada. Un administrador la revisará.');
+            ->with('success', 'Solicitud de servicio enviada. Un administrador la revisara.');
     }
 
     public function show(ServicioAsignado $servicio)
@@ -72,10 +132,10 @@ class ServicioController extends Controller
         $empresa = $this->empresaActual();
         $this->autorizar($servicio, $empresa->id);
 
-        $servicio->load(['servicio', 'asignadoA', 'solicitadoPor']);
+        $servicio->load(['servicio', 'asignadoA', 'solicitadoPor', 'recursos.subidoPor']);
 
         return view('partials.pedido-avance', [
-            'servicio'    => $servicio,
+            'servicio' => $servicio,
             'rutaListado' => route('empresa.servicios.index'),
         ]);
     }
@@ -85,7 +145,7 @@ class ServicioController extends Controller
         $empresa = $this->empresaActual();
         $this->autorizar($servicio, $empresa->id);
 
-        abort_unless($servicio->estado === 'pendiente', 422, 'Solo puedes eliminar solicitudes que aún no han sido aprobadas.');
+        abort_unless($servicio->estado === 'pendiente', 422, 'Solo puedes eliminar solicitudes que aun no han sido aprobadas.');
 
         $servicio->comentarios()->delete();
         $servicio->delete();
@@ -98,7 +158,8 @@ class ServicioController extends Controller
     private function empresaActual(): \App\Models\Empresa
     {
         $empresa = Auth::user()?->empresa;
-        abort_unless($empresa && $empresa->estado === 'activa', 403, 'Tu empresa no está activa.');
+        abort_unless($empresa && $empresa->estado === 'activa', 403, 'Tu empresa no esta activa.');
+
         return $empresa;
     }
 
@@ -111,16 +172,17 @@ class ServicioController extends Controller
         );
     }
 
-    private function estadisticas(int $empresaId): array
+    private function catalogosVisiblesQuery(bool $conRecursos = false): Builder
     {
-        $base = ServicioAsignado::where('asignable_type', \App\Models\Empresa::class)
-            ->where('asignable_id', $empresaId);
+        $query = CatalogoServicio::query()
+            ->select('catalogo_servicios.*')
+            ->distinct()
+            ->visiblesParaRol('empresa');
 
-        return [
-            'pendientes'  => (clone $base)->where('estado', 'pendiente')->count(),
-            'activos'     => (clone $base)->where('estado', 'activo')->count(),
-            'en_proceso'  => (clone $base)->where('estado', 'en_proceso')->count(),
-            'completados' => (clone $base)->where('estado', 'completado')->count(),
-        ];
+        if ($conRecursos && CatalogoServicio::tieneTablaRecursos()) {
+            $query->with('recursos.subidoPor');
+        }
+
+        return $query;
     }
 }
