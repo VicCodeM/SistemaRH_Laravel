@@ -36,42 +36,25 @@
     @if($servicioSeleccionado)
         <div style="max-width:920px; display:flex; flex-direction:column; gap:18px;">
             <div class="card" style="padding:24px;">
-                <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:flex-start;">
-                    <div style="min-width:260px;">
-                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-                            <span class="badge badge-green">Activo</span>
-                            <span class="badge badge-blue">
-                                {{ \App\Models\CatalogoServicio::tipos()[$servicioSeleccionado->tipo] ?? $servicioSeleccionado->tipo }}
-                            </span>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                    <span class="badge badge-green">Activo</span>
+                    <span class="badge badge-blue">
+                        {{ \App\Models\CatalogoServicio::tipos()[$servicioSeleccionado->tipo] ?? $servicioSeleccionado->tipo }}
+                    </span>
 
-                            @if($servicioSeleccionado->esFlujoVacante())
-                                <span class="badge badge-gray">Solicitud de vacante</span>
-                            @elseif($rolServicio === 'empresa' && $servicioSeleccionado->usaNivelJerarquicoPara('empresa') && $servicioSeleccionado->nivel_jerarquico !== 'todos')
-                                <span class="badge badge-blue">
-                                    {{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicioSeleccionado->nivel_jerarquico) }}
-                                </span>
-                            @endif
-                        </div>
-
-                        <h2 style="margin:0 0 6px; font-size:1.25rem; font-weight:800;">{{ $servicioSeleccionado->nombre }}</h2>
-                        <p style="margin:0; color:#64748b; font-size:0.95rem; white-space:pre-wrap;">
-                            {{ $servicioSeleccionado->descripcion ?: 'Sin descripcion detallada aun.' }}
-                        </p>
-                    </div>
-
-                    <div style="flex:1; min-width:280px;">
-                        <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:14px 16px;">
-                            <p style="margin:0 0 6px; font-size:0.72rem; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8;">Que veras aqui</p>
-                            <p style="margin:0; font-size:0.92rem; color:var(--text);">
-                                @if($servicioSeleccionado->tienePresentacionActiva())
-                                    Aqui veras las diapositivas en imagen que preparo el administrador para este servicio. Se muestran en vivo con navegacion interactiva.
-                                @else
-                                    Este servicio no tiene presentacion visual activa en este momento. Aun asi puedes revisar su descripcion y solicitarlo desde aqui.
-                                @endif
-                            </p>
-                        </div>
-                    </div>
+                    @if($servicioSeleccionado->esFlujoVacante())
+                        <span class="badge badge-gray">Solicitud de vacante</span>
+                    @elseif($rolServicio === 'empresa' && $servicioSeleccionado->usaNivelJerarquicoPara('empresa') && $servicioSeleccionado->nivel_jerarquico !== 'todos')
+                        <span class="badge badge-blue">
+                            {{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($servicioSeleccionado->nivel_jerarquico) }}
+                        </span>
+                    @endif
                 </div>
+
+                <h2 style="margin:0 0 6px; font-size:1.25rem; font-weight:800;">{{ $servicioSeleccionado->nombre }}</h2>
+                <p style="margin:0; color:#64748b; font-size:0.95rem; white-space:pre-wrap;">
+                    {{ $servicioSeleccionado->descripcion ?: 'Sin descripcion detallada aun.' }}
+                </p>
             </div>
 
             @include('partials.catalogo-servicio-recursos', [
