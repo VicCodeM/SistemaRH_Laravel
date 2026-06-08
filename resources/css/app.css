@@ -303,6 +303,7 @@ body.sidebar-open {
   box-shadow: var(--shadow-md);
   border-color: rgba(37, 99, 235, .28);
   background: #fff;
+  z-index: 30; /* sube la tarjeta activa para que su tooltip no quede detras de la siguiente */
 }
 .servicio-item__overlay {
   position: absolute;
