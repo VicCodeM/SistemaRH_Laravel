@@ -52,9 +52,7 @@
                 </div>
 
                 <h2 style="margin:0 0 6px; font-size:1.25rem; font-weight:800;">{{ $servicioSeleccionado->nombre }}</h2>
-                <p style="margin:0; color:#64748b; font-size:0.95rem; white-space:pre-wrap;">
-                    {{ $servicioSeleccionado->descripcion ?: 'Sin descripcion detallada aun.' }}
-                </p>
+                <p style="margin:0; color:#64748b; font-size:0.95rem; white-space:pre-wrap;">{{ trim((string) $servicioSeleccionado->descripcion) ?: 'Sin descripcion detallada aun.' }}</p>
             </div>
 
             @include('partials.catalogo-servicio-recursos', [
