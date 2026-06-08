@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->authenticateSessions();
 
+        // Webhook de GitHub no usa sesión ni CSRF
+        $middleware->validateCsrfTokens(except: [
+            'deploy',
+        ]);
+
         // Convierte los redirects de los envíos SPA en JSON { redirect } (ver RespuestaSpa).
         $middleware->web(append: [
             \App\Http\Middleware\RespuestaSpa::class,

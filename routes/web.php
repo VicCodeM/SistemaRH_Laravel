@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DeployController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CatalogoOpcionController;
 use App\Http\Controllers\Admin\CatalogoServicioController;
@@ -237,5 +238,8 @@ Route::middleware(['auth', 'email.verification', 'municipio.acceso'])->group(fun
         Route::patch('/tareas/{tarea}/cancelar', [TareaController::class, 'cancelar'])->name('tareas.cancelar');
     });
 });
+
+// Webhook de deploy automático (GitHub → Raspberry)
+Route::post('/deploy', [DeployController::class, 'handle'])->name('deploy.webhook');
 
 require __DIR__ . '/auth.php';

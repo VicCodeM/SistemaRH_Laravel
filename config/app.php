@@ -77,6 +77,8 @@ return [
 
     'timezone' => 'UTC',
 
+    'deploy_secret' => env('DEPLOY_SECRET'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
