@@ -1316,10 +1316,16 @@ body.sidebar-open {
   }
   .slide-list__size { display: none; }
   .slide-list__order { display: none; }
-  .presentacion__stage { min-height: 260px; padding: 16px; }
-  .presentacion__slide-img { max-height: 280px; }
+  .presentacion__main { min-height: 0; }
+  .presentacion__stage { min-height: 0; padding: 10px; }
+  .presentacion__slide-img { max-height: 240px; width: 100%; }
   .presentacion--fullscreen .presentacion__slide-img { max-height: calc(100vh - 140px); }
-  .presentacion__thumb-slide { width: 56px; height: 40px; }
+  .presentacion__nav { width: 30px; height: 30px; font-size: 1.05rem; }
+  .presentacion__nav--prev { left: 6px; }
+  .presentacion__nav--next { right: 6px; }
+  .presentacion__thumb-slide { width: 52px; height: 38px; }
+  .presentacion__thumbs { padding: 8px; }
+  .presentacion__thumbs-track { gap: 6px; }
   .presentacion-grid { grid-template-columns: 1fr; }
   .presentacion-preview__img { max-height: 220px; }
   .presentacion-preview__thumbs { max-width: 100%; }
