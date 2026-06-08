@@ -13,7 +13,7 @@ class Candidato extends Model
         'fecha_nacimiento', 'lugar_nacimiento', 'nacionalidad', 'telefono', 'celular',
         'domicilio', 'colonia', 'codigo_postal', 'municipio', 'ciudad', 'peso', 'estatura',
         'vive_con', 'estado_civil', 'dependientes', 'curp', 'nore_seguro_social', 'rfc',
-        'afore', 'cartilla_militar', 'pasaporte', 'experiencia_anios', 'puesto_deseado',
+        'afore', 'cartilla_militar', 'cartilla_tiene', 'pasaporte', 'pasaporte_tiene', 'experiencia_anios', 'puesto_deseado',
         'habilidades', 'escolaridad', 'sueldo_deseado', 'sueldo_aprobado', 'fecha_contratacion',
         'cv_path', 'solicitud_estado', 'solicitud_enviada_at', 'solicitud_revisada_at',
         'solicitud_revision_admin_id',

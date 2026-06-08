@@ -6,14 +6,14 @@
             <span>Solicitudes disponibles</span>
         </nav>
         <h1 class="page-title">Solicitudes disponibles</h1>
-        <p class="page-subtitle">Abre el detalle en un modal y revisa requisitos, empresa y alcance antes de solicitar.</p>
+        <p class="page-subtitle">Abre el detalle en un modal y revisa requisitos y alcance antes de solicitar.</p>
     </x-slot>
 
     <div class="card fade-in" style="margin-bottom:20px;">
         <form method="GET" class="candidate-filter-grid">
             <div>
                 <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Buscar</label>
-                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Título o empresa..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
+                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por título..." style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface);" spellcheck="true" autocorrect="on" autocapitalize="sentences" lang="es-MX">
             </div>
             <button type="submit" class="btn btn-primary" style="height:38px;">Filtrar</button>
         </form>
@@ -31,9 +31,6 @@
                             <h3 style="font-size:1.05rem; font-weight:600; margin-bottom:4px;">{{ $vacante->titulo }}</h3>
                             <span class="badge badge-blue">{{ \App\Models\CatalogoServicio::nivelJerarquicoLabel($vacante->nivel_jerarquico) }}</span>
                         </div>
-                        @if($vacante->empresa)
-                            <x-avatar :src="$vacante->empresa->usuario?->avatar_url" :nombre="$vacante->empresa->nombre_empresa" :tamano="36" />
-                        @endif
                     </div>
 
                     <p class="text-muted text-sm" style="margin-bottom:12px; flex:1;">

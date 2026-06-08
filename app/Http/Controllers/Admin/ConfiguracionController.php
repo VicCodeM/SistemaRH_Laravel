@@ -235,9 +235,11 @@ class ConfiguracionController extends Controller
             "Se creó el usuario {$user->name} ({$user->email}) con rol {$user->rol}.",
         );
 
-        return back()->with('success', $requiereVerificacion
-            ? 'Usuario creado correctamente. Se envio un correo de verificacion.'
-            : 'Usuario creado correctamente.');
+        return redirect()
+            ->route('admin.configuracion', ['tab' => 'usuarios'])
+            ->with('success', $requiereVerificacion
+                ? 'Usuario creado correctamente. Se envio un correo de verificacion.'
+                : 'Usuario creado correctamente.');
     }
 
     public function actualizarUsuario(Request $request, User $usuario, BitacoraService $bitacora): RedirectResponse
@@ -288,7 +290,9 @@ class ConfiguracionController extends Controller
             'Se actualizaron los campos: ' . implode(', ', array_unique($cambios ?: ['sin cambios visibles'])) . ". Usuario: {$usuario->email}."
         );
 
-        return back()->with('success', 'Usuario actualizado correctamente.');
+        return redirect()
+            ->route('admin.configuracion', ['tab' => 'usuarios'])
+            ->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function cambiarEstadoUsuario(User $usuario, BitacoraService $bitacora): RedirectResponse
@@ -307,7 +311,9 @@ class ConfiguracionController extends Controller
             "El usuario {$usuario->email} cambió a estado {$nuevoEstado}."
         );
 
-        return back()->with('success', $nuevoEstado === 'activo' ? 'Usuario desbloqueado.' : 'Usuario bloqueado.');
+        return redirect()
+            ->route('admin.configuracion', ['tab' => 'usuarios'])
+            ->with('success', $nuevoEstado === 'activo' ? 'Usuario desbloqueado.' : 'Usuario bloqueado.');
     }
 
     public function reenviarAcceso(User $usuario, BitacoraService $bitacora): RedirectResponse
@@ -324,7 +330,9 @@ class ConfiguracionController extends Controller
             "Se generó un enlace de restablecimiento para {$usuario->email}."
         );
 
-        return back()->with('success', 'Se generó el enlace de recuperación de acceso.');
+        return redirect()
+            ->route('admin.configuracion', ['tab' => 'usuarios'])
+            ->with('success', 'Se generó el enlace de recuperación de acceso.');
     }
 }
 

@@ -101,7 +101,7 @@
                 <div>
                     <div style="font-weight:600;">{{ $ultimaPostulacion->vacante?->titulo ?? 'Vacante' }}</div>
                     <div style="font-size:12px; color:#64748b; margin-top:4px;">
-                        {{ $ultimaPostulacion->vacante?->empresa?->nombre_empresa ?? 'Empresa' }}
+                        Empresa confidencial
                         @if($ultimaPostulacion->fecha_postulacion)
                             · {{ $ultimaPostulacion->fecha_postulacion->format('d/m/Y H:i') }}
                         @endif
@@ -220,7 +220,7 @@
                                     <div style="font-size:11px; color:#64748b;">{{ $postulacion->vacante?->requisitoResumen() ?? 'Sin requisitos' }}</div>
                                 </td>
                                 <td style="padding:9px 10px; color:#64748b;">
-                                    {{ $postulacion->vacante?->empresa?->nombre_empresa ?? '—' }}
+                                    Empresa confidencial
                                 </td>
                                 <td style="padding:9px 10px;">
                                     <span class="badge {{ \App\Models\Postulacion::estadoBadgeClass($postulacion->estado) }}">
@@ -241,7 +241,7 @@
                     @foreach($postulacionesRecientes as $postulacion)
                         <div class="candidate-mobile-card">
                             <h4 class="candidate-mobile-card-title">{{ $postulacion->vacante?->titulo ?? '—' }}</h4>
-                            <p class="candidate-mobile-card-subtitle">{{ $postulacion->vacante?->empresa?->nombre_empresa ?? '—' }}</p>
+                            <p class="candidate-mobile-card-subtitle">Empresa confidencial</p>
 
                             <div class="candidate-mobile-meta">
                                 <div>
@@ -280,7 +280,7 @@
                             <div style="min-width:0;">
                                 <div class="candidate-compact-item-title">{{ $vacante->titulo }}</div>
                                 <div class="candidate-compact-item-subtitle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                    {{ $vacante->empresa?->nombre_empresa ?? 'Empresa' }}
+                                    Empresa confidencial
                                 </div>
                             </div>
                             <div style="flex-shrink:0;">

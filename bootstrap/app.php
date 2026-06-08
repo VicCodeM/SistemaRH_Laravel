@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->authenticateSessions();
+
+        // Convierte los redirects de los envíos SPA en JSON { redirect } (ver RespuestaSpa).
+        $middleware->web(append: [
+            \App\Http\Middleware\RespuestaSpa::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // DomainException → flash error amigable (regla de negocio violada)

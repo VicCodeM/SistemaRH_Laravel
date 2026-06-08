@@ -42,7 +42,7 @@ class SolicitudCompatibilidadService
 
         $cumpleArea = empty($areasRequeridas)
             ? true
-            : $this->coincideConAlgunFragmento($perfilTexto, $areasRequeridas);
+            : $this->areaCoincideConPerfil($vacante->area_requerida, $perfilTexto);
 
         $cumpleExperiencia = $experienciaMinima === 0
             ? true
@@ -235,6 +235,76 @@ class SolicitudCompatibilidadService
         }
 
         return false;
+    }
+
+    /**
+     * Decide si el perfil del candidato corresponde al area requerida.
+     * 1) Match literal de los fragmentos del area (comportamiento original).
+     * 2) Match por FAMILIA: expande el area a sus palabras clave (ej. "Sistemas / TI"
+     *    => desarrollo, programacion, laravel, php, redes...) y las busca en el perfil.
+     *    Asi una desarrolladora Laravel cae en "Sistemas / TI", pero un medico no.
+     * Si el area no pertenece a ninguna familia conocida, se queda solo con el match literal.
+     */
+    private function areaCoincideConPerfil(?string $areaRequerida, string $perfilTexto): bool
+    {
+        $area = $this->normalizarTexto($areaRequerida);
+
+        if ($area === '') {
+            return true;
+        }
+
+        // 1) Match literal (lo de siempre)
+        $fragmentos = $this->fragmentarTexto($areaRequerida);
+        if (! empty($fragmentos) && $this->coincideConAlgunFragmento($perfilTexto, $fragmentos)) {
+            return true;
+        }
+
+        // 2) Match por familia de palabras clave
+        foreach ($this->familiasArea() as $familia) {
+            $perteneceALaFamilia = false;
+            foreach ($familia['claves'] as $clave) {
+                if (Str::contains($area, $clave)) {
+                    $perteneceALaFamilia = true;
+                    break;
+                }
+            }
+
+            if (! $perteneceALaFamilia) {
+                continue;
+            }
+
+            foreach ($familia['keywords'] as $keyword) {
+                if (Str::contains($perfilTexto, $keyword)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Familias de area con sus palabras clave (todo en minusculas y sin acentos,
+     * igual que normalizarTexto). 'claves' = como se reconoce el area requerida;
+     * 'keywords' = terminos del perfil del candidato que cuentan como coincidencia.
+     */
+    private function familiasArea(): array
+    {
+        return [
+            ['claves' => ['administracion', 'administrativo'], 'keywords' => ['administracion', 'administrativo', 'admin', 'gestion', 'oficina', 'secretari', 'asistente']],
+            ['claves' => ['contabilidad', 'contable', 'contador', 'contaduria'], 'keywords' => ['contabilidad', 'contable', 'contador', 'contaduria', 'impuestos', 'fiscal', 'auditoria', 'facturacion']],
+            ['claves' => ['finanzas', 'financ'], 'keywords' => ['finanzas', 'financiero', 'financiera', 'tesoreria', 'credito', 'cobranza', 'inversiones', 'presupuesto']],
+            ['claves' => ['recursos humanos', 'capital humano', ' rh', 'rh ', 'reclutamiento'], 'keywords' => ['recursos humanos', 'capital humano', 'reclutamiento', 'nomina', 'seleccion de personal', 'relaciones laborales', 'reclutador']],
+            ['claves' => ['sistemas', 'ti', 'tic', 'informatica', 'computacion', 'software', 'tecnologias de la informacion'], 'keywords' => ['sistemas', 'informatica', 'computacion', 'software', 'desarrollo', 'desarrollador', 'desarrolladora', 'programacion', 'programador', 'programadora', 'redes', 'soporte tecnico', 'base de datos', 'laravel', 'php', 'python', 'java', 'javascript', 'sql', 'html', 'css', 'web', 'frontend', 'backend', 'fullstack', 'devops', 'tecnologias de la informacion', 'ti']],
+            ['claves' => ['marketing', 'mercadotecnia', 'publicidad'], 'keywords' => ['marketing', 'mercadotecnia', 'publicidad', 'community', 'redes sociales', 'branding', 'seo', 'contenido', 'comunicacion', 'diseno']],
+            ['claves' => ['ventas', 'comercial'], 'keywords' => ['ventas', 'vendedor', 'vendedora', 'comercial', 'comercializacion', 'asesor de ventas', 'telemarketing', 'mostrador', 'promotor']],
+            ['claves' => ['ingenieria', 'ingeniero'], 'keywords' => ['ingenieria', 'ingeniero', 'ingeniera', 'mecanica', 'electrica', 'electronica', 'civil', 'industrial', 'mecatronica']],
+            ['claves' => ['produccion', 'operaciones', 'manufactura', 'mantenimiento', 'industrial'], 'keywords' => ['produccion', 'operaciones', 'manufactura', 'planta', 'ensamble', 'maquila', 'mantenimiento', 'calidad', 'industrial', 'operador', 'operario', 'tecnico']],
+            ['claves' => ['logistica', 'almacen', 'transporte'], 'keywords' => ['logistica', 'almacen', 'inventario', 'transporte', 'distribucion', 'cadena de suministro', 'supply', 'embarques', 'chofer', 'reparto']],
+            ['claves' => ['legal', 'juridico', 'derecho'], 'keywords' => ['legal', 'juridico', 'abogado', 'abogada', 'derecho', 'leyes', 'litigio', 'notaria']],
+            ['claves' => ['salud', 'medicina', 'medico'], 'keywords' => ['salud', 'medicina', 'medico', 'medica', 'enfermeria', 'enfermero', 'enfermera', 'clinico', 'hospital', 'paramedico', 'doctor', 'doctora', 'farmacia', 'laboratorio clinico', 'cuidados']],
+            ['claves' => ['educacion', 'docente', 'ensenanza'], 'keywords' => ['educacion', 'docente', 'maestro', 'maestra', 'profesor', 'profesora', 'pedagogia', 'ensenanza', 'capacitacion', 'instructor']],
+        ];
     }
 
     private function coincideConSolicitud(string $perfil, string $solicitud): bool

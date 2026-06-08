@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Candidato;
 
 use App\Http\Controllers\Controller;
+use App\Models\Candidato;
 use App\Models\ConfiguracionSistema;
 use App\Models\Postulacion;
 use App\Models\Vacante;
+use App\Services\SolicitudCompatibilidadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -51,6 +55,26 @@ class CandidatoController extends Controller
             ->with('error', 'Primero completa y envía tu solicitud para ver las vacantes.');
     }
 
+    /**
+     * Filtra una coleccion de vacantes dejando SOLO las adecuadas para el candidato:
+     * debe cumplir nivel de estudios Y el ramo/area requerida.
+     * (Un perfil de salud no vera vacantes cuyo area requerida sea, p. ej., desarrollo.)
+     * La experiencia NO bloquea: si le falta experiencia igual la ve, pero el area y los
+     * estudios si son filtros duros.
+     */
+    private function filtrarVacantesAdecuadas(Collection $vacantes, Candidato $candidato): Collection
+    {
+        $compatibilidad = app(SolicitudCompatibilidadService::class);
+
+        return $vacantes
+            ->filter(function (Vacante $vacante) use ($compatibilidad, $candidato) {
+                $resultado = $compatibilidad->evaluar($vacante, $candidato);
+
+                return $resultado['cumple_estudios'] && $resultado['cumple_area'];
+            })
+            ->values();
+    }
+
     public function dashboard(\App\Services\ResumenRapidoService $resumen): View
     {
         $candidato = $this->candidatoActual();
@@ -78,11 +102,14 @@ class CandidatoController extends Controller
             ->get();
 
         $vacantesRecientes = $candidato->solicitud_estado === 'aprobada'
-            ? Vacante::with('empresa')
-                ->where('estado', 'activa')
-                ->orderByDesc('fecha_publicacion')
-                ->limit(4)
-                ->get()
+            ? $this->filtrarVacantesAdecuadas(
+                Vacante::with('empresa')
+                    ->where('estado', 'activa')
+                    ->orderByDesc('fecha_publicacion')
+                    ->limit(60)
+                    ->get(),
+                $candidato
+            )->take(4)->values()
             : collect();
 
         $acciones = $resumen->paraCandidato($candidato);
@@ -124,13 +151,24 @@ class CandidatoController extends Controller
         if ($request->filled('buscar')) {
             $buscar = trim((string) $request->input('buscar'));
 
-            $query->where(function ($q) use ($buscar) {
-                $q->where('titulo', 'like', "%{$buscar}%")
-                    ->orWhereHas('empresa', fn ($empresa) => $empresa->where('nombre_empresa', 'like', "%{$buscar}%"));
-            });
+            // El candidato NO debe poder identificar la empresa: solo busca por titulo.
+            $query->where('titulo', 'like', "%{$buscar}%");
         }
 
-        $vacantes = $query->paginate(12)->withQueryString();
+        // Solo vacantes adecuadas al perfil (escolaridad + ramo/area). Se filtra en PHP
+        // porque la compatibilidad de area compara contra varios campos del perfil.
+        $adecuadas = $this->filtrarVacantesAdecuadas($query->get(), $candidato);
+
+        $porPagina = 12;
+        $pagina = max(1, (int) $request->input('page', 1));
+
+        $vacantes = new LengthAwarePaginator(
+            $adecuadas->forPage($pagina, $porPagina)->values(),
+            $adecuadas->count(),
+            $porPagina,
+            $pagina,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('candidato.vacantes', compact('vacantes'));
     }

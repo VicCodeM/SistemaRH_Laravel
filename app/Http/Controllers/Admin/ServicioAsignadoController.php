@@ -282,7 +282,7 @@ class ServicioAsignadoController extends Controller
             'cierre_resumen' => $data['cierre_resumen'] ?? null,
         ]);
 
-        return redirect()->route('admin.tareas.show', $tarea)->with('success', 'Tarea actualizada correctamente.');
+        return redirect()->route('admin.tareas.index')->with('success', 'Tarea actualizada correctamente.');
     }
 
     public function destroy(ServicioAsignado $tarea)
@@ -304,7 +304,7 @@ class ServicioAsignadoController extends Controller
         $nuevoEstado = $data['estado'];
 
         if (in_array($nuevoEstado, ['activo', 'en_proceso'], true) && ! $tarea->asignado_a) {
-            return back()->with('error', 'Asigna un responsable antes de mover a este estado.');
+            return redirect()->route('admin.tareas.index')->with('error', 'Asigna un responsable antes de mover a este estado.');
         }
 
         try {
@@ -312,10 +312,10 @@ class ServicioAsignadoController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return back()->with('error', 'No fue posible actualizar el estado. Intenta de nuevo.');
+            return redirect()->route('admin.tareas.index')->with('error', 'No fue posible actualizar el estado. Intenta de nuevo.');
         }
 
-        return back()->with('success', 'Estado actualizado correctamente.');
+        return redirect()->route('admin.tareas.index')->with('success', 'Estado actualizado correctamente.');
     }
 
     /**
@@ -364,10 +364,10 @@ class ServicioAsignadoController extends Controller
         } catch (\DomainException $e) {
             report($e);
 
-            return back()->with('error', 'No fue posible liberar al interno. Intenta de nuevo.');
+            return redirect()->route('admin.tareas.index')->with('error', 'No fue posible liberar al interno. Intenta de nuevo.');
         }
 
-        return back()->with('success', 'Interno liberado. Ya puedes asignar a otro.');
+        return redirect()->route('admin.tareas.index')->with('success', 'Interno liberado. Ya puedes asignar a otro.');
     }
 
     /**

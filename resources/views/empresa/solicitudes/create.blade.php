@@ -127,13 +127,17 @@
                 </div>
 
                 <div>
-                    <label class="form-label">Area o carrera</label>
-                    <select name="area_requerida" class="form-input">
-                        <option value="">Cualquier area</option>
+                    <label class="form-label">Area(s) o carrera(s)</label>
+                    @php $areasSel = (array) old('area_requerida', []); @endphp
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
                         @foreach($areas as $key => $label)
-                            <option value="{{ $label }}" @selected(old('area_requerida') === $label)>{{ $label }}</option>
+                            <label style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:.84rem; background:#fff;">
+                                <input type="checkbox" name="area_requerida[]" value="{{ $label }}" @checked(in_array($label, $areasSel))>
+                                {{ $label }}
+                            </label>
                         @endforeach
-                    </select>
+                    </div>
+                    <p style="margin:6px 0 0; font-size:11px; color:#94a3b8;">Puedes marcar varias. Si no marcas ninguna, queda abierta a cualquier ramo.</p>
                 </div>
 
                 <div>

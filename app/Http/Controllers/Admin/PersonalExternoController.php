@@ -196,6 +196,6 @@ class PersonalExternoController extends Controller
 
         $personalExterno->delete();
 
-        return back()->with('success', 'Registro eliminado correctamente.');
+        return redirect()->route('admin.personal-externo.index')->with('success', 'Registro eliminado correctamente.');
     }
 }

@@ -11,9 +11,14 @@
         <p class="page-subtitle">Registra una solicitud en nombre de una empresa cliente.</p>
     </x-slot>
 
-    <div style="max-width:860px;">
+    @php
+        $presentacionActivaInicial = (bool) old('presentacion_activa', false);
+    @endphp
+
+    <div x-data="{ presentacionActiva: @js($presentacionActivaInicial) }" style="max-width:860px;">
         <div class="card">
-            <form method="POST" action="{{ route('admin.vacantes.guardar') }}">
+            {{-- data-no-spa: este form redirige a otra pagina (editor/lista), debe seguir el redirect del servidor --}}
+            <form method="POST" action="{{ route('admin.vacantes.guardar') }}" data-no-spa>
                 @csrf
                 @php
                     $empresaSeleccionada = old('empresa_id') ? \App\Models\Empresa::find(old('empresa_id')) : null;
@@ -82,7 +87,7 @@
                     <h2 style="margin:0 0 6px; font-size:0.98rem;">Requisitos de compatibilidad</h2>
                     <p style="margin:0 0 14px; font-size:0.84rem; color:#64748b;">Estos campos permiten que el sistema ordene candidatos de forma autom&aacute;tica.</p>
 
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:14px;">
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" for="nivel_estudios_minimo">Nivel m&iacute;nimo de estudios</label>
                             <select id="nivel_estudios_minimo" name="nivel_estudios_minimo" class="form-input @error('nivel_estudios_minimo') is-invalid @enderror">
@@ -91,18 +96,8 @@
                                     <option value="{{ $key }}" {{ old('nivel_estudios_minimo') === $key ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <p style="margin:6px 0 0; font-size:11px; color:#94a3b8;">Es un m&iacute;nimo: si pides Licenciatura, tambi&eacute;n entran Ingenier&iacute;a, Maestr&iacute;a y Doctorado.</p>
                             @error('nivel_estudios_minimo')<div class="form-error">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="form-group" style="margin:0;">
-                            <label class="form-label" for="area_requerida">&Aacute;rea o carrera requerida</label>
-                            <select id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror">
-                                <option value="">Sin requisito</option>
-                                @foreach($areas as $key => $label)
-                                    <option value="{{ $label }}" {{ old('area_requerida') === $label ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="form-group" style="margin:0;">
@@ -119,6 +114,23 @@
                             >
                             @error('experiencia_minima')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
+                    </div>
+
+                    {{-- Area / ramo: seleccion multiple --}}
+                    <div class="form-group" style="margin-top:14px;">
+                        <label class="form-label">&Aacute;rea(s) o carrera(s) requerida(s)</label>
+                        @php $areasSel = (array) old('area_requerida', []); @endphp
+                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+                            @foreach($areas as $key => $label)
+                                <label style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:.84rem; background:#fff;">
+                                    <input type="checkbox" name="area_requerida[]" value="{{ $label }}" @checked(in_array($label, $areasSel))>
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <p style="margin:6px 0 0; font-size:11px; color:#94a3b8;">Puedes marcar varias (ej. Sistemas e Ingenier&iacute;a). Si no marcas ninguna, la vacante queda abierta a cualquier ramo.</p>
+                        @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
+                        @error('area_requerida.*')<div class="form-error">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="form-group" style="margin-top:14px;">
@@ -258,12 +270,38 @@
                     >{{ old('notas_internas') }}</textarea>
                 </div>
 
+                <div class="form-group" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--border);">
+                    <label style="display:flex; align-items:flex-start; gap:10px; font-weight:600; margin:0; cursor:pointer;">
+                        <input type="checkbox" name="presentacion_activa" value="1" x-model="presentacionActiva" @checked($presentacionActivaInicial) style="margin-top:2px;">
+                        <span>
+                            Activar presentacion visual de esta vacante
+                            <small style="display:block; margin-top:4px; font-size:12px; font-weight:400; color:#94a3b8;">
+                                Solo el admin la arma. La empresa y los candidatos solo la veran cuando la vacante final ya este lista.
+                            </small>
+                        </span>
+                    </label>
+                </div>
+
+                <div
+                    x-show="presentacionActiva"
+                    x-cloak
+                    style="margin-top:14px; padding:14px 16px; border:1px solid rgba(37,99,235,.18); border-radius:12px; background:rgba(59,130,246,.06);"
+                >
+                    <strong style="display:block; margin-bottom:6px; color:var(--text-primary);">Presentacion final de la vacante</strong>
+                    <p style="margin:0; font-size:0.84rem; line-height:1.6; color:#64748b;">
+                        Primero se crea la vacante y enseguida te llevaremos al editor para subir imagenes, ordenarlas y dejar la presentacion final publicada desde admin.
+                    </p>
+                </div>
+
                 <div style="margin-top:10px; padding:10px 14px; background:rgba(59,130,246,0.06); border-radius:8px; font-size:0.82rem; color:#94a3b8; border-left:3px solid var(--accent);">
                     La solicitud se crea con el estado que elijas y puede activarse o desactivarse despu&eacute;s desde la lista.
                 </div>
 
                 <div style="display:flex; gap:12px; margin-top:24px; padding-top:20px; border-top:1px solid var(--border);">
-                    <button type="submit" class="btn btn-primary">Crear solicitud</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span x-show="!presentacionActiva">Crear solicitud</span>
+                        <span x-show="presentacionActiva" x-cloak>Crear y abrir presentacion</span>
+                    </button>
                     <a href="{{ route('admin.vacantes') }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>

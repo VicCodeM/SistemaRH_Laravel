@@ -12,6 +12,7 @@
             <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @stack('head-scripts')
         @livewireStyles
     </head>
     <body>
@@ -129,17 +130,38 @@
             }
         };
 
-        // Disparar en submit de formularios
+        // Disparar en submit de formularios.
+        // Se difiere a un microtask para saber si el envio realmente procede:
+        // si un onsubmit="return confirm(...)" se cancela, no arrancamos la barra ni el boton.
         document.addEventListener('submit', e => {
-            RHP.start();
-            const btn = e.target.querySelector('[type=submit]');
-            if (btn && !btn.hasAttribute('data-no-load')) btn.classList.add('btn-loading');
+            queueMicrotask(() => {
+                // defaultPrevented sin manejo SPA = confirm cancelado u otra cancelacion: no hacer nada.
+                if (e.defaultPrevented && !e.__rhSpaHandled) return;
+                RHP.start();
+                const btn = e.target.querySelector('[type=submit]');
+                if (btn && !btn.hasAttribute('data-no-load')) {
+                    btn.classList.add('btn-loading');
+                    // Safety: si el submit fue cancelado (ej. confirm() = false),
+                    // el boton sigue en el DOM y la pagina no navega.
+                    // En ese caso, quitamos el estado visual tras un breve lapso.
+                    setTimeout(() => {
+                        if (document.contains(btn)) {
+                            btn.classList.remove('btn-loading');
+                            RHP.done();
+                        }
+                    }, 300);
+                }
+            });
         }, true);
 
         // ── SPA para formularios POST de acción: enviar sin recargar ───
         // Conserva el scroll y deja que el toast del flash se muestre solo.
         let _spaScrollY = null;
         document.addEventListener('submit', function(e) {
+            // Respeta cualquier cancelacion previa (ej. onsubmit="return confirm(...)").
+            // Si el usuario dio "Cancelar", el evento ya viene con defaultPrevented y NO debemos enviar.
+            if (e.defaultPrevented) return;
+
             const form = e.target;
             if (!(form instanceof HTMLFormElement)) return;
 
@@ -161,18 +183,35 @@
             if (/\/(login|logout|register|password|confirm-password|email)/.test(accion.pathname)) return;
 
             e.preventDefault();
+            e.__rhSpaHandled = true;
             _spaScrollY = window.scrollY;
             RHP.start();
 
             fetch(accion.href, {
                 method: 'POST',
                 body: new FormData(form),
-                redirect: 'manual',                 // no seguir el redirect → el flash sobrevive en sesión
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                // Cabecera propia: el middleware RespuestaSpa devuelve { redirect } y conserva el flash.
+                // Accept text/html: que la validación/errores se manejen como redirect (no 422 JSON).
+                headers: { 'X-RH-SPA': '1', 'Accept': 'text/html' },
             })
-            .then(() => {
-                // Refrescar la página actual sin recargar el navegador (corre scripts del flash)
-                window.Livewire ? Livewire.navigate(window.location.href) : window.location.reload();
+            .then(async (response) => {
+                let destino = null;
+                try {
+                    const data = await response.clone().json();
+                    if (data && data.redirect) destino = data.redirect;
+                } catch (_) { /* no vino JSON: usamos la pagina actual */ }
+
+                if (!destino) destino = window.location.href;
+
+                // Solo conservamos el scroll si seguimos en la MISMA pagina (acciones tipo toggle).
+                // Si el servidor redirige a otra pagina (ej. la lista tras guardar), no lo restauramos.
+                try {
+                    if (new URL(destino, window.location.origin).pathname !== window.location.pathname) {
+                        _spaScrollY = null;
+                    }
+                } catch (_) {}
+
+                window.Livewire ? Livewire.navigate(destino) : (window.location.href = destino);
             })
             .catch(() => {
                 _spaScrollY = null;
@@ -282,6 +321,12 @@
                         ns.textContent = s.textContent;
                         s.replaceWith(ns);
                     });
+                    // Inicializa componentes Alpine inyectados (ej. carrusel de presentacion)
+                    if (window.Alpine) {
+                        content.querySelectorAll('[x-data]').forEach(el => {
+                            if (!el._x_dataStack) window.Alpine.initTree(el);
+                        });
+                    }
                     RHP.done();
                 })
                 .catch(() => {
@@ -419,5 +464,6 @@
         @if(session('warning'))
             <script>rhToast(@json(session('warning')), 'warning');</script>
         @endif
+        @stack('page-scripts')
     </body>
 </html>

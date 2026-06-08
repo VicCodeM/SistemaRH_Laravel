@@ -83,7 +83,7 @@ class AdminCatalogosTest extends TestCase
             ->from(route('admin.catalogo.index'))
             ->patch(route('admin.catalogo.toggle', $servicio));
 
-        $response->assertRedirect(route('admin.catalogo.index'));
+        $response->assertRedirect(route('admin.catalogos.index', ['tab' => 'servicios']));
         $response->assertSessionHas('error', 'No se puede desactivar este servicio porque ya tiene pedidos activos o en proceso.');
 
         $this->assertDatabaseHas('catalogo_servicios', [
@@ -108,7 +108,7 @@ class AdminCatalogosTest extends TestCase
             ->from(route('admin.catalogo.index'))
             ->patch(route('admin.catalogo.toggle', $servicio));
 
-        $response->assertRedirect(route('admin.catalogo.index'));
+        $response->assertRedirect(route('admin.catalogos.index', ['tab' => 'servicios']));
         $response->assertSessionHas('success', 'Servicio desactivado.');
 
         $this->assertDatabaseHas('catalogo_servicios', [
@@ -133,7 +133,7 @@ class AdminCatalogosTest extends TestCase
 
         $servicio = CatalogoServicio::where('nombre', 'Reclutamiento ejecutivo')->firstOrFail();
 
-        $response->assertRedirect(route('admin.catalogo.edit', $servicio));
+        $response->assertRedirect(route('admin.catalogos.index', ['tab' => 'servicios']));
 
         $this->assertDatabaseHas('catalogo_servicios', [
             'id' => $servicio->id,

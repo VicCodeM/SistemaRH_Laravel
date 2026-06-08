@@ -23,15 +23,15 @@
             <div class="solicitud-grid-3">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Nombre(s) <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="nombre" placeholder="Nombre(s)" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="nombre" placeholder="Nombre(s)" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Apellido paterno <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="apellido_paterno" placeholder="Apellido paterno" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="apellido_paterno" placeholder="Apellido paterno" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Apellido materno <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="apellido_materno" placeholder="Apellido materno" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="apellido_materno" placeholder="Apellido materno" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
         </div>
@@ -45,19 +45,19 @@
             <div class="solicitud-grid-4" style="margin-bottom:16px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Edad <span class="req">*</span></label>
-                    <input type="number" class="form-input" wire:model="edad" min="14" max="100" placeholder="Años">
+                    <input type="number" class="form-input" wire:model.blur="edad" min="14" max="100" placeholder="Años">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Fecha de nacimiento <span class="req">*</span></label>
-                    <input type="date" class="form-input" wire:model="fecha_nacimiento">
+                    <input type="date" class="form-input" wire:model.blur="fecha_nacimiento">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Lugar de nacimiento <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="lugar_nacimiento" placeholder="Ciudad, estado o país" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="lugar_nacimiento" placeholder="Ciudad, estado o país" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Nacionalidad <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="nacionalidad" placeholder="Mexicana" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="nacionalidad" placeholder="Mexicana" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
 
@@ -111,17 +111,17 @@
             <div class="solicitud-grid-2" style="margin-bottom:16px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Peso <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="peso" placeholder="Ej. 72 kg" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="peso" placeholder="Ej. 72 kg" spellcheck="true" autocapitalize="sentences">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Estatura <span class="req">*</span></label>
-                    <input type="text" class="form-input" wire:model="estatura" placeholder="Ej. 1.75 m" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="estatura" placeholder="Ej. 1.75 m" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
 
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Dependientes económicos <span class="req">*</span></label>
-                <textarea class="form-input" wire:model="dependientes" rows="2" spellcheck="true" autocapitalize="sentences"
+                <textarea class="form-input" wire:model.blur="dependientes" rows="2" spellcheck="true" autocapitalize="sentences"
                     placeholder="Ej. 2 hijos, 1 padre. Si no tienes, escribe 'Ninguno'."></textarea>
             </div>
         </div>

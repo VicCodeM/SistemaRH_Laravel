@@ -133,7 +133,7 @@ class PersonalInternoController extends Controller
 
         $servicio->actualizarCapacidades($interno, $data['servicios'] ?? []);
 
-        return back()->with('success', 'Capacidades actualizadas correctamente.');
+        return redirect()->route('admin.personal-interno.index')->with('success', 'Capacidades actualizadas correctamente.');
     }
 
     public function toggleEstado(User $interno)
@@ -143,7 +143,7 @@ class PersonalInternoController extends Controller
         $interno->update(['estado' => $nuevoEstado]);
 
         $msg = $nuevoEstado === 'activo' ? 'Interno activado correctamente.' : 'Interno desactivado.';
-        return back()->with('success', $msg);
+        return redirect()->route('admin.personal-interno.index')->with('success', $msg);
     }
 
     public function exportarCsv(ExportadorService $exportador)

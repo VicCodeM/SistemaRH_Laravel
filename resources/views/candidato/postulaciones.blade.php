@@ -37,10 +37,7 @@
                                     <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">{{ $p->vacante?->requisitoResumen() ?? 'Sin requisitos' }}</div>
                                 </td>
                                 <td>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <x-avatar :src="$p->vacante?->empresa?->usuario?->avatar_url" :nombre="$p->vacante?->empresa?->nombre_empresa ?? '?'" :tamano="28" />
-                                        <span class="text-muted">{{ $p->vacante?->empresa?->nombre_empresa ?? '—' }}</span>
-                                    </div>
+                                    <span class="text-muted">Empresa confidencial</span>
                                 </td>
                                 <td class="text-muted text-sm">{{ $p->fecha_postulacion?->format('d/m/Y H:i') ?? '—' }}</td>
                                 <td>
@@ -75,7 +72,7 @@
                 @foreach($postulaciones as $p)
                     <div class="candidate-mobile-card fade-in">
                         <h3 class="candidate-mobile-card-title">{{ $p->vacante?->titulo ?? '—' }}</h3>
-                        <p class="candidate-mobile-card-subtitle">{{ $p->vacante?->empresa?->nombre_empresa ?? '—' }}</p>
+                        <p class="candidate-mobile-card-subtitle">Empresa confidencial</p>
 
                         <div class="candidate-mobile-meta">
                             <div>

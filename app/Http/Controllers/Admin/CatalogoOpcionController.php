@@ -185,12 +185,16 @@ class CatalogoOpcionController extends Controller
     public function toggle(CatalogoOpcion $catalogo)
     {
         if ($catalogo->es_sistema) {
-            return back()->with('error', 'Las opciones del sistema no se pueden desactivar.');
+            return redirect()
+                ->route('admin.catalogos.index', ['tab' => CatalogoOpcion::moduloDelGrupo($catalogo->grupo) ?? 'vacantes'])
+                ->with('error', 'Las opciones del sistema no se pueden desactivar.');
         }
 
         $catalogo->update(['activo' => ! $catalogo->activo]);
 
-        return back()->with('success', $catalogo->activo ? 'Opción activada.' : 'Opción desactivada.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => CatalogoOpcion::moduloDelGrupo($catalogo->grupo) ?? 'vacantes'])
+            ->with('success', $catalogo->activo ? 'Opción activada.' : 'Opción desactivada.');
     }
 
     public function accionModal(CatalogoOpcion $catalogo, string $accion)
@@ -219,12 +223,18 @@ class CatalogoOpcionController extends Controller
 
     public function destroy(CatalogoOpcion $catalogo)
     {
+        $tab = CatalogoOpcion::moduloDelGrupo($catalogo->grupo) ?? 'vacantes';
+
         if ($catalogo->es_sistema) {
-            return back()->with('error', 'No se puede eliminar una opción del sistema.');
+            return redirect()
+                ->route('admin.catalogos.index', ['tab' => $tab])
+                ->with('error', 'No se puede eliminar una opción del sistema.');
         }
 
         $catalogo->delete();
 
-        return back()->with('success', 'Opción eliminada.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => $tab])
+            ->with('success', 'Opción eliminada.');
     }
 }

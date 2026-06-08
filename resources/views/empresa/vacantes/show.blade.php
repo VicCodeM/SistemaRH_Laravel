@@ -21,6 +21,17 @@
         </div>
     @endif
 
+    @if ($vacante->presentacion_activa && \App\Models\Vacante::tieneTablaRecursos() && $vacante->recursos()->exists())
+        <div style="margin-bottom:20px;">
+            @include('partials.catalogo-servicio-recursos', [
+                'owner' => $vacante,
+                'puedeGestionar' => false,
+                'tituloSeccion' => 'Presentacion de la vacante',
+                'tieneTablaRecursos' => true,
+            ])
+        </div>
+    @endif
+
     @if ($vacante->postulaciones->isEmpty())
         <div style="text-align: center; padding: 60px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" style="width: 40px; height: 40px; margin: 0 auto 12px; display: block; color: #334155;">

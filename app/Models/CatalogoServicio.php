@@ -20,11 +20,13 @@ class CatalogoServicio extends Model
         'para_quien',
         'flujo',
         'activo',
+        'presentacion_activa',
         'orden',
     ];
 
     protected $casts = [
         'activo' => 'boolean',
+        'presentacion_activa' => 'boolean',
     ];
 
     public function scopeActivos(Builder $query): void
@@ -59,6 +61,11 @@ class CatalogoServicio extends Model
             ->orderBy('tipo', 'desc')
             ->orderBy('orden')
             ->orderBy('created_at');
+    }
+
+    public function tienePresentacionActiva(): bool
+    {
+        return (bool) ($this->presentacion_activa ?? false);
     }
 
     public static function tieneTablaRecursos(): bool

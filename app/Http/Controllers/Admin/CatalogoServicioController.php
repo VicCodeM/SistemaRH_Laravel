@@ -31,6 +31,7 @@ class CatalogoServicioController extends Controller
             'nivel_jerarquico' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
             'para_quien' => ['nullable', 'in:empresa,candidato,ambos'],
             'activo' => ['boolean'],
+            'presentacion_activa' => ['boolean'],
             'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
@@ -44,11 +45,14 @@ class CatalogoServicioController extends Controller
         }
 
         $data['activo'] = $request->boolean('activo', true);
+        $data['presentacion_activa'] = $request->boolean('presentacion_activa');
 
         $catalogo = CatalogoServicio::create($data);
 
-        return redirect()->route('admin.catalogo.edit', $catalogo)
-            ->with('success', 'Servicio creado correctamente. Ahora puedes agregar su presentacion.');
+        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
+            ->with('success', $data['presentacion_activa']
+                ? 'Servicio creado. Ahora agrega su presentación desde el listado.'
+                : 'Servicio creado correctamente.');
     }
 
     public function edit(CatalogoServicio $catalogo)
@@ -66,6 +70,7 @@ class CatalogoServicioController extends Controller
             'nivel_jerarquico' => ['nullable', 'in:' . implode(',', array_keys(CatalogoServicio::nivelesJerarquicosCompatibles()))],
             'para_quien' => ['nullable', 'in:empresa,candidato,ambos'],
             'activo' => ['boolean'],
+            'presentacion_activa' => ['boolean'],
             'orden' => ['nullable', 'integer', 'min:0'],
         ]);
 
@@ -79,22 +84,27 @@ class CatalogoServicioController extends Controller
         }
 
         $data['activo'] = $request->boolean('activo');
+        $data['presentacion_activa'] = $request->boolean('presentacion_activa');
 
         $catalogo->update($data);
 
-        return redirect()->route('admin.catalogo.edit', $catalogo)
+        return redirect()->route('admin.catalogos.index', ['tab' => 'servicios'])
             ->with('success', 'Servicio actualizado correctamente.');
     }
 
     public function toggle(CatalogoServicio $catalogo)
     {
         if ($catalogo->activo && ! $catalogo->puedeDesactivarse()) {
-            return back()->with('error', 'No se puede desactivar este servicio porque ya tiene pedidos activos o en proceso.');
+            return redirect()
+                ->route('admin.catalogos.index', ['tab' => 'servicios'])
+                ->with('error', 'No se puede desactivar este servicio porque ya tiene pedidos activos o en proceso.');
         }
 
         $catalogo->update(['activo' => ! $catalogo->activo]);
 
-        return back()->with('success', $catalogo->activo ? 'Servicio activado.' : 'Servicio desactivado.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => 'servicios'])
+            ->with('success', $catalogo->activo ? 'Servicio activado.' : 'Servicio desactivado.');
     }
 
     public function accionModal(CatalogoServicio $catalogo, string $accion)
@@ -122,11 +132,15 @@ class CatalogoServicioController extends Controller
     public function destroy(CatalogoServicio $catalogo)
     {
         if ($catalogo->tieneSolicitudesRelacionadas()) {
-            return back()->with('error', 'No se puede eliminar este servicio porque ya tiene solicitudes asociadas. Desactivalo en su lugar.');
+            return redirect()
+                ->route('admin.catalogos.index', ['tab' => 'servicios'])
+                ->with('error', 'No se puede eliminar este servicio porque ya tiene solicitudes asociadas. Desactivalo en su lugar.');
         }
 
         $catalogo->delete();
 
-        return back()->with('success', 'Servicio eliminado.');
+        return redirect()
+            ->route('admin.catalogos.index', ['tab' => 'servicios'])
+            ->with('success', 'Servicio eliminado.');
     }
 }

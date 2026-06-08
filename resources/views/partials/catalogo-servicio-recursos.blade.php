@@ -1,10 +1,17 @@
 @php
-    $tieneTablaRecursos = \App\Models\CatalogoServicio::tieneTablaRecursos();
+    // Parametros generalizados: por defecto trabaja con $catalogo (servicios),
+    // pero acepta cualquier $owner (ej. una Vacante) con sus propias rutas.
+    $owner = $owner ?? $catalogo;
+    $rutaStore = $rutaStore ?? 'admin.catalogo.recursos.store';
+    $rutaUpdate = $rutaUpdate ?? 'admin.catalogo.recursos.update';
+    $rutaDestroy = $rutaDestroy ?? 'admin.catalogo.recursos.destroy';
+    $tituloSeccion = $tituloSeccion ?? 'Presentacion del servicio';
+    $tieneTablaRecursos = $tieneTablaRecursos ?? \App\Models\CatalogoServicio::tieneTablaRecursos();
 
     if ($tieneTablaRecursos) {
-        $catalogo->loadMissing(['recursos.subidoPor']);
+        $owner->loadMissing(['recursos.subidoPor']);
 
-        $recursos = $catalogo->recursos->sortBy([
+        $recursos = $owner->recursos->sortBy([
             ['orden', 'asc'],
             ['created_at', 'asc'],
         ])->values();
@@ -22,40 +29,28 @@
 
     $usuario = auth()->user();
     $puedeGestionar = $puedeGestionar ?? ($usuario?->rol === 'admin');
-    $slideInicial = $slides->first();
+    $presentacionActiva = (bool) ($owner->presentacion_activa ?? false);
     $siguienteOrden = (int) ($recursos->max('orden') ?? 0) + 1;
+    $slidesData = $slides->map(fn ($recurso) => [
+        'id' => $recurso->id,
+        'titulo' => $recurso->titulo,
+        'descripcion' => $recurso->descripcion,
+        'url' => $recurso->url(),
+        'thumb_url' => $recurso->thumbUrl(),
+    ])->values();
 @endphp
 
-<div
-    class="card servicio-recursos"
-    x-data="{
-        slides: @js($slides->pluck('id')->map(fn ($id) => (string) $id)->values()),
-        activo: '{{ $slideInicial?->id ? (string) $slideInicial->id : '' }}',
-        anterior() {
-            if (! this.slides.length) return;
-            const indice = this.slides.indexOf(this.activo);
-            const siguiente = indice <= 0 ? this.slides.length - 1 : indice - 1;
-            this.activo = this.slides[siguiente];
-        },
-        siguiente() {
-            if (! this.slides.length) return;
-            const indice = this.slides.indexOf(this.activo);
-            const siguiente = indice === -1 || indice >= this.slides.length - 1 ? 0 : indice + 1;
-            this.activo = this.slides[siguiente];
-        },
-        seleccionar(id) {
-            this.activo = String(id);
-        }
-    }"
->
+<div class="card servicio-recursos">
     <div class="servicio-recursos__head">
         <div>
-            <h3 class="servicio-recursos__title">Presentacion del servicio</h3>
+            <h3 class="servicio-recursos__title">{{ $tituloSeccion }}</h3>
             <p class="servicio-recursos__text">
                 Esta presentacion se arma con imagenes. Empresa y candidato la ven en vivo; el admin puede subirlas, ordenarlas y poner texto opcional debajo de cada diapositiva.
             </p>
         </div>
-        <span class="badge badge-blue">{{ $slides->count() }} diapositiva(s)</span>
+        <span class="badge {{ $presentacionActiva ? 'badge-blue' : 'badge-gray' }}">
+            {{ $presentacionActiva ? $slides->count() . ' diapositiva(s)' : 'Presentacion desactivada' }}
+        </span>
     </div>
 
     @if(! $tieneTablaRecursos)
@@ -76,10 +71,10 @@
                 <span class="badge badge-gray">{{ $slides->count() }} imagen(es)</span>
             </div>
 
-            <div style="display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, .95fr); gap:16px;">
+            <div class="servicio-recursos__admin-builder">
                 <form
                     method="POST"
-                    action="{{ route('admin.catalogo.recursos.store', $catalogo) }}"
+                    action="{{ route($rutaStore, $owner) }}"
                     enctype="multipart/form-data"
                     class="servicio-recursos__form"
                     x-data="{
@@ -97,9 +92,7 @@
 
                             this.archivos = Array.from(lista || []).map((archivo, indice) => ({
                                 clave: `${archivo.name}-${indice}-${archivo.size}`,
-                                nombre: archivo.name,
                                 url: URL.createObjectURL(archivo),
-                                tamano: archivo.size ? `${Math.max(1, Math.round(archivo.size / 1024))} KB` : '',
                             }));
                         },
                         cambiarArchivo(evento) {
@@ -176,18 +169,18 @@
                     <div class="servicio-recursos__preview" x-show="archivos.length" x-cloak>
                         <div class="servicio-recursos__preview-card">
                             <div class="servicio-recursos__preview-badge">Vista previa local</div>
-                            <p class="servicio-recursos__preview-title" x-text="archivos.length === 1 ? archivos[0].nombre : `${archivos.length} diapositivas listas para agregarse`"></p>
+                            <p class="servicio-recursos__preview-title" x-text="archivos.length === 1 ? '1 diapositiva lista para agregarse' : `${archivos.length} diapositivas listas para agregarse`"></p>
                             <p class="servicio-recursos__preview-subtitle">
                                 Despues de subirlas podras editar titulo, texto opcional y orden individual de cada diapositiva.
                             </p>
 
                             <div class="servicio-recursos__preview-grid">
-                                <template x-for="archivo in archivos" :key="archivo.clave">
+                                <template x-for="(archivo, indice) in archivos" :key="archivo.clave">
                                     <article class="servicio-recursos__preview-mini">
                                         <img :src="archivo.url" alt="Vista previa" class="servicio-recursos__preview-mini-media">
                                         <div class="servicio-recursos__preview-mini-body">
-                                            <strong x-text="archivo.nombre"></strong>
-                                            <small x-text="archivo.tamano || 'Imagen lista'"></small>
+                                            <strong x-text="'Diapositiva ' + (indice + 1)"></strong>
+                                            <small>Imagen lista</small>
                                         </div>
                                     </article>
                                 </template>
@@ -200,7 +193,7 @@
                     </div>
                 </form>
 
-                <div class="servicio-recursos__preview-card" style="align-self:start;">
+                <div class="servicio-recursos__preview-card servicio-recursos__preview-card--list">
                     <div class="servicio-recursos__preview-badge">Diapositivas actuales</div>
 
                     @if($slides->isEmpty())
@@ -216,9 +209,6 @@
                                                 <span class="badge badge-green">Imagen</span>
                                             </div>
                                             <strong style="display:block; color:var(--text-primary);">{{ $recurso->titulo }}</strong>
-                                            <small style="display:block; margin-top:4px; color:#64748b; word-break:break-word;">
-                                                {{ $recurso->archivo_original }} @if($recurso->tamano_bytes) &middot; {{ $recurso->tamanoHumano() }} @endif
-                                            </small>
                                         </div>
                                         <span style="color:#94a3b8; font-size:12px;">Editar</span>
                                     </summary>
@@ -228,7 +218,7 @@
 
                                         <form
                                             method="POST"
-                                            action="{{ route('admin.catalogo.recursos.update', $recurso) }}"
+                                            action="{{ route($rutaUpdate, $recurso) }}"
                                             enctype="multipart/form-data"
                                             style="display:grid; gap:14px;"
                                         >
@@ -276,7 +266,7 @@
                                         </form>
 
                                         <div style="display:flex; justify-content:flex-start;">
-                                            <form method="POST" action="{{ route('admin.catalogo.recursos.destroy', $recurso) }}" onsubmit="return confirm('Eliminar esta diapositiva?')">
+                                            <form method="POST" action="{{ route($rutaDestroy, $recurso) }}" onsubmit="return confirm('Eliminar esta diapositiva?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-ghost" style="color:#dc2626;">Eliminar diapositiva</button>
@@ -295,68 +285,233 @@
                     Hay {{ $recursosNoImagen->count() }} recurso(s) antiguo(s) que no son imagen. La presentacion nueva ya solo trabaja con imagenes.
                 </div>
             @endif
+
+            @if($slides->isNotEmpty())
+                <div
+                    class="presentacion-preview"
+                    x-data="{
+                        actual: 0,
+                        total: {{ $slides->count() }},
+                        slides: @js($slidesData),
+                        irA(indice) {
+                            if (indice < 0 || indice >= this.total) {
+                                return;
+                            }
+
+                            this.actual = indice;
+                        },
+                        siguiente() {
+                            if (this.total <= 1) {
+                                return;
+                            }
+
+                            this.actual = (this.actual + 1) % this.total;
+                        },
+                        anterior() {
+                            if (this.total <= 1) {
+                                return;
+                            }
+
+                            this.actual = (this.actual - 1 + this.total) % this.total;
+                        },
+                        slideActual() {
+                            return this.slides[this.actual] || null;
+                        }
+                    }"
+                >
+                    <div class="presentacion-preview__head">
+                        <div>
+                            <p class="presentacion-preview__label">Vista previa del admin</p>
+                            <p class="servicio-recursos__hint" style="margin-top:4px;">
+                                Aqui revisas como se vera la presentacion sin hacer enorme la pantalla de edicion.
+                            </p>
+                        </div>
+                        <span class="presentacion-preview__counter" x-text="(actual + 1) + ' / ' + total"></span>
+                    </div>
+
+                    <div class="presentacion-preview__stage" x-show="slideActual()" x-cloak>
+                        <img
+                            :src="slideActual()?.url || ''"
+                            :alt="slideActual()?.titulo || 'Diapositiva del servicio'"
+                            class="presentacion-preview__img"
+                        >
+                    </div>
+
+                    @if($slides->count() > 1)
+                        <div class="presentacion-preview__controls">
+                            <button type="button" class="presentacion-preview__btn" @click="anterior()" aria-label="Anterior">&lsaquo;</button>
+                            <div class="presentacion-preview__thumbs">
+                                <template x-for="(slide, indice) in slides" :key="slide.id">
+                                    <button
+                                        type="button"
+                                        class="presentacion-preview__thumb"
+                                        :class="{ 'is-active': actual === indice }"
+                                        :aria-label="'Ver diapositiva ' + (indice + 1)"
+                                        @click="irA(indice)"
+                                    >
+                                        <img :src="slide.thumb_url || slide.url" :alt="slide.titulo || ('Diapositiva ' + (indice + 1))">
+                                    </button>
+                                </template>
+                            </div>
+                            <button type="button" class="presentacion-preview__btn" @click="siguiente()" aria-label="Siguiente">&rsaquo;</button>
+                        </div>
+                    @endif
+
+                    <div style="margin-top:12px; padding:14px 16px; border:1px solid var(--border); border-radius:12px; background:#fff;" x-show="slideActual()">
+                        <strong style="display:block; color:var(--text-primary);" x-text="slideActual()?.titulo || ''"></strong>
+                        <p
+                            style="margin:8px 0 0; font-size:.84rem; line-height:1.6; color:var(--text-secondary); white-space:pre-wrap;"
+                            x-show="slideActual()?.descripcion"
+                            x-text="slideActual()?.descripcion || ''"
+                        ></p>
+                    </div>
+                </div>
+            @endif
         </section>
     @endif
 
-    @if($tieneTablaRecursos && $slides->isNotEmpty())
-        <div class="servicio-recursos__viewer">
+    @if(! $puedeGestionar && $tieneTablaRecursos && $presentacionActiva && $slides->isNotEmpty())
+        <div
+            class="servicio-recursos__viewer"
+            x-data="{
+                actual: 0,
+                total: {{ $slides->count() }},
+                multiple: @js($slides->count() > 1),
+                slides: @js($slidesData),
+                autoplay: @js($slides->count() > 1),
+                temporizador: null,
+                iniciar() {
+                    this.programar();
+                },
+                toggleAutoplay() {
+                    this.autoplay = !this.autoplay;
+                    this.programar();
+                },
+                programar() {
+                    this.detener();
+
+                    if (!this.multiple || !this.autoplay) {
+                        return;
+                    }
+
+                    this.temporizador = window.setInterval(() => {
+                        this.siguiente();
+                    }, 4500);
+                },
+                detener() {
+                    if (!this.temporizador) {
+                        return;
+                    }
+
+                    window.clearInterval(this.temporizador);
+                    this.temporizador = null;
+                },
+                irA(indice) {
+                    if (indice < 0 || indice >= this.total) {
+                        return;
+                    }
+
+                    this.actual = indice;
+                },
+                siguiente() {
+                    if (!this.multiple) {
+                        return;
+                    }
+
+                    this.actual = (this.actual + 1) % this.total;
+                },
+                anterior() {
+                    if (!this.multiple) {
+                        return;
+                    }
+
+                    this.actual = (this.actual - 1 + this.total) % this.total;
+                },
+                slideActual() {
+                    return this.slides[this.actual] || null;
+                }
+            }"
+            x-init="iniciar()"
+            @mouseenter="detener()"
+            @mouseleave="programar()"
+            @keydown.right.window="multiple && siguiente()"
+            @keydown.left.window="multiple && anterior()"
+        >
             <div class="servicio-recursos__viewer-head">
                 <div>
                     <h4 class="servicio-recursos__viewer-title">Vista en vivo</h4>
                     <p class="servicio-recursos__viewer-text">
-                        Navega entre las diapositivas preparadas por el administrador.
+                        Navega entre las diapositivas preparadas por el administrador. Puedes usar flechas, miniaturas y reproduccion automatica.
                     </p>
                 </div>
 
+                <div class="toolbar-wrap">
+                    @if($slides->count() > 1)
+                        <button type="button" class="btn btn-secondary btn-sm" @click="toggleAutoplay()" x-text="autoplay ? 'Pausar movimiento' : 'Reanudar movimiento'"></button>
+                    @endif
+                    <span class="badge badge-gray" x-text="(actual + 1) + ' / ' + total"></span>
+                </div>
+            </div>
+
+            <div class="presentacion__main">
+                <div class="presentacion__stage" x-show="slideActual()" x-cloak>
+                    <img
+                        :src="slideActual()?.url || ''"
+                        :alt="slideActual()?.titulo || 'Diapositiva del servicio'"
+                        class="presentacion__slide-img"
+                    >
+                </div>
+
                 @if($slides->count() > 1)
-                    <div class="toolbar-wrap">
-                        <button type="button" class="btn btn-secondary btn-sm" @click="anterior()">Anterior</button>
-                        <button type="button" class="btn btn-secondary btn-sm" @click="siguiente()">Siguiente</button>
+                    <button type="button" class="presentacion__nav presentacion__nav--prev" @click="anterior()">&lsaquo;</button>
+                    <button type="button" class="presentacion__nav presentacion__nav--next" @click="siguiente()">&rsaquo;</button>
+                    <div class="presentacion__dots">
+                        <template x-for="(slide, indice) in slides" :key="'dot-' + slide.id">
+                            <button
+                                type="button"
+                                class="presentacion__dot"
+                                :class="{ 'is-active': actual === indice }"
+                                :aria-label="'Ir a la diapositiva ' + (indice + 1)"
+                                @click="irA(indice)"
+                            ></button>
+                        </template>
                     </div>
                 @endif
             </div>
 
-            <div class="servicio-recursos__slide-stage">
-                @foreach($slides as $recurso)
-                    <section class="servicio-recursos__slide" x-show="activo === '{{ $recurso->id }}'" x-cloak>
-                        <div class="servicio-recursos__slide-head">
-                            <div>
-                                <h5 class="servicio-recursos__slide-title">{{ $recurso->titulo }}</h5>
-                                <div class="servicio-recursos__slide-meta">
-                                    <span class="badge badge-green">Imagen</span>
-                                    <span>{{ $recurso->archivo_original }}</span>
-                                    <span>&middot;</span>
-                                    <span>{{ $recurso->tamanoHumano() }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <img src="{{ $recurso->url() }}" alt="{{ $recurso->titulo }}" class="servicio-recursos__slide-media">
-
-                        @if($recurso->descripcion)
-                            <p class="servicio-recursos__slide-caption">{{ $recurso->descripcion }}</p>
-                        @endif
-                    </section>
-                @endforeach
+            <div class="presentacion__info" x-show="slideActual()">
+                <h5 class="servicio-recursos__slide-title" x-text="slideActual()?.titulo || ''"></h5>
+                <p class="servicio-recursos__slide-caption" x-show="slideActual()?.descripcion" x-text="slideActual()?.descripcion || ''"></p>
             </div>
 
             @if($slides->count() > 1)
-                <div class="servicio-recursos__thumbnails">
-                    @foreach($slides as $recurso)
-                        <button type="button" class="servicio-recursos__thumb" :class="{ 'is-active': activo === '{{ $recurso->id }}' }" @click="seleccionar('{{ $recurso->id }}')">
-                            <span class="servicio-recursos__thumb-icon">IMG</span>
-                            <span>
-                                <strong>{{ $recurso->titulo }}</strong>
-                                <small>{{ $recurso->archivo_original }}</small>
-                            </span>
-                        </button>
-                    @endforeach
+                <div class="presentacion__thumbs">
+                    <div class="presentacion__thumbs-track">
+                        <template x-for="(slide, indice) in slides" :key="'thumb-' + slide.id">
+                            <button
+                                type="button"
+                                class="presentacion__thumb-slide"
+                                :class="{ 'is-active': actual === indice }"
+                                :aria-label="'Ver diapositiva ' + (indice + 1)"
+                                @click="irA(indice)"
+                            >
+                                <img :src="slide.thumb_url || slide.url" :alt="slide.titulo || ('Diapositiva ' + (indice + 1))">
+                            </button>
+                        </template>
+                    </div>
                 </div>
             @endif
         </div>
     @endif
 
-    @if($tieneTablaRecursos && $slides->isEmpty())
+    @if(! $puedeGestionar && $tieneTablaRecursos && ! $presentacionActiva)
+        <div class="servicio-recursos__empty">
+            <div class="servicio-recursos__empty-icon">OFF</div>
+            <p>Este servicio no tiene activada una presentacion visual por el momento.</p>
+        </div>
+    @endif
+
+    @if(! $puedeGestionar && $tieneTablaRecursos && $presentacionActiva && $slides->isEmpty())
         <div class="servicio-recursos__empty">
             <div class="servicio-recursos__empty-icon">IMG</div>
             <p>

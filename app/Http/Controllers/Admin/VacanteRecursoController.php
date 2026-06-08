@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CatalogoServicio;
-use App\Models\CatalogoServicioRecurso;
+use App\Models\Vacante;
+use App\Models\VacanteRecurso;
 use App\Services\ImagenService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,72 +12,72 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class CatalogoServicioRecursoController extends Controller
+class VacanteRecursoController extends Controller
 {
-    public function store(Request $request, CatalogoServicio $catalogo)
+    public function store(Request $request, Vacante $vacante)
     {
         $data = $this->validar($request, null);
         $archivos = $data['archivos'] ?? [];
-        $ordenBase = (int) ($data['orden'] ?? ((int) ($catalogo->recursos()->max('orden') ?? 0) + 1));
+        $ordenBase = (int) ($data['orden'] ?? ((int) ($vacante->recursos()->max('orden') ?? 0) + 1));
         $totalArchivos = count($archivos);
 
         foreach ($archivos as $indice => $archivo) {
-            $payload = $this->armarPayload($catalogo, null, [
+            $payload = $this->armarPayload($vacante, null, [
                 ...$data,
                 'titulo' => $this->resolverTituloArchivo($data['titulo'] ?? null, $archivo, $totalArchivos, $indice),
                 'orden' => $ordenBase + $indice,
             ], $archivo);
 
-            CatalogoServicioRecurso::create([
-                'catalogo_servicio_id' => $catalogo->id,
+            VacanteRecurso::create([
+                'vacante_id' => $vacante->id,
                 'user_id' => auth()->id(),
                 ...$payload,
             ]);
         }
 
-        $this->activarPresentacion($catalogo);
+        $this->activarPresentacion($vacante);
 
         $mensaje = $totalArchivos > 1
             ? $totalArchivos . ' diapositivas agregadas correctamente.'
             : 'Diapositiva agregada correctamente.';
 
-        return $this->redirigirAlEditor($catalogo, $mensaje);
+        return $this->redirigirAlEditor($vacante, $mensaje);
     }
 
-    public function update(Request $request, CatalogoServicioRecurso $recurso)
+    public function update(Request $request, VacanteRecurso $recurso)
     {
-        $recurso->loadMissing('catalogoServicio');
-        abort_unless($recurso->catalogoServicio, 404);
+        $recurso->loadMissing('vacante');
+        abort_unless($recurso->vacante, 404);
 
         $data = $this->validar($request, $recurso);
-        $payload = $this->armarPayload($recurso->catalogoServicio, $recurso, $data, $request->file('archivo'));
+        $payload = $this->armarPayload($recurso->vacante, $recurso, $data, $request->file('archivo'));
 
         $recurso->update($payload);
-        $this->activarPresentacion($recurso->catalogoServicio);
+        $this->activarPresentacion($recurso->vacante);
 
-        return $this->redirigirAlEditor($recurso->catalogoServicio, 'Diapositiva actualizada correctamente.');
+        return $this->redirigirAlEditor($recurso->vacante, 'Diapositiva actualizada correctamente.');
     }
 
-    public function reordenar(Request $request, CatalogoServicio $catalogo)
+    public function reordenar(Request $request, Vacante $vacante)
     {
         $data = $request->validate([
             'orden' => ['required', 'array'],
-            'orden.*' => ['integer', 'exists:catalogo_servicio_recursos,id'],
+            'orden.*' => ['integer', 'exists:vacante_recursos,id'],
         ]);
 
         foreach ($data['orden'] as $posicion => $id) {
-            CatalogoServicioRecurso::where('id', $id)
-                ->where('catalogo_servicio_id', $catalogo->id)
+            VacanteRecurso::where('id', $id)
+                ->where('vacante_id', $vacante->id)
                 ->update(['orden' => $posicion + 1]);
         }
 
         return response()->json(['ok' => true]);
     }
 
-    public function updateInline(Request $request, CatalogoServicioRecurso $recurso)
+    public function updateInline(Request $request, VacanteRecurso $recurso)
     {
-        $recurso->loadMissing('catalogoServicio');
-        abort_unless($recurso->catalogoServicio, 404);
+        $recurso->loadMissing('vacante');
+        abort_unless($recurso->vacante, 404);
 
         $data = $request->validate([
             'titulo' => ['sometimes', 'required', 'string', 'max:140'],
@@ -89,20 +89,19 @@ class CatalogoServicioRecursoController extends Controller
         return response()->json(['ok' => true, 'titulo' => $recurso->titulo]);
     }
 
-    public function destroy(CatalogoServicioRecurso $recurso)
+    public function destroy(VacanteRecurso $recurso)
     {
-        $recurso->loadMissing('catalogoServicio');
-
-        abort_unless($recurso->catalogoServicio, 404);
+        $recurso->loadMissing('vacante');
+        abort_unless($recurso->vacante, 404);
 
         $this->eliminarArchivosAnteriores($recurso);
 
         $recurso->delete();
 
-        return $this->redirigirAlEditor($recurso->catalogoServicio, 'Diapositiva eliminada.');
+        return $this->redirigirAlEditor($recurso->vacante, 'Diapositiva eliminada.');
     }
 
-    private function validar(Request $request, ?CatalogoServicioRecurso $recurso): array
+    private function validar(Request $request, ?VacanteRecurso $recurso): array
     {
         if (! $recurso && $request->hasFile('archivo') && ! $request->hasFile('archivos')) {
             $request->files->set('archivos', [$request->file('archivo')]);
@@ -145,8 +144,8 @@ class CatalogoServicioRecursoController extends Controller
     }
 
     private function armarPayload(
-        CatalogoServicio $catalogo,
-        ?CatalogoServicioRecurso $recurso,
+        Vacante $vacante,
+        ?VacanteRecurso $recurso,
         array $data,
         ?UploadedFile $archivo = null
     ): array {
@@ -154,13 +153,13 @@ class CatalogoServicioRecursoController extends Controller
             'tipo' => $data['tipo'],
             'titulo' => $data['titulo'],
             'descripcion' => $data['descripcion'] ?? null,
-            'orden' => $data['orden'] ?? ($recurso?->orden ?? ((int) ($catalogo->recursos()->max('orden') ?? 0) + 1)),
+            'orden' => $data['orden'] ?? ($recurso?->orden ?? ((int) ($vacante->recursos()->max('orden') ?? 0) + 1)),
         ];
 
         if ($archivo instanceof UploadedFile) {
             $this->eliminarArchivosAnteriores($recurso);
 
-            $carpeta = 'catalogos/' . $catalogo->id . '/recursos';
+            $carpeta = 'vacantes/' . $vacante->id . '/recursos';
             $imagenService = app(ImagenService::class);
             $resultado = $imagenService->procesar($archivo, $carpeta);
 
@@ -174,9 +173,11 @@ class CatalogoServicioRecursoController extends Controller
         return $payload;
     }
 
-    private function eliminarArchivosAnteriores(?CatalogoServicioRecurso $recurso): void
+    private function eliminarArchivosAnteriores(?VacanteRecurso $recurso): void
     {
-        if (!$recurso) return;
+        if (! $recurso) {
+            return;
+        }
 
         if ($recurso->archivo_path && Storage::disk('public')->exists($recurso->archivo_path)) {
             Storage::disk('public')->delete($recurso->archivo_path);
@@ -205,19 +206,19 @@ class CatalogoServicioRecursoController extends Controller
             ->value();
     }
 
-    private function redirigirAlEditor(CatalogoServicio $catalogo, string $mensaje): RedirectResponse
+    private function redirigirAlEditor(Vacante $vacante, string $mensaje): RedirectResponse
     {
         return redirect()
-            ->to(route('admin.catalogo.edit', $catalogo) . '#presentacion-servicio')
+            ->to(route('admin.vacantes.editar', $vacante) . '#presentacion-vacante')
             ->with('success', $mensaje);
     }
 
-    private function activarPresentacion(CatalogoServicio $catalogo): void
+    private function activarPresentacion(Vacante $vacante): void
     {
-        if ($catalogo->presentacion_activa) {
+        if ($vacante->presentacion_activa) {
             return;
         }
 
-        $catalogo->forceFill(['presentacion_activa' => true])->save();
+        $vacante->forceFill(['presentacion_activa' => true])->save();
     }
 }

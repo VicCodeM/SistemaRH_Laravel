@@ -30,6 +30,7 @@ class Vacante extends Model
         'fecha_cierre',
         'notas_internas',
         'estado',
+        'presentacion_activa',
         'fecha_publicacion',
     ];
 
@@ -40,7 +41,24 @@ class Vacante extends Model
         'experiencia_minima' => 'integer',
         'cupos' => 'integer',
         'fecha_cierre' => 'datetime',
+        'presentacion_activa' => 'boolean',
     ];
+
+    public static function tieneTablaRecursos(): bool
+    {
+        static $tieneTabla = null;
+
+        if ($tieneTabla !== null) {
+            return $tieneTabla;
+        }
+
+        return $tieneTabla = \Illuminate\Support\Facades\Schema::hasTable('vacante_recursos');
+    }
+
+    public function recursos(): HasMany
+    {
+        return $this->hasMany(VacanteRecurso::class, 'vacante_id');
+    }
 
     /**
      * Candidatos ya seleccionados (cupos ocupados).

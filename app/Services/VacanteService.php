@@ -37,7 +37,12 @@ class VacanteService
             $input['nivel_estudios_minimo'] ?? null
         );
 
-        $datos['area_requerida'] = $this->limpiarNulo($input['area_requerida'] ?? null);
+        // Acepta varias areas (array, desde el admin) o una sola (string, desde empresa).
+        $area = $input['area_requerida'] ?? null;
+        if (is_array($area)) {
+            $area = implode(', ', array_filter(array_map('trim', $area), fn ($v) => $v !== ''));
+        }
+        $datos['area_requerida'] = $this->limpiarNulo($area);
         $datos['experiencia_minima'] = isset($input['experiencia_minima']) && $input['experiencia_minima'] !== ''
             ? (int) $input['experiencia_minima']
             : null;
@@ -66,6 +71,11 @@ class VacanteService
         // Notas internas: solo si vienen (no las pisamos con null si no se envían)
         if (array_key_exists('notas_internas', $input)) {
             $datos['notas_internas'] = $this->limpiarNulo($input['notas_internas']);
+        }
+
+        // Presentacion visual (diapositivas): solo si viene en el input
+        if (array_key_exists('presentacion_activa', $input)) {
+            $datos['presentacion_activa'] = (bool) $input['presentacion_activa'];
         }
 
         return $datos;

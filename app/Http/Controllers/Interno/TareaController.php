@@ -71,7 +71,7 @@ class TareaController extends Controller
 
         $servicio->cambiarEstado($tarea, 'en_proceso');
 
-        return back()->with('success', 'Tarea tomada.');
+        return redirect()->route('interno.tareas.index')->with('success', 'Tarea tomada.');
     }
 
     public function completar(Request $request, ServicioAsignado $tarea, ServicioAsignadoService $servicio)
@@ -99,7 +99,7 @@ class TareaController extends Controller
 
         $servicio->cancelar($tarea, $data['cierre_resumen']);
 
-        return back()->with('success', 'Tarea cancelada.');
+        return redirect()->route('interno.tareas.index')->with('success', 'Tarea cancelada.');
     }
 
     private function autorizarTarea(ServicioAsignado $tarea): void

@@ -41,7 +41,11 @@ class ServicioRecurso extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->archivo_path);
+        if (! $this->archivo_path) {
+            return '';
+        }
+
+        return $this->resolverUrlPublica('storage/' . ltrim($this->archivo_path, '/'));
     }
 
     public function extension(): string
@@ -122,5 +126,17 @@ class ServicioRecurso extends Model
             $this->tipo === 'presentacion' => 'PPT',
             default => strtoupper(Str::of($this->extension() ?: 'file')->substr(0, 3)->toString()),
         };
+    }
+
+    private function resolverUrlPublica(string $ruta): string
+    {
+        $ruta = '/' . ltrim($ruta, '/');
+        $baseUrl = '';
+
+        if (app()->bound('request')) {
+            $baseUrl = rtrim((string) request()->getBaseUrl(), '/');
+        }
+
+        return ($baseUrl !== '' ? $baseUrl : '') . $ruta;
     }
 }

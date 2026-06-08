@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ConfiguracionController;
 use App\Http\Controllers\Admin\ServicioAsignadoController;
 use App\Http\Controllers\Admin\PersonalExternoController;
 use App\Http\Controllers\Admin\PersonalInternoController;
+use App\Http\Controllers\Admin\VacanteRecursoController;
 use App\Http\Controllers\Candidato\CandidatoController;
 use App\Http\Controllers\Candidato\ServicioController as CandidatoServicioController;
 use App\Http\Controllers\ComentarioServicioController;
@@ -92,6 +93,13 @@ Route::middleware(['auth', 'email.verification', 'municipio.acceso'])->group(fun
         Route::get('/vacantes/{vacante}/candidatos/exportar/pdf', [AdminController::class, 'exportarCandidatosPdf'])->name('vacantes.candidatos.pdf');
         Route::post('/vacantes/{vacante}/asignar', [AdminController::class, 'asignarCandidato'])->name('vacantes.asignar');
         Route::post('/vacantes/{vacante}/tarea', [AdminController::class, 'crearTareaDesdeVacante'])->name('vacantes.tarea');
+
+        // Diapositivas / presentacion de la vacante (mismo editor que servicios)
+        Route::post('/vacantes/{vacante}/recursos', [VacanteRecursoController::class, 'store'])->name('vacantes.recursos.store');
+        Route::post('/vacantes/{vacante}/recursos/reordenar', [VacanteRecursoController::class, 'reordenar'])->name('vacantes.recursos.reordenar');
+        Route::patch('/vacantes/recursos/{recurso}', [VacanteRecursoController::class, 'update'])->name('vacantes.recursos.update');
+        Route::patch('/vacantes/recursos/{recurso}/inline', [VacanteRecursoController::class, 'updateInline'])->name('vacantes.recursos.updateInline');
+        Route::delete('/vacantes/recursos/{recurso}', [VacanteRecursoController::class, 'destroy'])->name('vacantes.recursos.destroy');
         Route::patch('/postulaciones/{postulacion}/estado', [AdminController::class, 'moverPostulacion'])->name('postulaciones.mover');
 
         Route::resource('catalogos', CatalogoOpcionController::class)->except(['show']);
@@ -104,6 +112,8 @@ Route::middleware(['auth', 'email.verification', 'municipio.acceso'])->group(fun
         Route::post('/catalogo/{catalogo}/recursos', [CatalogoServicioRecursoController::class, 'store'])->name('catalogo.recursos.store');
         Route::patch('/catalogo/recursos/{recurso}', [CatalogoServicioRecursoController::class, 'update'])->name('catalogo.recursos.update');
         Route::delete('/catalogo/recursos/{recurso}', [CatalogoServicioRecursoController::class, 'destroy'])->name('catalogo.recursos.destroy');
+        Route::post('/catalogo/{catalogo}/recursos/reordenar', [CatalogoServicioRecursoController::class, 'reordenar'])->name('catalogo.recursos.reordenar');
+        Route::patch('/catalogo/recursos/{recurso}/inline', [CatalogoServicioRecursoController::class, 'updateInline'])->name('catalogo.recursos.updateInline');
 
         Route::get('/buscar', [AdminController::class, 'buscarGlobal'])->name('buscar');
         Route::get('/buscar-json', [AdminController::class, 'buscarJson'])->name('buscar.json');
@@ -198,6 +208,8 @@ Route::middleware(['auth', 'email.verification', 'municipio.acceso'])->group(fun
         Route::get('/servicios/{servicio}', [CandidatoServicioController::class, 'show'])->name('servicios.ver');
         Route::delete('/servicios/{servicio}', [CandidatoServicioController::class, 'destroy'])->name('servicios.eliminar');
     });
+
+    // Presentaciones de servicios del catalogo (visible por todos los roles autenticados)
 
     // Comentarios en pedidos de servicio (accesible por admin/interno/empresa/candidato dueño)
     Route::post('/pedidos-servicio/{servicio}/comentarios', [ComentarioServicioController::class, 'store'])->name('pedidos.comentarios.store');

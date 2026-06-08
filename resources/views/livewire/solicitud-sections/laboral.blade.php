@@ -16,7 +16,7 @@
             <div class="solicitud-grid-2">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Sueldo deseado <span style="color:var(--danger);">*</span></label>
-                    <input type="text" class="form-input" wire:model="sueldo_deseado" placeholder="Ej. $15,000" spellcheck="true" autocapitalize="sentences">
+                    <input type="text" class="form-input" wire:model.blur="sueldo_deseado" placeholder="Ej. $15,000" spellcheck="true" autocapitalize="sentences">
                 </div>
             </div>
         </div>
@@ -40,34 +40,34 @@
                             <div class="solicitud-grid-3" style="margin-bottom:10px;">
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Empresa</label>
-                                    <input type="text" class="form-input" wire:model="historial_laboral.{{ $index }}.empresa" placeholder="Nombre de la empresa" spellcheck="true" autocapitalize="sentences">
+                                    <input type="text" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.empresa" placeholder="Nombre de la empresa" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Puesto</label>
-                                    <input type="text" class="form-input" wire:model="historial_laboral.{{ $index }}.puesto" placeholder="Puesto desempeñado" spellcheck="true" autocapitalize="sentences">
+                                    <input type="text" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.puesto" placeholder="Puesto desempeñado" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Jefe directo</label>
-                                    <input type="text" class="form-input" wire:model="historial_laboral.{{ $index }}.jefe" placeholder="Nombre del jefe" spellcheck="true" autocapitalize="sentences">
+                                    <input type="text" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.jefe" placeholder="Nombre del jefe" spellcheck="true" autocapitalize="sentences">
                                 </div>
                             </div>
                             <div class="solicitud-grid-3" style="margin-bottom:10px;">
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Sueldo</label>
-                                    <input type="text" class="form-input" wire:model="historial_laboral.{{ $index }}.sueldo" placeholder="Sueldo mensual" spellcheck="true" autocapitalize="sentences">
+                                    <input type="text" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.sueldo" placeholder="Sueldo mensual" spellcheck="true" autocapitalize="sentences">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Desde</label>
-                                    <input type="date" class="form-input" wire:model="historial_laboral.{{ $index }}.desde">
+                                    <input type="date" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.desde">
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label">Hasta</label>
-                                    <input type="date" class="form-input" wire:model="historial_laboral.{{ $index }}.hasta">
+                                    <input type="date" class="form-input" wire:model.blur="historial_laboral.{{ $index }}.hasta">
                                 </div>
                             </div>
                             <div class="form-group" style="margin:0 0 10px;">
                                 <label class="form-label">Motivo de salida</label>
-                                <textarea class="form-input" rows="2" wire:model="historial_laboral.{{ $index }}.motivo" spellcheck="true" autocapitalize="sentences" placeholder="Motivo de salida del empleo"></textarea>
+                                <textarea class="form-input" rows="2" wire:model.blur="historial_laboral.{{ $index }}.motivo" spellcheck="true" autocapitalize="sentences" placeholder="Motivo de salida del empleo"></textarea>
                             </div>
                             <div style="text-align:right;">
                                 <button type="button" class="btn btn-ghost btn-sm" x-on:click="$wire.eliminarEmpleo({{ $index }})" wire:loading.attr="disabled" style="color:var(--danger);border-color:var(--danger-light);">Quitar empleo</button>

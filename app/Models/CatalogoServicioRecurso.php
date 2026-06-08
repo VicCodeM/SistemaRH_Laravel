@@ -18,6 +18,7 @@ class CatalogoServicioRecurso extends Model
         'titulo',
         'descripcion',
         'archivo_path',
+        'thumb_path',
         'archivo_original',
         'mime_type',
         'tamano_bytes',
@@ -41,7 +42,19 @@ class CatalogoServicioRecurso extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->archivo_path);
+        if (!$this->archivo_path) {
+            return '';
+        }
+
+        return $this->resolverUrlPublica('storage/' . ltrim($this->archivo_path, '/'));
+    }
+
+    public function thumbUrl(): string
+    {
+        if ($this->thumb_path) {
+            return $this->resolverUrlPublica('storage/' . ltrim($this->thumb_path, '/'));
+        }
+        return $this->url();
     }
 
     public function contenidoTexto(): ?string
@@ -133,5 +146,17 @@ class CatalogoServicioRecurso extends Model
             $this->tipo === 'presentacion' => 'PPT',
             default => strtoupper(Str::of($this->extension() ?: 'file')->substr(0, 3)->toString()),
         };
+    }
+
+    private function resolverUrlPublica(string $ruta): string
+    {
+        $ruta = '/' . ltrim($ruta, '/');
+        $baseUrl = '';
+
+        if (app()->bound('request')) {
+            $baseUrl = rtrim((string) request()->getBaseUrl(), '/');
+        }
+
+        return ($baseUrl !== '' ? $baseUrl : '') . $ruta;
     }
 }

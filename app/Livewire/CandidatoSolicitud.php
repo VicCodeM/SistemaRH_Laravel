@@ -127,8 +127,11 @@ class CandidatoSolicitud extends Component
             $this->historial_laboral = is_array($candidato->historial_laboral) ? array_values($candidato->historial_laboral) : [];
             $this->referencias_personales = is_array($candidato->referencias_personales) ? array_values($candidato->referencias_personales) : [];
 
-            $this->cartilla_tiene = $this->campoLleno($this->cartilla_militar) ? 'si' : '';
-            $this->pasaporte_tiene = $this->campoLleno($this->pasaporte) ? 'si' : '';
+            // Prefiere el toggle guardado; si no existe (datos viejos), lo reconstruye del valor.
+            $this->cartilla_tiene = $candidato->cartilla_tiene
+                ?: ($this->campoLleno($this->cartilla_militar) ? 'si' : '');
+            $this->pasaporte_tiene = $candidato->pasaporte_tiene
+                ?: ($this->campoLleno($this->pasaporte) ? 'si' : '');
 
             $this->yaEnviada = $candidato->solicitud_estado !== 'borrador';
             $this->estadoSolicitud = $candidato->solicitud_estado ?? 'borrador';
@@ -497,7 +500,9 @@ class CandidatoSolicitud extends Component
             'rfc' => $this->rfc,
             'afore' => $this->afore,
             'cartilla_militar' => $this->cartilla_militar,
+            'cartilla_tiene' => $this->cartilla_tiene,
             'pasaporte' => $this->pasaporte,
+            'pasaporte_tiene' => $this->pasaporte_tiene,
             'experiencia_anios' => $this->experiencia_anios ?? 0,
             'puesto_deseado' => $this->puesto_deseado,
             'escolaridad' => $this->escolaridad,
@@ -584,6 +589,11 @@ class CandidatoSolicitud extends Component
 
         $referenciasOk = true;
         foreach ($this->referencias_personales as $ref) {
+            // Las referencias son OPCIONALES: una fila completamente vacía no bloquea.
+            if ($this->referenciaVacia($ref)) {
+                continue;
+            }
+            // Pero si el candidato empezó a llenarla, exige al menos nombre y teléfono.
             if (! $this->campoLleno($ref['nombre'] ?? '') || ! $this->campoLleno($ref['telefono'] ?? '')) {
                 $referenciasOk = false;
                 break;
@@ -603,6 +613,21 @@ class CandidatoSolicitud extends Component
     public function campoLleno(mixed $valor): bool
     {
         return ! blank($valor);
+    }
+
+    /**
+     * Una referencia se considera vacía (y por tanto opcional) si NINGÚN
+     * campo tiene datos. En cuanto el candidato escribe algo, deja de ser vacía.
+     */
+    private function referenciaVacia(array $ref): bool
+    {
+        foreach (['nombre', 'telefono', 'ocupacion', 'tiempo', 'domicilio'] as $campo) {
+            if ($this->campoLleno($ref[$campo] ?? '')) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -700,6 +725,10 @@ class CandidatoSolicitud extends Component
             if (! $this->campoLleno($this->licencia_conducir['vigencia'] ?? '')) $faltan[] = 'Vigencia de licencia';
         }
         foreach ($this->referencias_personales as $i => $ref) {
+            // Referencia vacía = opcional, no se reporta como faltante.
+            if ($this->referenciaVacia($ref)) {
+                continue;
+            }
             if (! $this->campoLleno($ref['nombre'] ?? ''))    $faltan[] = 'Referencia #' . ($i + 1) . ' — Nombre';
             if (! $this->campoLleno($ref['telefono'] ?? ''))  $faltan[] = 'Referencia #' . ($i + 1) . ' — Teléfono';
         }

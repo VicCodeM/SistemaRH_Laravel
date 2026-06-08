@@ -73,7 +73,7 @@ class AdminController extends Controller
     public function aprobarEmpresa(Empresa $empresa)
     {
         $empresa->update(['estado' => 'activa']);
-        return back()->with('success', "Empresa \"{$empresa->nombre_empresa}\" aprobada.");
+        return redirect()->route('admin.empresas')->with('success', "Empresa \"{$empresa->nombre_empresa}\" aprobada.");
     }
 
     public function rechazarEmpresaModal(Empresa $empresa)
@@ -84,13 +84,13 @@ class AdminController extends Controller
     public function rechazarEmpresa(Empresa $empresa)
     {
         $empresa->update(['estado' => 'rechazada']);
-        return back()->with('error', "Empresa \"{$empresa->nombre_empresa}\" rechazada.");
+        return redirect()->route('admin.empresas')->with('error', "Empresa \"{$empresa->nombre_empresa}\" rechazada.");
     }
 
     public function suspenderEmpresa(Empresa $empresa)
     {
         $empresa->update(['estado' => 'suspendida']);
-        return back()->with('success', "Empresa \"{$empresa->nombre_empresa}\" suspendida.");
+        return redirect()->route('admin.empresas')->with('success', "Empresa \"{$empresa->nombre_empresa}\" suspendida.");
     }
 
     public function showEmpresa(Empresa $empresa)
@@ -287,7 +287,7 @@ class AdminController extends Controller
     public function aprobarCandidato(Candidato $candidato)
     {
         if (! $candidato->solicitudCompleta()) {
-            return back()->with('error', 'No se puede aprobar una solicitud incompleta.');
+            return redirect()->route('admin.candidatos')->with('error', 'No se puede aprobar una solicitud incompleta.');
         }
 
         $candidato->update([
@@ -296,7 +296,7 @@ class AdminController extends Controller
             'solicitud_revision_admin_id' => auth()->id(),
         ]);
 
-        return back()->with('success', "Solicitud de {$candidato->nombre} aprobada.");
+        return redirect()->route('admin.candidatos')->with('success', "Solicitud de {$candidato->nombre} aprobada.");
     }
 
     public function rechazarCandidatoModal(Candidato $candidato)
@@ -312,7 +312,7 @@ class AdminController extends Controller
             'solicitud_revision_admin_id' => auth()->id(),
         ]);
 
-        return back()->with('error', "Solicitud de {$candidato->nombre} rechazada.");
+        return redirect()->route('admin.candidatos')->with('error', "Solicitud de {$candidato->nombre} rechazada.");
     }
 
     public function vacantes(Request $request)
@@ -420,20 +420,20 @@ class AdminController extends Controller
     public function activarVacante(Vacante $vacante)
     {
         $vacante->update(['estado' => 'activa']);
-        return back()->with('success', "Solicitud \"{$vacante->titulo}\" activada.");
+        return redirect()->route('admin.vacantes')->with('success', "Solicitud \"{$vacante->titulo}\" activada.");
     }
 
     public function rechazarVacante(Vacante $vacante)
     {
         $vacante->update(['estado' => 'rechazada']);
 
-        return back()->with('error', "Solicitud \"{$vacante->titulo}\" rechazada.");
+        return redirect()->route('admin.vacantes')->with('error', "Solicitud \"{$vacante->titulo}\" rechazada.");
     }
 
     public function cerrarVacante(Vacante $vacante)
     {
         $vacante->update(['estado' => 'cerrada']);
-        return back()->with('success', "Solicitud \"{$vacante->titulo}\" cerrada.");
+        return redirect()->route('admin.vacantes')->with('success', "Solicitud \"{$vacante->titulo}\" cerrada.");
     }
 
     public function crearVacante()
@@ -459,7 +459,8 @@ class AdminController extends Controller
             'cupos'                 => 'nullable|integer|min:1|max:100',
             'notas_internas'        => 'nullable|string|max:2000',
             'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
-            'area_requerida'        => 'nullable|string|max:150',
+            'area_requerida'        => ['nullable', 'array'],
+            'area_requerida.*'      => ['string', 'max:100'],
             'tipo_contrato'         => 'nullable|string|max:50',
             'experiencia_minima'    => 'nullable|integer|min:0|max:60',
             'descripcion'           => 'nullable|string|max:5000',
@@ -469,13 +470,21 @@ class AdminController extends Controller
             'ingresos_ofrecidos'    => 'nullable|string|max:1000',
             'prestaciones'          => 'nullable|string|max:2000',
             'ubicacion'             => 'nullable|string|max:200',
+            'presentacion_activa'   => ['boolean'],
         ]);
 
         // Vacante = solo reclutamiento (los demás servicios van por ServicioAsignado)
         $data['tipo_servicio'] = 'reclutamiento';
+        $data['presentacion_activa'] = $request->boolean('presentacion_activa');
 
         $estadoInicial = $data['estado'] ?? 'activa';
-        $vacanteService->crear($data, (int) $data['empresa_id'], $estadoInicial);
+        $vacante = $vacanteService->crear($data, (int) $data['empresa_id'], $estadoInicial);
+
+        if ($data['presentacion_activa']) {
+            return redirect()
+                ->to(route('admin.vacantes.editar', $vacante) . '#presentacion-vacante')
+                ->with('success', 'Vacante creada. Ahora agrega la presentacion final antes de darla por lista.');
+        }
 
         return redirect()->route('admin.vacantes')->with(
             'success',
@@ -493,7 +502,7 @@ class AdminController extends Controller
 
         $vacanteService->cerrarManual($vacante, $data['motivo'] ?? null);
 
-        return back()->with('success', "Vacante \"{$vacante->titulo}\" cerrada.");
+        return redirect()->route('admin.vacantes')->with('success', "Vacante \"{$vacante->titulo}\" cerrada.");
     }
 
     public function reabrirVacante(Vacante $vacante, VacanteService $vacanteService)
@@ -503,10 +512,10 @@ class AdminController extends Controller
         } catch (\DomainException $e) {
             report($e);
 
-            return back()->with('error', 'No fue posible reabrir la solicitud. Intenta de nuevo.');
+            return redirect()->route('admin.vacantes')->with('error', 'No fue posible reabrir la solicitud. Intenta de nuevo.');
         }
 
-        return back()->with('success', "Vacante \"{$vacante->titulo}\" reabierta.");
+        return redirect()->route('admin.vacantes')->with('success', "Vacante \"{$vacante->titulo}\" reabierta.");
     }
 
     public function editarVacante(Vacante $vacante)
@@ -530,7 +539,8 @@ class AdminController extends Controller
             'cupos'                 => 'nullable|integer|min:1|max:100',
             'notas_internas'        => 'nullable|string|max:2000',
             'nivel_estudios_minimo' => ['nullable', 'in:' . implode(',', array_keys(Vacante::nivelesEstudios()))],
-            'area_requerida'        => 'nullable|string|max:150',
+            'area_requerida'        => ['nullable', 'array'],
+            'area_requerida.*'      => ['string', 'max:100'],
             'tipo_contrato'         => 'nullable|string|max:50',
             'experiencia_minima'    => 'nullable|integer|min:0|max:60',
             'descripcion'           => 'nullable|string|max:5000',
@@ -544,6 +554,7 @@ class AdminController extends Controller
 
         // Vacante = solo reclutamiento (los demás servicios van por ServicioAsignado)
         $data['tipo_servicio'] = 'reclutamiento';
+        $data['presentacion_activa'] = $request->boolean('presentacion_activa');
 
         try {
             $vacanteService->actualizar($vacante, $data);
@@ -594,10 +605,10 @@ class AdminController extends Controller
         } catch (\DomainException $e) {
             report($e);
 
-            return back()->with('error', 'No fue posible cambiar el estado de la postulación. Intenta de nuevo.');
+            return redirect()->route('admin.vacantes')->with('error', 'No fue posible cambiar el estado de la postulación. Intenta de nuevo.');
         }
 
-        return back()->with('success', $postulacionService->mensajeParaEstado($request->estado));
+        return redirect()->route('admin.vacantes')->with('success', $postulacionService->mensajeParaEstado($request->estado));
     }
 
     public function destroyEmpresa(Empresa $empresa)
@@ -606,7 +617,7 @@ class AdminController extends Controller
         $empresa->delete();
         $usuario?->delete();
 
-        return back()->with('success', 'Empresa eliminada permanentemente.');
+        return redirect()->route('admin.empresas')->with('success', 'Empresa eliminada permanentemente.');
     }
 
     public function destroyCandidato(Candidato $candidato)
@@ -615,14 +626,14 @@ class AdminController extends Controller
         $candidato->delete();
         $usuario?->delete();
 
-        return back()->with('success', 'Candidato eliminado permanentemente.');
+        return redirect()->route('admin.candidatos')->with('success', 'Candidato eliminado permanentemente.');
     }
 
     public function destroyVacante(Vacante $vacante)
     {
         $vacante->delete();
 
-        return back()->with('success', 'Solicitud eliminada permanentemente.');
+        return redirect()->route('admin.vacantes')->with('success', 'Solicitud eliminada permanentemente.');
     }
 
     public function matchingVacante(Request $request, Vacante $vacante, SolicitudCompatibilidadService $compatibilidad)
@@ -685,10 +696,10 @@ class AdminController extends Controller
         );
 
         if (! $resultado['exito']) {
-            return back()->with('error', $resultado['mensaje']);
+            return redirect()->route('admin.vacantes.matching', $vacante)->with('error', $resultado['mensaje']);
         }
 
-        return back()->with('success', $resultado['mensaje']);
+        return redirect()->route('admin.vacantes.matching', $vacante)->with('success', $resultado['mensaje']);
     }
 
     public function crearTareaDesdeVacante(Vacante $vacante)

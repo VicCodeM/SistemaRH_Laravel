@@ -3,11 +3,11 @@
     <div class="modal-header">
         <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-header-icon" style="background:rgba(59,130,246,.1);color:#2563eb;font-size:18px;font-weight:700;">
-                {{ strtoupper(substr($vacante->empresa?->nombre_empresa ?? 'S', 0, 1)) }}
+                {{ strtoupper(substr($vacante->titulo ?? 'V', 0, 1)) }}
             </div>
             <div>
                 <h2 class="modal-title">{{ $vacante->titulo }}</h2>
-                <span class="modal-subtitle">{{ $vacante->empresa?->nombre_empresa ?? 'Empresa' }}</span>
+                <span class="modal-subtitle">Empresa confidencial</span>
             </div>
         </div>
         <button onclick="rhModalClose()" class="modal-close">&times;</button>
@@ -42,6 +42,16 @@
             <div class="modal-field-label" style="margin-bottom:8px;">Descripción</div>
             <div style="color:var(--text-secondary); line-height:1.6; font-size:13px; white-space:pre-wrap;">{{ $vacante->descripcion ?: 'Sin descripción detallada.' }}</div>
         </div>
+
+        {{-- Presentación (diapositivas) --}}
+        @if($vacante->presentacion_activa && \App\Models\Vacante::tieneTablaRecursos() && $vacante->recursos()->exists())
+            @include('partials.catalogo-servicio-recursos', [
+                'owner' => $vacante,
+                'puedeGestionar' => false,
+                'tituloSeccion' => 'Presentacion de la vacante',
+                'tieneTablaRecursos' => true,
+            ])
+        @endif
 
         {{-- Ubicación y contrato --}}
         <div class="modal-grid-2">

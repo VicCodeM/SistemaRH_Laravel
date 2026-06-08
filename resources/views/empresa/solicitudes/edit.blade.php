@@ -68,10 +68,23 @@
                         </div>
 
                         <div class="form-group" style="margin:0;">
-                            <label class="form-label" for="area_requerida">Área o carrera requerida</label>
-                            <input type="text" id="area_requerida" name="area_requerida" class="form-input @error('area_requerida') is-invalid @enderror" spellcheck="true" autocapitalize="sentences"
-                                   value="{{ old('area_requerida', $vacante->area_requerida) }}" maxlength="150" placeholder="Ej: Sistemas, Medicina, RH">
+                            <label class="form-label">Área(s) o carrera(s) requerida(s)</label>
+                            @php
+                                $areasSel = collect(explode(',', (string) $vacante->area_requerida))
+                                    ->map(fn ($s) => trim($s))->filter()->values()->all();
+                                $areasSel = (array) old('area_requerida', $areasSel);
+                            @endphp
+                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+                                @foreach($areas as $key => $label)
+                                    <label style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:.84rem; background:#fff;">
+                                        <input type="checkbox" name="area_requerida[]" value="{{ $label }}" @checked(in_array($label, $areasSel))>
+                                        {{ $label }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p style="margin:6px 0 0; font-size:11px; color:#94a3b8;">Puedes marcar varias. Si no marcas ninguna, queda abierta a cualquier ramo.</p>
                             @error('area_requerida')<div class="form-error">{{ $message }}</div>@enderror
+                            @error('area_requerida.*')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="form-group" style="margin:0;">

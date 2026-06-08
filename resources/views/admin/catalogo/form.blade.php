@@ -20,15 +20,22 @@
 
     @php
         $flujoInicial = old('flujo', $servicio->flujo ?? 'servicio');
+        $presentacionActivaInicial = (bool) old('presentacion_activa', $servicio->presentacion_activa ?? false);
     @endphp
 
-    <div style="max-width:980px; display:flex; flex-direction:column; gap:20px;">
+    <div
+        class="catalogo-servicio-shell"
+        x-data="{
+            flujo: @js($flujoInicial),
+            presentacionActiva: @js($presentacionActivaInicial),
+        }"
+    >
         <form
+            id="catalogo-servicio-form"
             method="POST"
             action="{{ $servicio->exists ? route('admin.catalogo.update', $servicio) : route('admin.catalogo.store') }}"
             class="card"
             style="padding:24px;"
-            x-data="{ flujo: '{{ $flujoInicial }}' }"
         >
             @csrf
             @if($servicio->exists)
@@ -68,7 +75,7 @@
 
                 <div class="form-group" x-show="flujo !== 'vacante'">
                     <label class="form-label">Para quien *</label>
-                    <select name="para_quien" class="form-input">
+                    <select :name="flujo !== 'vacante' ? 'para_quien' : ''" class="form-input">
                         @foreach([
                             'empresa' => 'Empresa',
                             'candidato' => 'Candidato',
@@ -83,14 +90,14 @@
 
                 <div class="form-group" x-show="flujo === 'vacante'">
                     <label class="form-label">Para quien</label>
-                    <input type="hidden" name="para_quien" value="empresa">
+                    <input type="hidden" :name="flujo === 'vacante' ? 'para_quien' : ''" value="empresa">
                     <div class="form-input" style="display:flex; align-items:center; color:#475569; background:var(--surface-2);">Empresa</div>
                     <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">Las solicitudes de vacante solo se publican para empresas.</p>
                 </div>
 
                 <div class="form-group" x-show="flujo !== 'vacante'">
                     <label class="form-label">Nivel jerarquico *</label>
-                    <select name="nivel_jerarquico" class="form-input">
+                    <select :name="flujo !== 'vacante' ? 'nivel_jerarquico' : ''" class="form-input">
                         @foreach(\App\Models\CatalogoServicio::nivelesJerarquicosCompatibles() as $key => $label)
                             <option value="{{ $key }}" @selected(old('nivel_jerarquico', $servicio->nivel_jerarquico ?: 'todos') === $key)>{{ $label }}</option>
                         @endforeach
@@ -101,7 +108,7 @@
 
                 <div class="form-group" x-show="flujo === 'vacante'">
                     <label class="form-label">Nivel del catalogo</label>
-                    <input type="hidden" name="nivel_jerarquico" value="todos">
+                    <input type="hidden" :name="flujo === 'vacante' ? 'nivel_jerarquico' : ''" value="todos">
                     <div class="form-input" style="display:flex; align-items:center; color:#475569; background:var(--surface-2);">Todos</div>
                     <p style="margin:6px 0 0; font-size:12px; color:#94a3b8;">El nivel real se define despues en el formulario de vacante.</p>
                 </div>
@@ -125,27 +132,54 @@
                         Servicio activo
                     </label>
                 </div>
+
+                <div class="form-group form-grid-span-2">
+                    <div class="catalogo-servicio-toggle">
+                        <label class="catalogo-servicio-toggle__label">
+                            <input type="checkbox" name="presentacion_activa" value="1" x-model="presentacionActiva">
+                            <span>Activar presentacion visual del servicio</span>
+                        </label>
+                        <p class="catalogo-servicio-toggle__text">
+                            La presentacion es opcional. Si la activas, empresa o candidato veran el carrusel antes de solicitar el servicio. Si la desactivas, el servicio seguira disponible sin diapositivas.
+                        </p>
+                    </div>
+                    @error('presentacion_activa') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             <div x-show="flujo === 'vacante'" style="margin-top:18px; padding:14px 16px; border:1px solid #bfdbfe; background:#eff6ff; border-radius:12px; color:#1d4ed8; font-size:13px;">
                 Este servicio aparecera en Servicios disponibles, pero el boton del detalle abrira el flujo actual de vacantes.
             </div>
-
-            <div class="mt-6 flex gap-3 justify-end">
-                <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">{{ $servicio->exists ? 'Guardar cambios' : 'Crear servicio' }}</button>
-            </div>
         </form>
 
-        @if($servicio->exists)
-            @include('partials.catalogo-servicio-recursos', [
-                'catalogo' => $servicio,
-                'puedeGestionar' => true,
-            ])
-        @else
-            <div class="card" style="padding:20px;">
-                <p style="margin:0; color:#64748b;">Guarda primero el servicio para poder cargar las imagenes de su presentacion.</p>
+        <div id="presentacion-servicio" style="display:flex; flex-direction:column; gap:16px;">
+            <div class="card catalogo-servicio-note" x-show="!presentacionActiva" x-cloak>
+                <strong>Presentacion desactivada</strong>
+                <p>
+                    Este servicio puede guardarse y solicitarse sin carrusel. Cuando quieras mostrar imagenes, activa la casilla y aqui mismo aparecera el editor.
+                </p>
             </div>
-        @endif
+
+            @if($servicio->exists)
+                <div x-show="presentacionActiva" x-cloak>
+                    @include('partials.catalogo-servicio-recursos', [
+                        'catalogo' => $servicio,
+                        'puedeGestionar' => true,
+                    ])
+                </div>
+            @else
+                <div class="card catalogo-servicio-note" x-show="presentacionActiva" x-cloak>
+                    <strong>Guarda primero el servicio</strong>
+                    <p>En cuanto guardes este registro, aqui se habilitara el armado de la presentacion con imagenes.</p>
+                </div>
+            @endif
+        </div>
+
+        <div class="catalogo-servicio-actions">
+            <a href="{{ route('admin.catalogos.index', ['tab' => 'servicios']) }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" form="catalogo-servicio-form" class="btn btn-primary">
+                {{ $servicio->exists ? 'Guardar cambios' : 'Crear servicio' }}
+            </button>
+        </div>
     </div>
 </x-app-layout>
