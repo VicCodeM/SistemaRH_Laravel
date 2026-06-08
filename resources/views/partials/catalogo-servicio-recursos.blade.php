@@ -459,6 +459,7 @@
                         :src="slideActual()?.url || ''"
                         :alt="slideActual()?.titulo || 'Diapositiva del servicio'"
                         class="presentacion__slide-img"
+                        decoding="async"
                     >
                 </div>
 
@@ -495,7 +496,7 @@
                                 :aria-label="'Ver diapositiva ' + (indice + 1)"
                                 @click="irA(indice)"
                             >
-                                <img :src="slide.thumb_url || slide.url" :alt="slide.titulo || ('Diapositiva ' + (indice + 1))">
+                                <img :src="slide.thumb_url || slide.url" :alt="slide.titulo || ('Diapositiva ' + (indice + 1))" loading="lazy" decoding="async">
                             </button>
                         </template>
                     </div>

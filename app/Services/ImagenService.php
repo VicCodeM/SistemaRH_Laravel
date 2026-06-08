@@ -7,12 +7,14 @@ use Illuminate\Support\Facades\Storage;
 
 class ImagenService
 {
-    private int $anchoMax = 1920;
-    private int $altoMax = 1080;
-    private int $calidad = 82;
+    // Tamaño optimizado para web: suficiente para verse nítido en pantalla,
+    // pero ligero para cargar rápido y no saturar el almacenamiento.
+    private int $anchoMax = 1600;
+    private int $altoMax = 1000;
+    private int $calidad = 78;
     private int $thumbAncho = 320;
     private int $thumbAlto = 200;
-    private int $thumbCalidad = 70;
+    private int $thumbCalidad = 68;
 
     public function procesar(UploadedFile $archivo, string $carpeta): array
     {
