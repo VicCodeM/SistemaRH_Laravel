@@ -378,8 +378,8 @@ body.sidebar-open {
 .servicio-item__tooltip {
   position: absolute;
   left: 72px;
-  bottom: calc(100% + 10px);
-  z-index: 6;
+  top: calc(100% + 8px);
+  z-index: 20;
   width: min(460px, calc(100vw - 48px));
   padding: 14px 16px;
   border: 1px solid var(--border);
@@ -387,13 +387,15 @@ body.sidebar-open {
   background: #fff;
   box-shadow: var(--shadow-lg);
   opacity: 0;
-  transform: translateY(-4px);
+  visibility: hidden;
+  transform: translateY(4px);
   pointer-events: none;
-  transition: opacity var(--transition), transform var(--transition);
+  transition: opacity var(--transition), transform var(--transition), visibility var(--transition);
 }
 .servicio-item:hover .servicio-item__tooltip,
 .servicio-item:focus-within .servicio-item__tooltip {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
 }
 .servicio-item__tooltip-label {
