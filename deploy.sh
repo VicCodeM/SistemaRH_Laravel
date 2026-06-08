@@ -4,15 +4,20 @@
 set -e
 
 APP_DIR="/home/victor/sistemarh"
-REPO="https://github.com/VicCodeM/SistemaRH_Laravel.git"
+REPO="git@github.com:VicCodeM/SistemaRH_Laravel.git"
 LOG="$APP_DIR/storage/logs/deploy.log"
 TMP="/tmp/sistemarh_deploy"
+
+# PATH completo para que php, git y vite sean encontrables
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export HOME="/home/victor"
+export GIT_SSH_COMMAND="ssh -i /home/victor/.ssh/id_ed25519_github -o StrictHostKeyChecking=no"
 
 echo "==============================" >> "$LOG"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy iniciado" >> "$LOG"
 
-# Clonar main en temporal
-rm -rf "$TMP"
+# Clonar main en temporal (forzar borrado aunque sea de otro usuario)
+sudo rm -rf "$TMP" 2>/dev/null || rm -rf "$TMP" 2>/dev/null || true
 git clone --branch main --depth 1 "$REPO" "$TMP" >> "$LOG" 2>&1
 
 # Detectar si cambiaron dependencias antes de sobrescribir
@@ -43,7 +48,7 @@ if [ "$COMPOSER_CHANGED" = true ]; then
     cd "$APP_DIR" && composer install --no-interaction --no-dev --optimize-autoloader >> "$LOG" 2>&1
 fi
 
-# Dependencias JS + build si cambiaron
+# Dependencias JS si cambiaron
 if [ "$NPM_CHANGED" = true ]; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] package.json cambió — corriendo npm install" >> "$LOG"
     cd "$APP_DIR" && npm install >> "$LOG" 2>&1
@@ -51,7 +56,7 @@ fi
 
 # Siempre recompilar assets (CSS/JS puede cambiar sin cambiar package.json)
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Compilando assets" >> "$LOG"
-cd "$APP_DIR" && npm run build >> "$LOG" 2>&1
+cd "$APP_DIR" && "$APP_DIR/node_modules/.bin/vite" build >> "$LOG" 2>&1
 
 # Migraciones
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Migraciones" >> "$LOG"
@@ -64,7 +69,7 @@ cd "$APP_DIR" && php artisan cache:clear >> "$LOG" 2>&1
 cd "$APP_DIR" && php artisan route:clear >> "$LOG" 2>&1
 
 # Limpiar temporal
-rm -rf "$TMP"
+sudo rm -rf "$TMP" 2>/dev/null || rm -rf "$TMP" 2>/dev/null || true
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy completado OK" >> "$LOG"
 echo "==============================" >> "$LOG"

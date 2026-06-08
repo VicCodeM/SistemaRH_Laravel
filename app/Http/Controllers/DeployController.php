@@ -31,9 +31,9 @@ class DeployController extends Controller
         $commit = $payload['head_commit']['message'] ?? 'sin mensaje';
         Log::info("Webhook deploy recibido: {$commit}");
 
-        // Correr deploy en background para no hacer timeout
+        // Correr deploy como victor (dueño de los archivos, no www-data)
         $script = base_path('deploy.sh');
-        exec("bash {$script} > /dev/null 2>&1 &");
+        exec("sudo -u victor bash {$script} > /dev/null 2>&1 &");
 
         return response()->json(['ok' => true, 'commit' => $commit]);
     }
