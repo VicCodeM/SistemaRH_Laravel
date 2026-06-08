@@ -31,6 +31,43 @@ class ImagenService
             ];
         }
 
+        $nombreBase = pathinfo($archivo->hashName(), PATHINFO_FILENAME);
+
+        return $this->guardarOptimizado($imagen, $carpeta, $nombreBase);
+    }
+
+    /**
+     * Re-optimiza una imagen YA guardada en el disco public (re-comprime a WebP ligero
+     * y regenera su miniatura). Se usa para optimizar imagenes subidas anteriormente.
+     * Devuelve las rutas nuevas o null si el archivo no existe / no es imagen.
+     */
+    public function optimizarRuta(string $pathRelativo): ?array
+    {
+        $disk = Storage::disk('public');
+
+        if (! $pathRelativo || ! $disk->exists($pathRelativo)) {
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($pathRelativo, PATHINFO_EXTENSION));
+        $imagen = $this->crearDesdeArchivo($disk->path($pathRelativo), $extension);
+
+        if (! $imagen) {
+            return null;
+        }
+
+        $carpeta = str_replace('\\', '/', dirname($pathRelativo));
+        $carpeta = $carpeta === '.' ? '' : $carpeta;
+        $nombreBase = pathinfo($pathRelativo, PATHINFO_FILENAME);
+
+        return $this->guardarOptimizado($imagen, $carpeta, $nombreBase);
+    }
+
+    /**
+     * Redimensiona si hace falta, guarda como WebP ligero y genera la miniatura.
+     */
+    private function guardarOptimizado(\GdImage $imagen, string $carpeta, string $nombreBase): array
+    {
         $anchoOriginal = imagesx($imagen);
         $altoOriginal = imagesy($imagen);
 
@@ -38,16 +75,16 @@ class ImagenService
             $imagen = $this->redimensionar($imagen, $anchoOriginal, $altoOriginal, $this->anchoMax, $this->altoMax);
         }
 
-        $nombreBase = pathinfo($archivo->hashName(), PATHINFO_FILENAME);
+        $prefijo = $carpeta !== '' ? $carpeta . '/' : '';
 
-        $rutaPrincipal = $carpeta . '/' . $nombreBase . '.webp';
+        $rutaPrincipal = $prefijo . $nombreBase . '.webp';
         $rutaAbsoluta = Storage::disk('public')->path($rutaPrincipal);
         $this->asegurarDirectorio($rutaAbsoluta);
         imagewebp($imagen, $rutaAbsoluta, $this->calidad);
         $tamano = filesize($rutaAbsoluta);
 
         $thumb = $this->redimensionar($imagen, imagesx($imagen), imagesy($imagen), $this->thumbAncho, $this->thumbAlto);
-        $rutaThumb = $carpeta . '/thumbs/' . $nombreBase . '.webp';
+        $rutaThumb = $prefijo . 'thumbs/' . $nombreBase . '.webp';
         $rutaThumbAbs = Storage::disk('public')->path($rutaThumb);
         $this->asegurarDirectorio($rutaThumbAbs);
         imagewebp($thumb, $rutaThumbAbs, $this->thumbCalidad);
