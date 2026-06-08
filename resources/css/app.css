@@ -1317,8 +1317,9 @@ body.sidebar-open {
   .slide-list__size { display: none; }
   .slide-list__order { display: none; }
   .presentacion__main { min-height: 0; }
-  .presentacion__stage { min-height: 0; padding: 10px; }
-  .presentacion__slide-img { max-height: 240px; width: 100%; }
+  /* En movil la imagen llena el ancho y la altura se ajusta sola (sin recuadros vacios). */
+  .presentacion__stage { min-height: 0; padding: 0; display: block; }
+  .presentacion__slide-img { width: 100%; height: auto; max-width: 100%; max-height: 72vh; object-fit: contain; display: block; }
   .presentacion--fullscreen .presentacion__slide-img { max-height: calc(100vh - 140px); }
   .presentacion__nav { width: 30px; height: 30px; font-size: 1.05rem; }
   .presentacion__nav--prev { left: 6px; }
