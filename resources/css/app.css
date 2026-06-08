@@ -379,7 +379,7 @@ body.sidebar-open {
 .servicio-item__tooltip {
   position: absolute;
   left: 72px;
-  top: calc(100% + 8px);
+  bottom: calc(100% + 8px);
   z-index: 20;
   width: min(460px, calc(100vw - 48px));
   padding: 14px 16px;
