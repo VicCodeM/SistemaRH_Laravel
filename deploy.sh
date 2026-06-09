@@ -62,11 +62,8 @@ cd "$APP_DIR" && "$APP_DIR/node_modules/.bin/vite" build >> "$LOG" 2>&1
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Migraciones" >> "$LOG"
 cd "$APP_DIR" && php artisan migrate --force >> "$LOG" 2>&1
 
-# Limpiar cache
-cd "$APP_DIR" && php artisan view:clear >> "$LOG" 2>&1
-cd "$APP_DIR" && php artisan config:clear >> "$LOG" 2>&1
-cd "$APP_DIR" && php artisan cache:clear >> "$LOG" 2>&1
-cd "$APP_DIR" && php artisan route:clear >> "$LOG" 2>&1
+# Limpiar todo el cache
+cd "$APP_DIR" && php artisan optimize:clear >> "$LOG" 2>&1
 
 # Limpiar temporal
 sudo rm -rf "$TMP" 2>/dev/null || rm -rf "$TMP" 2>/dev/null || true
