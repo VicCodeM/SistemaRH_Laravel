@@ -1318,6 +1318,7 @@ body.sidebar-open {
   .slide-list__size { display: none; }
   .slide-list__order { display: none; }
   .presentacion__main { min-height: 0; overflow: visible; }
+  .servicio-recursos__viewer { overflow-x: visible; }
   /* En movil la imagen llena el ancho y la altura se ajusta sola (sin recuadros vacios). */
   .presentacion__stage { min-height: 0; padding: 0; display: block; }
   .presentacion__slide-img { width: 100%; height: auto; max-width: 100%; max-height: 72vh; object-fit: contain; display: block; }
