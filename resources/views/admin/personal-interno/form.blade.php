@@ -80,7 +80,7 @@
             <div style="display:flex; align-items:start; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
                 <div>
                     <h2 style="margin:0 0 4px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#475569;">3. Especialidades (servicios que sabe brindar)</h2>
-                    <p style="margin:0; font-size:12px; color:#64748b;">Selecciona los servicios del catálogo. Solo se le podrán asignar pedidos de estos servicios.</p>
+                    <p style="margin:0; font-size:12px; color:#64748b;">Selecciona los servicios del <strong>Catálogo de Servicios</strong>. Solo se le podrán asignar pedidos de estos servicios.</p>
                 </div>
                 @if($servicios->isNotEmpty())
                     <div style="font-size:12px; color:#64748b; display:flex; gap:10px;">
@@ -92,8 +92,8 @@
 
             @if($servicios->isEmpty())
                 <div style="padding:20px; text-align:center; background:var(--surface-2); border-radius:8px; color:#64748b; font-size:13px;">
-                    No hay servicios en el catálogo.
-                    <a href="{{ route('admin.catalogo.create') }}" style="color:#3b82f6; text-decoration:underline;">Agregar uno</a>.
+                    No hay servicios en el <strong>Catálogo de Servicios</strong>.
+                    <a href="{{ route('admin.catalogo.create') }}" style="color:#3b82f6; text-decoration:underline;">Agregar uno aquí</a>.
                 </div>
             @else
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px;">

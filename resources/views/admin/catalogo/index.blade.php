@@ -8,7 +8,7 @@
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
                 <h1 class="page-title">Catálogo de Servicios</h1>
-                <p class="page-subtitle">Servicios que ofrece la consultora, organizados por tipo y nivel.</p>
+                <p class="page-subtitle">Servicios que ofrece la consultora y que el personal interno puede tener como especialidades.</p>
             </div>
             <a href="{{ route('admin.catalogo.create') }}" class="btn btn-primary">+ Agregar servicio</a>
         </div>

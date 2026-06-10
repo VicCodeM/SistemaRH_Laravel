@@ -15,7 +15,7 @@
     }
 
     $hints = [
-        'servicios' => 'Administra el catalogo que ven empresas y candidatos, y define si cada registro genera un servicio o una vacante.',
+        'servicios' => 'Estos servicios son las especialidades del personal interno. También las ven empresas y candidatos al solicitar. Define si cada registro genera un servicio o una vacante.',
         'vacantes' => 'Listas que usa el formulario de vacantes: areas, niveles de estudio, contratos y jerarquias.',
         'empresas' => 'Datos generales de las empresas clientes: sectores economicos y listas relacionadas.',
     ];

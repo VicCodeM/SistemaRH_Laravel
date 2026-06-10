@@ -3,7 +3,7 @@ import zipfile
 
 def create_zip():
     zip_filename = 'deploy.zip'
-    exclude_dirs = {'vendor', 'node_modules', '.git', '.agents', '.claude', '.kilo', '.specify', 'tmp'}
+    exclude_dirs = {'vendor', 'node_modules', '.git', '.agents', '.claude', '.kilo', '.specify', 'tmp', 'storage', 'cache'}
     
     # Remove existing deploy.zip if present
     if os.path.exists(zip_filename):

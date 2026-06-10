@@ -56,7 +56,7 @@
                 </div>
             @else
                 <div style="padding:12px; border-radius:8px; background:var(--surface-2); text-align:center; color:#94a3b8; font-size:13px;">
-                    No hay servicios activos en el catálogo.
+                    No hay servicios activos en el <strong>Catálogo de Servicios</strong>.
                 </div>
             @endif
         </div>
