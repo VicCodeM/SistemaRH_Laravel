@@ -598,15 +598,19 @@ class AdminController extends Controller
             'estado' => 'required|in:' . implode(',', array_keys(Postulacion::estadosProceso())),
         ]);
 
+        $volverAlMatching = route('admin.vacantes.matching', $postulacion->vacante_id) . '#candidatos-en-proceso';
+
         try {
             $postulacionService->mover($postulacion, $request->estado);
         } catch (\DomainException $e) {
             report($e);
 
-            return redirect()->route('admin.vacantes')->with('error', 'No fue posible cambiar el estado de la postulación. Intenta de nuevo.');
+            return redirect()->to($volverAlMatching)
+                ->with('error', 'No fue posible cambiar el estado de la postulación. Intenta de nuevo.');
         }
 
-        return redirect()->route('admin.vacantes')->with('success', $postulacionService->mensajeParaEstado($request->estado));
+        return redirect()->to($volverAlMatching)
+            ->with('success', $postulacionService->mensajeParaEstado($request->estado));
     }
 
     public function destroyEmpresa(Empresa $empresa)

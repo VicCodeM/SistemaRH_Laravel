@@ -80,7 +80,7 @@
         </div>
     @endif
 
-    <div class="card" style="margin-bottom:20px;">
+    <div id="candidatos-en-proceso" class="card" style="margin-bottom:20px; scroll-margin-top:24px;">
         <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start;">
             <div>
                 <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 10px; border-radius:999px; background:rgba(59,130,246,.08); color:#60a5fa; font-size:12px; font-weight:600;">
