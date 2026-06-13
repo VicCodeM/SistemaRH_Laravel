@@ -8,6 +8,20 @@ class Postulacion extends Model
 {
     protected $table = 'postulaciones';
 
+    public const ESTADO_INICIAL = 'recibida';
+
+    private const ESTADOS_INACTIVOS_BASE = [
+        'pendiente_proxima_vacante',
+        'rechazado',
+        'retirado',
+    ];
+
+    private const ESTADOS_OCUPAN_CUPO = [
+        'seleccionado',
+        'firma_contrato',
+        'capacitacion',
+    ];
+
     protected $fillable = [
         'candidato_id',
         'vacante_id',
@@ -25,35 +39,70 @@ class Postulacion extends Model
     public static function estadosProceso(): array
     {
         return CatalogoOpcion::opciones('postulacion_estados', [
-            'postulado' => 'En revisión',
-            'entrevista' => 'Ya entrevistado',
-            'seleccionado' => 'Seleccionado',
+            'recibida' => 'Recibida',
+            'en_revision' => 'En revisión',
+            'referencias' => 'Referencias',
+            'entrevista' => 'Entrevista',
+            'pendiente_proxima_vacante' => 'Pendiente próxima vacante',
+            'firma_contrato' => 'Firma de contrato',
+            'capacitacion' => 'Capacitación',
             'rechazado' => 'Rechazado',
             'retirado' => 'Retirado',
+            'postulado' => 'Postulado',
         ]);
+    }
+
+    public static function estadoInicial(): string
+    {
+        $estados = self::estadosProceso();
+
+        if (array_key_exists(self::ESTADO_INICIAL, $estados)) {
+            return self::ESTADO_INICIAL;
+        }
+
+        return array_key_first($estados) ?? 'postulado';
     }
 
     public static function estadosActivos(): array
     {
-        return ['postulado', 'entrevista', 'seleccionado'];
+        $estados = array_keys(self::estadosProceso());
+        $activos = array_values(array_diff($estados, self::estadosInactivos()));
+
+        return $activos ?: [self::estadoInicial()];
     }
 
     public static function estadosInactivos(): array
     {
-        return ['rechazado', 'retirado'];
+        return self::ESTADOS_INACTIVOS_BASE;
+    }
+
+    public static function estadosOcupanCupo(): array
+    {
+        return self::ESTADOS_OCUPAN_CUPO;
+    }
+
+    public static function estadoOcupaCupo(?string $estado): bool
+    {
+        return in_array($estado, self::estadosOcupanCupo(), true);
+    }
+
+    public static function puedeEliminarPorCandidato(?string $estado): bool
+    {
+        return $estado === self::estadoInicial() || $estado === 'postulado';
     }
 
     public static function estadoLabel(?string $estado): string
     {
-        return self::estadosProceso()[$estado] ?? ucfirst((string) $estado);
+        return CatalogoOpcion::label('postulacion_estados', $estado, ucfirst(str_replace('_', ' ', (string) $estado)));
     }
 
     public static function estadoBadgeClass(?string $estado): string
     {
         return match ($estado) {
-            'postulado' => 'badge-blue',
-            'entrevista' => 'badge-yellow',
-            'seleccionado' => 'badge-green',
+            'recibida', 'postulado' => 'badge-blue',
+            'en_revision', 'referencias', 'entrevista' => 'badge-yellow',
+            'pendiente_proxima_vacante' => 'badge-orange',
+            'firma_contrato', 'capacitacion', 'seleccionado' => 'badge-green',
             'rechazado' => 'badge-red',
             'retirado' => 'badge-gray',
             default => 'badge-gray',

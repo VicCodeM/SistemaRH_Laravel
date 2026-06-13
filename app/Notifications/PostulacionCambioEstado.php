@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Notifica al candidato cuando su postulacion cambia a seleccionado o rechazado.
+ * Notifica al candidato cuando su postulacion llega a un estado final relevante.
  */
 class PostulacionCambioEstado extends Notification
 {
@@ -28,18 +28,19 @@ class PostulacionCambioEstado extends Notification
         $vacante = $this->postulacion->vacante;
         $empresa = $vacante?->empresa?->nombre_empresa ?? 'la empresa';
         $titulo = $vacante?->titulo ?? 'la vacante';
-        $esBuena = $this->postulacion->estado === 'seleccionado';
+        $estadoLabel = Postulacion::estadoLabel($this->postulacion->estado);
+        $esBuena = Postulacion::estadoOcupaCupo($this->postulacion->estado);
         $nombre = trim((string) ($notifiable->name ?? ''));
 
         $mail = (new MailMessage)
             ->subject($esBuena
-                ? "¡Buenas noticias! Fuiste seleccionado para {$titulo}"
+                ? "Buenas noticias sobre tu proceso para {$titulo}"
                 : "Actualización sobre tu postulacion a {$titulo}")
             ->greeting($nombre !== '' ? "Hola {$nombre}" : 'Hola');
 
         if ($esBuena) {
-            $mail->line("Tenemos buenas noticias: **{$empresa}** te seleccionó para el puesto de **{$titulo}**.")
-                ->line('En breve podrían contactarte para continuar con el proceso.')
+            $mail->line("Tenemos buenas noticias: tu proceso con **{$empresa}** para **{$titulo}** avanzó a **{$estadoLabel}**.")
+                ->line('En breve podrían contactarte para continuar con los siguientes pasos.')
                 ->action('Ver mi postulacion', route('candidato.postulaciones'))
                 ->line('Gracias por confiar en SistemaRH para tu búsqueda laboral.')
                 ->line('Te deseamos mucho éxito en esta nueva etapa.');

@@ -220,7 +220,7 @@ class CandidatoController extends Controller
         $candidato = $this->candidatoActual();
 
         abort_if($postulacion->candidato_id !== $candidato->id, 403, 'Esta postulación no te pertenece.');
-        abort_if($postulacion->estado !== 'postulado', 422, 'Solo puedes eliminar postulaciones que aún no han sido revisadas.');
+        abort_if(! Postulacion::puedeEliminarPorCandidato($postulacion->estado), 422, 'Solo puedes eliminar postulaciones que aún no han sido revisadas.');
 
         $postulacion->delete();
 
@@ -252,7 +252,7 @@ class CandidatoController extends Controller
         Postulacion::create([
             'candidato_id' => $candidato->id,
             'vacante_id' => $vacante->id,
-            'estado' => 'postulado',
+            'estado' => Postulacion::estadoInicial(),
             'fecha_postulacion' => now(),
         ]);
 

@@ -341,9 +341,8 @@ class AdminController extends Controller
 
         $withCount = [
             'postulaciones',
-            'postulaciones as seleccionados_count' => fn ($q) => $q->where('estado', 'seleccionado'),
-            'postulaciones as entrevista_count'    => fn ($q) => $q->where('estado', 'entrevista'),
-            'postulaciones as postulados_count'    => fn ($q) => $q->where('estado', 'postulado'),
+            'postulaciones as en_proceso_count' => fn ($q) => $q->whereIn('estado', Postulacion::estadosActivos()),
+            'postulaciones as cupos_ocupados_count' => fn ($q) => $q->whereIn('estado', Postulacion::estadosOcupanCupo()),
             'serviciosAsignados',
         ];
 
@@ -368,9 +367,8 @@ class AdminController extends Controller
             'serviciosAsignados' => fn ($query) => $query->with('asignadoA')->latest()->take(3),
         ])->loadCount([
             'postulaciones',
-            'postulaciones as seleccionados_count' => fn ($query) => $query->where('estado', 'seleccionado'),
-            'postulaciones as entrevista_count' => fn ($query) => $query->where('estado', 'entrevista'),
-            'postulaciones as postulados_count' => fn ($query) => $query->where('estado', 'postulado'),
+            'postulaciones as en_proceso_count' => fn ($query) => $query->whereIn('estado', Postulacion::estadosActivos()),
+            'postulaciones as cupos_ocupados_count' => fn ($query) => $query->whereIn('estado', Postulacion::estadosOcupanCupo()),
             'serviciosAsignados',
         ]);
 

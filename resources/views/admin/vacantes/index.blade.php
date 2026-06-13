@@ -155,14 +155,11 @@
                                         <span style="color:#475569; font-size:0.8rem;">—</span>
                                     @else
                                         <div style="display:flex; flex-direction:column; gap:3px; font-size:0.75rem;">
-                                            @if($vacante->seleccionados_count > 0)
-                                                <span style="color:#22c55e; font-weight:700;">{{ $vacante->seleccionados_count }} seleccionado{{ $vacante->seleccionados_count > 1 ? 's' : '' }}</span>
+                                            @if(($vacante->cupos_ocupados_count ?? 0) > 0)
+                                                <span style="color:#22c55e; font-weight:700;">{{ $vacante->cupos_ocupados_count }} ocupando cupo</span>
                                             @endif
-                                            @if($vacante->entrevista_count > 0)
-                                                <span style="color:#f59e0b;">{{ $vacante->entrevista_count }} entrevista{{ $vacante->entrevista_count > 1 ? 's' : '' }}</span>
-                                            @endif
-                                            @if($vacante->postulados_count > 0)
-                                                <span style="color:#60a5fa;">{{ $vacante->postulados_count }} en revisión</span>
+                                            @if(($vacante->en_proceso_count ?? 0) > 0)
+                                                <span style="color:#60a5fa;">{{ $vacante->en_proceso_count }} en proceso</span>
                                             @endif
                                         </div>
                                     @endif

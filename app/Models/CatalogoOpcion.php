@@ -54,6 +54,7 @@ class CatalogoOpcion extends Model
             'niveles_estudios'    => 'Niveles de estudio',
             'areas_carreras'      => 'Áreas y carreras',
             'tipos_contrato'      => 'Tipos de contrato',
+            'postulacion_estados' => 'Estados de postulación',
             'sectores_empresa'    => 'Sectores de empresa',
         ];
     }
@@ -67,7 +68,7 @@ class CatalogoOpcion extends Model
     {
         return [
             'roles', 'empresa_estados', 'candidato_estados',
-            'vacante_estados', 'postulacion_estados',
+            'vacante_estados',
             'servicio_asignado_estados',
             'chat_room_tipos', 'disponibilidad_externa',
             'tipos_servicio', // legacy: sustituido por CatalogoServicio
@@ -82,7 +83,7 @@ class CatalogoOpcion extends Model
     {
         return [
             'servicios' => [], // El catálogo principal de servicios (CatalogoServicio) se muestra aparte
-            'vacantes'  => ['niveles_jerarquicos', 'niveles_estudios', 'areas_carreras', 'tipos_contrato'],
+            'vacantes'  => ['niveles_jerarquicos', 'niveles_estudios', 'areas_carreras', 'tipos_contrato', 'postulacion_estados'],
             'empresas'  => ['sectores_empresa'],
         ];
     }
@@ -145,6 +146,17 @@ class CatalogoOpcion extends Model
             return $fallback ?? 'Sin definir';
         }
 
+        if (static::tablaDisponible()) {
+            $valor = static::query()
+                ->where('grupo', $grupo)
+                ->where('clave', $clave)
+                ->value('valor');
+
+            if ($valor) {
+                return $valor;
+            }
+        }
+
         $opciones = self::opciones($grupo);
 
         return $opciones[$clave] ?? $fallback ?? ucfirst(str_replace('_', ' ', (string) $clave));
@@ -174,11 +186,16 @@ class CatalogoOpcion extends Model
             ['grupo' => 'vacante_estados', 'clave' => 'cerrada', 'valor' => 'Cerrada', 'descripcion' => 'Solicitud cerrada', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
             ['grupo' => 'vacante_estados', 'clave' => 'rechazada', 'valor' => 'Rechazada', 'descripcion' => 'Solicitud rechazada', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
 
-            ['grupo' => 'postulacion_estados', 'clave' => 'postulado', 'valor' => 'En revisión', 'descripcion' => 'Candidato en proceso inicial', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
-            ['grupo' => 'postulacion_estados', 'clave' => 'entrevista', 'valor' => 'Ya entrevistado', 'descripcion' => 'Candidato ya fue entrevistado', 'activo' => true, 'orden' => 20, 'es_sistema' => true],
-            ['grupo' => 'postulacion_estados', 'clave' => 'seleccionado', 'valor' => 'Seleccionado', 'descripcion' => 'Candidato seleccionado', 'activo' => true, 'orden' => 30, 'es_sistema' => true],
-            ['grupo' => 'postulacion_estados', 'clave' => 'rechazado', 'valor' => 'Rechazado', 'descripcion' => 'Candidato rechazado', 'activo' => true, 'orden' => 40, 'es_sistema' => true],
-            ['grupo' => 'postulacion_estados', 'clave' => 'retirado', 'valor' => 'Retirado', 'descripcion' => 'Candidato retiró su proceso', 'activo' => true, 'orden' => 50, 'es_sistema' => true],
+            ['grupo' => 'postulacion_estados', 'clave' => 'recibida', 'valor' => 'Recibida', 'descripcion' => 'Solicitud recibida por el equipo RH', 'activo' => true, 'orden' => 10, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'en_revision', 'valor' => 'En revisión', 'descripcion' => 'Candidato en revisión por el equipo RH', 'activo' => true, 'orden' => 20, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'referencias', 'valor' => 'Referencias', 'descripcion' => 'Se están validando referencias', 'activo' => true, 'orden' => 30, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'entrevista', 'valor' => 'Entrevista', 'descripcion' => 'Candidato en etapa de entrevista', 'activo' => true, 'orden' => 40, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'pendiente_proxima_vacante', 'valor' => 'Pendiente próxima vacante', 'descripcion' => 'Candidato reservado para otra oportunidad', 'activo' => true, 'orden' => 50, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'firma_contrato', 'valor' => 'Firma de contrato', 'descripcion' => 'Candidato en proceso de firma', 'activo' => true, 'orden' => 60, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'capacitacion', 'valor' => 'Capacitación', 'descripcion' => 'Candidato en capacitación inicial', 'activo' => true, 'orden' => 70, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'rechazado', 'valor' => 'Rechazado', 'descripcion' => 'Candidato rechazado', 'activo' => false, 'orden' => 90, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'retirado', 'valor' => 'Retirado', 'descripcion' => 'Candidato retiró su proceso', 'activo' => false, 'orden' => 100, 'es_sistema' => false],
+            ['grupo' => 'postulacion_estados', 'clave' => 'postulado', 'valor' => 'Postulado (anterior)', 'descripcion' => 'Estado anterior conservado por compatibilidad', 'activo' => false, 'orden' => 110, 'es_sistema' => false],
 
             ['grupo' => 'servicio_asignado_estados', 'clave' => 'activo', 'valor' => 'Activo', 'descripcion' => 'Tarea creada y pendiente de toma', 'activo' => true, 'orden' => 10, 'es_sistema' => true],
             ['grupo' => 'servicio_asignado_estados', 'clave' => 'en_proceso', 'valor' => 'En proceso', 'descripcion' => 'Tarea en ejecución', 'activo' => true, 'orden' => 20, 'es_sistema' => true],

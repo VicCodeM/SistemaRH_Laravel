@@ -1,7 +1,13 @@
 @php
     $colorEstado = [
-        'postulado' => 'b-yellow',
-        'entrevista' => 'b-blue',
+        'recibida' => 'b-blue',
+        'en_revision' => 'b-yellow',
+        'referencias' => 'b-yellow',
+        'entrevista' => 'b-yellow',
+        'pendiente_proxima_vacante' => 'b-gray',
+        'firma_contrato' => 'b-green',
+        'capacitacion' => 'b-green',
+        'postulado' => 'b-blue',
         'seleccionado' => 'b-green',
         'rechazado' => 'b-red',
         'retirado' => 'b-gray',

@@ -28,11 +28,14 @@ class PostulacionService
             $query->where('vacante_id', $vacanteId);
         }
 
+        $postulaciones = $query->latest('updated_at')->get();
+        $estados = Postulacion::estadosProceso();
+
         return [
-            'postulados' => (clone $query)->where('estado', 'postulado')->get(),
-            'entrevista' => (clone $query)->where('estado', 'entrevista')->get(),
-            'seleccionados' => (clone $query)->where('estado', 'seleccionado')->get(),
-            'rechazados' => (clone $query)->where('estado', 'rechazado')->get(),
+            'estados' => $estados,
+            'postulacionesPorEstado' => collect($estados)
+                ->mapWithKeys(fn ($label, $estado) => [$estado => $postulaciones->where('estado', $estado)->values()])
+                ->all(),
         ];
     }
 
@@ -45,7 +48,7 @@ class PostulacionService
     public function asignar(Vacante $vacante, int $candidatoId, bool $forzar, ?string $motivo): array
     {
         // Asignar = agregar al pipeline. Sin límite, varios candidatos pueden
-        // competir por los cupos. El límite aplica solo al marcar como 'seleccionado'.
+        // competir por los cupos. El límite aplica solo al pasar a un estado que ocupa vacante.
 
         $candidato = Candidato::where('id', $candidatoId)
             ->where('solicitud_estado', 'aprobada')
@@ -75,7 +78,7 @@ class PostulacionService
                 'candidato_id' => $candidato->id,
             ],
             [
-                'estado' => 'postulado',
+                'estado' => Postulacion::estadoInicial(),
                 'fecha_postulacion' => now(),
                 'asignacion_forzada' => $forzar && $evaluacion['categoria'] === 'no_aptos',
                 'motivo_asignacion' => trim((string) ($motivo ?? '')) ?: $evaluacion['resumen'],
@@ -104,13 +107,12 @@ class PostulacionService
             throw new \InvalidArgumentException("Estado de postulación no válido: {$nuevoEstado}");
         }
 
-        // Validar cupos SOLO al pasar a 'seleccionado' (no estaba antes seleccionado).
-        // En revisión / Ya entrevistado no tienen límite: pueden haber varios compitiendo.
-        if ($nuevoEstado === 'seleccionado' && $postulacion->estado !== 'seleccionado') {
+        // Validar cupos solo al entrar a un estado que ocupa vacante.
+        if (Postulacion::estadoOcupaCupo($nuevoEstado) && ! Postulacion::estadoOcupaCupo($postulacion->estado)) {
             $vacante = $postulacion->vacante()->first();
             if ($vacante && $vacante->estaLlena()) {
                 throw new \DomainException(
-                    "No puedes seleccionar: la vacante ya tiene {$vacante->cuposCubiertos()} de {$vacante->cupos} cupo(s) cubierto(s). Retira a alguien para liberar un lugar."
+                    "No puedes avanzar: la vacante ya tiene {$vacante->cuposCubiertos()} de {$vacante->cupos} cupo(s) cubierto(s). Retira a alguien o aumenta los cupos."
                 );
             }
         }
@@ -121,7 +123,7 @@ class PostulacionService
         $this->sincronizarEstadoVacante($postulacion);
 
         // Notificar al candidato si su postulación cambió a un estado final relevante
-        if ($estadoAnterior !== $nuevoEstado && in_array($nuevoEstado, ['seleccionado', 'rechazado'], true)) {
+        if ($estadoAnterior !== $nuevoEstado && (Postulacion::estadoOcupaCupo($nuevoEstado) || $nuevoEstado === 'rechazado')) {
             $this->notificarCandidato($postulacion);
         }
     }
@@ -153,7 +155,7 @@ class PostulacionService
         if ($vacante->estaLlena() && $vacante->estado !== 'cerrada') {
             $vacante->update(['estado' => 'cerrada']);
         } elseif (! $vacante->estaLlena() && $vacante->estado === 'cerrada') {
-            // Se liberó un cupo (retiro/rechazo de seleccionado) → reabrir
+            // Se liberó un cupo al mover fuera de un estado que ocupa vacante.
             $vacante->update(['estado' => 'activa']);
         }
     }
@@ -163,13 +165,7 @@ class PostulacionService
      */
     public function mensajeParaEstado(string $estado): string
     {
-        return match ($estado) {
-            'entrevista'   => 'Candidato marcado como ya entrevistado.',
-            'seleccionado' => 'Candidato seleccionado.',
-            'rechazado'    => 'Candidato rechazado.',
-            'retirado'     => 'Candidato retirado de la vacante.',
-            default        => 'Estado actualizado.',
-        };
+        return 'Estado actualizado a ' . Postulacion::estadoLabel($estado) . '.';
     }
 
     public function getVacantes(): Collection

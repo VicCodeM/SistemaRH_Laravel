@@ -42,9 +42,8 @@
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
                 @if($vacante->esReclutamiento())
-                    <span class="badge badge-blue" style="font-size:11px;">{{ $vacante->postulados_count }} en revisión</span>
-                    <span class="badge badge-yellow" style="font-size:11px;">{{ $vacante->entrevista_count }} entrevistas</span>
-                    <span class="badge badge-green" style="font-size:11px;">{{ $vacante->seleccionados_count }} seleccionados</span>
+                    <span class="badge badge-blue" style="font-size:11px;">{{ $vacante->en_proceso_count }} en proceso</span>
+                    <span class="badge badge-green" style="font-size:11px;">{{ $vacante->cupos_ocupados_count }} ocupando cupo</span>
                 @else
                     <span class="badge badge-blue" style="font-size:11px;">{{ $vacante->servicios_asignados_count }} tarea(s)</span>
                     @if($ultimaTarea)

@@ -19,7 +19,7 @@
     if ($candidatoActual) {
         $candidatoNovedades = $candidatoActual
             ->postulaciones()
-            ->whereIn('estado', ['seleccionado', 'rechazado'])
+            ->whereIn('estado', array_merge(\App\Models\Postulacion::estadosOcupanCupo(), ['rechazado']))
             ->where('updated_at', '>=', now()->subDays(7))
             ->count();
     }
@@ -30,7 +30,7 @@
             'vacante',
             fn ($q) => $q->where('empresa_id', $empresaActual->id)
         )
-        ->where('estado', 'postulado')
+        ->where('estado', \App\Models\Postulacion::estadoInicial())
         ->where('created_at', '>=', now()->subDays(7))
         ->count();
     }

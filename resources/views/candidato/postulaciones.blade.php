@@ -52,7 +52,7 @@
                                                 Ver detalle
                                             </button>
                                         @endif
-                                        @if($p->estado === 'postulado')
+                                        @if(\App\Models\Postulacion::puedeEliminarPorCandidato($p->estado))
                                             <form method="POST" action="{{ route('candidato.postulaciones.eliminar', $p) }}" style="display:inline;" onsubmit="return confirm('&iquest;Eliminar esta postulación? Se borrará permanentemente.')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>
@@ -97,7 +97,7 @@
                                     Ver detalle
                                 </button>
                             @endif
-                            @if($p->estado === 'postulado')
+                            @if(\App\Models\Postulacion::puedeEliminarPorCandidato($p->estado))
                                 <form method="POST" action="{{ route('candidato.postulaciones.eliminar', $p) }}" onsubmit="return confirm('&iquest;Eliminar esta postulación? Se borrará permanentemente.')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-ghost btn-sm" style="color:#dc2626;">Eliminar</button>

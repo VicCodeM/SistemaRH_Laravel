@@ -59,8 +59,11 @@
     @endif
 
     @php
-        $activos = $asignados->whereIn('estado', \App\Models\Postulacion::estadosActivos());
-        $inactivos = $asignados->whereIn('estado', \App\Models\Postulacion::estadosInactivos());
+        $estadosProceso = \App\Models\Postulacion::estadosProceso();
+        $estadosActivos = \App\Models\Postulacion::estadosActivos();
+        $estadosInactivos = \App\Models\Postulacion::estadosInactivos();
+        $activos = $asignados->whereIn('estado', $estadosActivos);
+        $inactivos = $asignados->whereIn('estado', $estadosInactivos);
         $secciones = [
             'aptos' => ['titulo' => 'Aptos', 'texto' => 'Cumplen los requisitos principales.', 'clase' => 'badge-green'],
             'dudosos' => ['titulo' => 'Dudosos', 'texto' => 'Tienen compatibilidad parcial y conviene revisar.', 'clase' => 'badge-yellow'],
@@ -139,8 +142,8 @@
                 Aún no hay candidatos en proceso para esta solicitud.
             </div>
         @else
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
-                @foreach(['postulado', 'entrevista', 'seleccionado'] as $estado)
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                @foreach($estadosActivos as $estado)
                     @php
                         $estadoCandidatos = $activos->where('estado', $estado);
                         $estadoBadge = \App\Models\Postulacion::estadoBadgeClass($estado);
@@ -164,41 +167,14 @@
                                 </div>
 
                                 <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
-                                    @if($estado === 'postulado')
-                                        <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="estado" value="entrevista">
-                                            <button type="submit" class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem;">Ya entrevistado</button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="estado" value="rechazado">
-                                            <button type="submit" class="btn btn-secondary" style="padding:4px 10px; font-size:0.75rem;">No continúa</button>
-                                        </form>
-                                    @elseif($estado === 'entrevista')
-                                        <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="estado" value="seleccionado">
-                                            <button type="submit" class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem;">Seleccionar</button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="estado" value="rechazado">
-                                            <button type="submit" class="btn btn-secondary" style="padding:4px 10px; font-size:0.75rem;">No continúa</button>
-                                        </form>
-                                    @elseif($estado === 'seleccionado')
-                                        <span class="badge badge-green">Colocado</span>
-                                    @endif
-
-                                    <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}" onsubmit="return confirm('¿Retirar a este candidato?')">
+                                    <form method="POST" action="{{ route('admin.postulaciones.mover', $postulacion) }}" style="width:100%;">
                                         @csrf
                                         @method('PATCH')
-                                        <input type="hidden" name="estado" value="retirado">
-                                        <button type="submit" class="btn btn-secondary" style="padding:4px 10px; font-size:0.72rem;">Retirar</button>
+                                        <select name="estado" class="form-input" onchange="this.form.submit()" style="width:100%; padding:6px 8px; font-size:0.75rem;">
+                                            @foreach($estadosProceso as $estadoKey => $estadoLabel)
+                                                <option value="{{ $estadoKey }}" @selected($postulacion->estado === $estadoKey)>{{ $estadoLabel }}</option>
+                                            @endforeach
+                                        </select>
                                     </form>
                                 </div>
                             </div>

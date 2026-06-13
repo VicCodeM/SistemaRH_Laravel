@@ -436,14 +436,14 @@ class DummyDataSeeder extends Seeder
         Postulacion::create([
             'candidato_id' => $candidatos[1]->id,
             'vacante_id' => $vacantes[1]->id,
-            'estado' => 'postulado',
+            'estado' => Postulacion::estadoInicial(),
             'fecha_postulacion' => now()->subDay(),
         ]);
 
         Postulacion::create([
             'candidato_id' => $candidatos[2]->id,
             'vacante_id' => $vacantes[2]->id,
-            'estado' => 'postulado',
+            'estado' => Postulacion::estadoInicial(),
             'fecha_postulacion' => now()->subHours(12),
         ]);
 

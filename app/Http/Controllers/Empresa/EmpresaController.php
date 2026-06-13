@@ -36,14 +36,14 @@ class EmpresaController extends Controller
             'solicitudes_activas' => $empresa->vacantes()->where('estado', 'activa')->count(),
             'solicitudes_pendientes' => $empresa->vacantes()->where('estado', 'pendiente')->count(),
             'contratados' => Postulacion::whereIn('vacante_id', $vacantesIds)
-                ->where('estado', 'seleccionado')->count(),
+                ->whereIn('estado', Postulacion::estadosOcupanCupo())->count(),
             'en_proceso' => $empresa->vacantes()->where('estado', 'activa')
-                ->whereDoesntHave('postulaciones', fn ($q) => $q->where('estado', 'seleccionado'))
+                ->whereDoesntHave('postulaciones', fn ($q) => $q->whereIn('estado', Postulacion::estadosOcupanCupo()))
                 ->count(),
         ];
 
         $solicitudesRecientes = $empresa->vacantes()
-            ->withCount(['postulaciones' => fn ($q) => $q->where('estado', 'seleccionado')])
+            ->withCount(['postulaciones' => fn ($q) => $q->whereIn('estado', Postulacion::estadosOcupanCupo())])
             ->latest()
             ->take(5)
             ->get();
@@ -159,7 +159,7 @@ class EmpresaController extends Controller
         }
 
         $this->autorizarVacante($vacante);
-        $vacante->load(['postulaciones' => fn ($q) => $q->where('estado', 'seleccionado'), 'postulaciones.candidato.usuario']);
+        $vacante->load(['postulaciones' => fn ($q) => $q->whereIn('estado', Postulacion::estadosOcupanCupo()), 'postulaciones.candidato.usuario']);
 
         return view('empresa.solicitudes.show', compact('vacante'));
     }

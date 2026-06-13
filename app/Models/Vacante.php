@@ -61,13 +61,13 @@ class Vacante extends Model
     }
 
     /**
-     * Candidatos ya seleccionados (cupos ocupados).
-     * Cuenta postulaciones en estado 'seleccionado' (los retirados/rechazados no cuentan).
+     * Candidatos que ya ocupan cupo.
+     * Los estados se definen en Postulacion para permitir flujos editables.
      */
     public function cuposCubiertos(): int
     {
         return $this->postulaciones()
-            ->where('estado', 'seleccionado')
+            ->whereIn('estado', \App\Models\Postulacion::estadosOcupanCupo())
             ->count();
     }
 

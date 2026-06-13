@@ -25,14 +25,14 @@ class ResumenRapidoService
 
         // Postulaciones nuevas en sus vacantes
         $nuevasPostulaciones = Postulacion::whereHas('vacante', fn ($q) => $q->where('empresa_id', $empresa->id))
-            ->where('estado', 'postulado')
+            ->where('estado', Postulacion::estadoInicial())
             ->count();
 
         if ($nuevasPostulaciones > 0) {
             $acciones->push($this->accion(
                 icono: '👤',
                 titulo: $this->plural($nuevasPostulaciones, 'candidato nuevo', 'candidatos nuevos'),
-                mensaje: 'Hay candidatos esperando entrevista.',
+                mensaje: 'Hay candidatos nuevos esperando revisión.',
                 href: route('empresa.solicitudes'),
                 color: '#3b82f6',
             ));
@@ -98,7 +98,7 @@ class ResumenRapidoService
 
         // Postulaciones con cambio reciente
         $cambiosRecientes = $candidato->postulaciones()
-            ->whereIn('estado', ['seleccionado', 'rechazado'])
+            ->whereIn('estado', array_merge(Postulacion::estadosOcupanCupo(), ['rechazado']))
             ->where('updated_at', '>=', now()->subDays(7))
             ->count();
 

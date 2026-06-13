@@ -8,34 +8,27 @@
         </select>
     </div>
 
-    @php
-        $columns = [
-            'postulados' => 'postulado',
-            'entrevista' => 'entrevista',
-            'seleccionados' => 'seleccionado',
-            'rechazados' => 'rechazado',
-        ];
-    @endphp
-
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-        @foreach($columns as $key => $estado)
-            @php $estadoBadge = \App\Models\Postulacion::estadoBadgeClass($estado); @endphp
+        @foreach($estados as $estado => $estadoLabel)
+            @php
+                $estadoBadge = \App\Models\Postulacion::estadoBadgeClass($estado);
+                $items = $postulacionesPorEstado[$estado] ?? collect();
+            @endphp
             <div class="card" style="padding: 0;">
                 <div style="padding: 14px 16px; border-bottom: 2px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
-                    <span class="badge {{ $estadoBadge }}" style="font-size: 0.85rem;">{{ \App\Models\Postulacion::estadoLabel($estado) }}</span>
-                    <span class="badge {{ $estadoBadge }}">{{ count($$key) }}</span>
+                    <span class="badge {{ $estadoBadge }}" style="font-size: 0.85rem;">{{ $estadoLabel }}</span>
+                    <span class="badge {{ $estadoBadge }}">{{ $items->count() }}</span>
                 </div>
                 <div style="padding: 8px;">
-                    @forelse($$key as $p)
+                    @forelse($items as $p)
                         <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px; border-left: 3px solid var(--border);">
                             <div style="font-weight: 600; font-size: 0.85rem;">{{ $p->candidato->nombre ?? 'Candidato' }}</div>
                             <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">{{ $p->updated_at->diffForHumans() }}</div>
                             @if(auth()->user() && (auth()->user()->esAdmin() || auth()->user()->esInterno()))
                                 <select wire:change="moverEstado({{ $p->id }}, $event.target.value)" style="font-size: 0.72rem; padding: 3px 6px; margin-top: 6px; width: 100%; border-radius: var(--radius); border: 1px solid var(--border); background: white;">
-                                    <option value="postulado" @if($estado === 'postulado') selected @endif>Postulado</option>
-                                    <option value="entrevista" @if($estado === 'entrevista') selected @endif>Entrevista</option>
-                                    <option value="seleccionado" @if($estado === 'seleccionado') selected @endif>Seleccionado</option>
-                                    <option value="rechazado" @if($estado === 'rechazado') selected @endif>Rechazado</option>
+                                    @foreach($estados as $estadoKey => $estadoNombre)
+                                        <option value="{{ $estadoKey }}" @selected($p->estado === $estadoKey)>{{ $estadoNombre }}</option>
+                                    @endforeach
                                 </select>
                             @endif
                         </div>
